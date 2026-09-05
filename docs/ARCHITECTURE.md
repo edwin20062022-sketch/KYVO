@@ -10,6 +10,9 @@ com.kyvo.app
 │   ├── designsystem
 │   └── navigation
 ├── feature
+│   ├── auth
+│   │   ├── presentation
+│   │   └── domain
 │   └── <feature>
 │       ├── presentation
 │       ├── domain
@@ -22,7 +25,11 @@ Las abstracciones compartidas viven en `domain`; los adaptadores en `data`; los 
 
 ## Navegación
 
-La navegación aprobada es Inicio, Comidas, Meal Share, Progreso y Perfil. Durante la Fase 0 solo se registra una ruta técnica de foundation. Login será el primer destino real en la Fase 1 y las rutas restantes se incorporarán únicamente al aprobar su fase.
+La navegación aprobada es Inicio, Comidas, Meal Share, Progreso y Perfil. Login es el destino inicial. Al autenticar correctamente se navega a un destino mínimo de Onboarding; la pantalla real del wizard no se implementará hasta aprobar la Fase 2. Las rutas restantes se incorporarán únicamente al aprobar su fase.
+
+## Autenticación
+
+`LoginViewModel` depende únicamente de `AuthRepository`. La implementación actual, `PendingAuthRepository`, rechaza de forma segura cualquier intento porque aún no existe un proveedor configurado. Nunca acepta credenciales locales como autenticación válida. Un adaptador futuro podrá integrar Firebase Authentication o un backend propio sin modificar la pantalla ni el ViewModel.
 
 ## Persistencia
 
@@ -32,4 +39,3 @@ La navegación aprobada es Inicio, Comidas, Meal Share, Progreso y Perfil. Duran
 - Información sensible: almacenamiento cifrado o credenciales administradas por el proveedor de autenticación.
 
 Room y DataStore no se agregan aún: se incorporarán cuando exista el primer caso de uso real para evitar dependencias y esquemas vacíos.
-

@@ -4,7 +4,7 @@ Aplicación Android nativa de nutrición para personas que entrenan en gimnasio.
 
 ## Estado
 
-Fase 0 — Foundation. Todavía no se ha implementado Login ni ninguna feature de producto.
+Fase 1 — Login. La portada de acceso, el formulario de correo/contraseña, sus estados y la navegación mínima posterior están implementados. El proveedor real de identidad permanece pendiente de configuración externa.
 
 ## Stack
 
@@ -25,3 +25,5 @@ Fase 0 — Foundation. Todavía no se ha implementado Login ni ninguna feature d
 ```
 
 Consulta [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) para preparar el entorno local.
+
+La configuración pendiente del proveedor de acceso se documenta en [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md).

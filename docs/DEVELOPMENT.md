@@ -17,6 +17,8 @@
 .\gradlew.bat :app:lintDebug
 ```
 
+Las pruebas unitarias de Login usan `kotlinx-coroutines-test` para controlar el estado de carga y los resultados asíncronos del ViewModel.
+
 Las pruebas instrumentadas requieren emulador o dispositivo autorizado:
 
 ```powershell

@@ -11,6 +11,7 @@ Los mockups en `KYVO Pantallas` son la fuente visual principal. Se revisaron mue
 - Cards blancas, radios amplios, bordes tenues y elevación contenida.
 - Texto principal casi negro; texto secundario gris azulado.
 - Acciones primarias grandes y cómodas para uso alrededor del entrenamiento.
+- Acciones primarias con gradiente púrpura horizontal y altura mínima de 56 dp.
 - Iconos lineales dentro de contenedores circulares o cuadrados suavizados.
 - Proteína púrpura, carbohidratos turquesa y grasas ámbar.
 - Navegación inferior con Meal Share como acción central de mayor jerarquía.
@@ -36,6 +37,15 @@ Los tokens viven en `core/designsystem`: `Color.kt`, `Typography.kt`, `Shape.kt`
 La escala espacial base es 4, 8, 12, 16, 20, 24, 32 y 40 dp. Los radios base son 8, 12, 16, 20 y 28 dp.
 
 La tipografía actual usa la familia sans-serif del sistema. Los mockups muestran una sans geométrica y, en marketing, una variante condensada; no se añadirá una fuente externa hasta conocer el archivo y su licencia.
+
+## Componentes incorporados en Fase 1
+
+- `KyvoBrandLockup`: marca vectorial reconstruida en Compose; no usa el mockup como imagen.
+- `KyvoTextField`: campo con estados de foco, error, teclado y transformación visual.
+- `KyvoPrimaryButton`: acción primaria con loading y bloqueo de envíos múltiples.
+- `KyvoSecondaryButton`: acción secundaria delineada.
+
+La marca reconstruida es provisional hasta recibir el recurso vectorial oficial de KYVO.
 
 ## Responsive y accesibilidad
 
