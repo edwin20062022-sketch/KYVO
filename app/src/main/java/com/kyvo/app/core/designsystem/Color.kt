@@ -1,5 +1,6 @@
 package com.kyvo.app.core.designsystem
 
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 object KyvoColors {
@@ -24,5 +25,11 @@ object KyvoColors {
     val DarkCanvas = Color(0xFF0F0B18)
     val DarkSurface = Color(0xFF191326)
     val DarkOnSurface = Color(0xFFF5F2FA)
+}
+
+object KyvoBrushes {
+    val PrimaryAction = Brush.horizontalGradient(
+        listOf(KyvoColors.PurplePrimary, KyvoColors.PurpleAccent, KyvoColors.PurplePrimary),
+    )
 }
 

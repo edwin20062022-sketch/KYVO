@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">KYVO</string>
+    <string name="login_tagline_primary">NUTRICIÓN</string>
+    <string name="login_tagline_accent">PARA TU MEJOR VERSIÓN</string>
+    <string name="login_description">Registra lo que comes, alcanza tus macros\ny construye tu mejor versión cada día.</string>
+    <string name="login_benefit_goals_title">ALCANZA</string>
+    <string name="login_benefit_goals_body">TUS OBJETIVOS</string>
+    <string name="login_benefit_tracking_title">TRACKING SIMPLE</string>
+    <string name="login_benefit_tracking_body">Y PRECISO</string>
+    <string name="login_benefit_share_title">COMPARTE TU</string>
+    <string name="login_benefit_share_body">PROGRESO</string>
+    <string name="create_account">Crear cuenta</string>
+    <string name="sign_in">Iniciar sesión</string>
+    <string name="continue_with_google">Continuar con Google</string>
+    <string name="email_login_title">Inicia sesión en KYVO</string>
+    <string name="email_login_description">Continúa construyendo tu mejor versión.</string>
+    <string name="email_label">Correo electrónico</string>
+    <string name="password_label">Contraseña</string>
+    <string name="show_password">Mostrar contraseña</string>
+    <string name="hide_password">Ocultar contraseña</string>
+    <string name="password_toggle_show">Ver</string>
+    <string name="password_toggle_hide">Ocultar</string>
+    <string name="back">Volver</string>
+    <string name="email_empty_error">Ingresa tu correo electrónico.</string>
+    <string name="email_invalid_error">Ingresa un correo electrónico válido.</string>
+    <string name="password_empty_error">Ingresa tu contraseña.</string>
+    <string name="password_short_error">La contraseña debe tener al menos 8 caracteres.</string>
+    <string name="invalid_credentials_error">El correo o la contraseña son incorrectos.</string>
+    <string name="network_error">No pudimos conectarnos. Revisa tu conexión e inténtalo de nuevo.</string>
+    <string name="configuration_required_error">El proveedor de autenticación aún no está configurado.</string>
+    <string name="unknown_auth_error">Ocurrió un error inesperado. Inténtalo nuevamente.</string>
+    <string name="account_creation_unavailable">La creación de cuenta se habilitará al configurar el proveedor de autenticación.</string>
+    <string name="dismiss_message">Cerrar mensaje</string>
+    <string name="google_logo_description">Google</string>
+    <string name="onboarding_pending_title">Onboarding pendiente</string>
+    <string name="onboarding_pending_body">La navegación desde Login funciona. El onboarding se implementará únicamente al aprobar la Fase 2.</string>
+</resources>
