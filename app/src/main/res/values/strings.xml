@@ -4,12 +4,9 @@
     <string name="login_tagline_primary">NUTRICIÓN</string>
     <string name="login_tagline_accent">PARA TU MEJOR VERSIÓN</string>
     <string name="login_description">Registra lo que comes, alcanza tus macros\ny construye tu mejor versión cada día.</string>
-    <string name="login_benefit_goals_title">ALCANZA</string>
-    <string name="login_benefit_goals_body">TUS OBJETIVOS</string>
-    <string name="login_benefit_tracking_title">TRACKING SIMPLE</string>
-    <string name="login_benefit_tracking_body">Y PRECISO</string>
-    <string name="login_benefit_share_title">COMPARTE TU</string>
-    <string name="login_benefit_share_body">PROGRESO</string>
+    <string name="login_benefit_goals">ALCANZA TUS OBJETIVOS</string>
+    <string name="login_benefit_tracking">TRACKING SIMPLE Y PRECISO</string>
+    <string name="login_benefit_share">COMPARTE TU PROGRESO</string>
     <string name="create_account">Crear cuenta</string>
     <string name="sign_in">Iniciar sesión</string>
     <string name="continue_with_google">Continuar con Google</string>
@@ -33,6 +30,7 @@
     <string name="account_creation_unavailable">La creación de cuenta se habilitará al configurar el proveedor de autenticación.</string>
     <string name="dismiss_message">Cerrar mensaje</string>
     <string name="google_logo_description">Google</string>
+    <string name="kyvo_logo_description">Logotipo de KYVO</string>
     <string name="onboarding_pending_title">Onboarding pendiente</string>
     <string name="onboarding_pending_body">La navegación desde Login funciona. El onboarding se implementará únicamente al aprobar la Fase 2.</string>
 </resources>

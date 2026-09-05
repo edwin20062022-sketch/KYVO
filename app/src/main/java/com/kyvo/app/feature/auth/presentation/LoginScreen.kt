@@ -1,7 +1,7 @@
 package com.kyvo.app.feature.auth.presentation
 
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -43,10 +42,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
@@ -70,7 +67,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kyvo.app.R
-import com.kyvo.app.core.designsystem.KyvoColors
 import com.kyvo.app.core.designsystem.KyvoTheme
 import com.kyvo.app.core.designsystem.component.KyvoBrandLockup
 import com.kyvo.app.core.designsystem.component.KyvoPrimaryButton
@@ -100,11 +96,17 @@ fun LoginScreen(
     onEvent: (LoginEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        AuthBackground()
-        when (state.mode) {
-            LoginMode.Welcome -> WelcomeContent(state = state, onEvent = onEvent)
-            LoginMode.Email -> EmailLoginContent(state = state, onEvent = onEvent)
+    Surface(
+        modifier = modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background,
+        contentColor = MaterialTheme.colorScheme.onBackground,
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            AuthBackground()
+            when (state.mode) {
+                LoginMode.Welcome -> WelcomeContent(state = state, onEvent = onEvent)
+                LoginMode.Email -> EmailLoginContent(state = state, onEvent = onEvent)
+            }
         }
     }
 }
@@ -322,89 +324,50 @@ private fun BenefitsRow(compact: Boolean) {
         horizontalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 12.dp),
     ) {
         BenefitItem(
-            type = BenefitType.Goal,
-            title = stringResource(R.string.login_benefit_goals_title),
-            body = stringResource(R.string.login_benefit_goals_body),
+            iconRes = R.drawable.ic_benefit_goals,
+            label = stringResource(R.string.login_benefit_goals),
             compact = compact,
             modifier = Modifier.weight(1f),
         )
         BenefitItem(
-            type = BenefitType.Tracking,
-            title = stringResource(R.string.login_benefit_tracking_title),
-            body = stringResource(R.string.login_benefit_tracking_body),
+            iconRes = R.drawable.ic_benefit_tracking,
+            label = stringResource(R.string.login_benefit_tracking),
             compact = compact,
             modifier = Modifier.weight(1f),
         )
         BenefitItem(
-            type = BenefitType.Share,
-            title = stringResource(R.string.login_benefit_share_title),
-            body = stringResource(R.string.login_benefit_share_body),
+            iconRes = R.drawable.ic_benefit_share,
+            label = stringResource(R.string.login_benefit_share),
             compact = compact,
             modifier = Modifier.weight(1f),
         )
     }
 }
 
-private enum class BenefitType { Goal, Tracking, Share }
-
 @Composable
 private fun BenefitItem(
-    type: BenefitType,
-    title: String,
-    body: String,
+    @DrawableRes iconRes: Int,
+    label: String,
     compact: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Surface(
-            modifier = Modifier.size(if (compact) 48.dp else 56.dp),
-            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f),
-            shape = RoundedCornerShape(16.dp),
-        ) {
-            BenefitIcon(type = type, modifier = Modifier.padding(13.dp))
-        }
+        Image(
+            painter = painterResource(iconRes),
+            contentDescription = null,
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.size(if (compact) 52.dp else 64.dp),
+        )
         Spacer(Modifier.height(8.dp))
         Text(
-            text = title,
+            text = label,
             fontSize = if (compact) 10.sp else 11.sp,
             lineHeight = 14.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
-            maxLines = 1,
+            color = MaterialTheme.colorScheme.onBackground,
+            maxLines = 2,
         )
-        Text(
-            text = body,
-            fontSize = if (compact) 10.sp else 11.sp,
-            lineHeight = 14.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-        )
-    }
-}
-
-@Composable
-private fun BenefitIcon(type: BenefitType, modifier: Modifier = Modifier) {
-    val color = MaterialTheme.colorScheme.primary
-    Canvas(modifier = modifier.fillMaxSize()) {
-        val stroke = Stroke(width = size.minDimension * 0.09f, cap = StrokeCap.Round)
-        when (type) {
-            BenefitType.Goal -> {
-                drawCircle(color = color, radius = size.minDimension * .36f, style = stroke)
-                drawCircle(color = color, radius = size.minDimension * .10f)
-            }
-            BenefitType.Tracking -> {
-                drawArc(color, -90f, 275f, false, style = stroke)
-                drawLine(color, center, Offset(center.x, size.height * .16f), stroke.width, StrokeCap.Round)
-                drawLine(color, center, Offset(size.width * .78f, center.y), stroke.width, StrokeCap.Round)
-            }
-            BenefitType.Share -> {
-                drawRect(color = color, topLeft = Offset(size.width * .18f, size.height * .38f), size = androidx.compose.ui.geometry.Size(size.width * .64f, size.height * .50f), style = stroke)
-                drawLine(color, Offset(center.x, size.height * .62f), Offset(center.x, size.height * .08f), stroke.width, StrokeCap.Round)
-                drawLine(color, Offset(center.x, size.height * .08f), Offset(size.width * .32f, size.height * .28f), stroke.width, StrokeCap.Round)
-                drawLine(color, Offset(center.x, size.height * .08f), Offset(size.width * .68f, size.height * .28f), stroke.width, StrokeCap.Round)
-            }
-        }
     }
 }
 
@@ -476,19 +439,13 @@ private fun LoginMessageBanner(message: LoginMessage, onDismiss: () -> Unit) {
 
 @Composable
 private fun AuthBackground() {
-    val purple = KyvoColors.PurplePrimary
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        drawCircle(
-            color = purple.copy(alpha = .045f),
-            radius = size.width * .72f,
-            center = Offset(size.width * .85f, size.height * .08f),
-        )
-        val watermark = purple.copy(alpha = .035f)
-        val width = size.width * .12f
-        drawLine(watermark, Offset(size.width * .24f, size.height * .03f), Offset(size.width * .08f, size.height * .44f), width, StrokeCap.Square)
-        drawLine(watermark, Offset(size.width * .10f, size.height * .42f), Offset(size.width * .80f, size.height * .02f), width, StrokeCap.Square)
-        drawLine(watermark, Offset(size.width * .45f, size.height * .25f), Offset(size.width * .92f, size.height * .48f), width, StrokeCap.Square)
-    }
+    Image(
+        painter = painterResource(R.drawable.kyvo_mark_watermark),
+        contentDescription = null,
+        contentScale = ContentScale.Fit,
+        alpha = 0.045f,
+        modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+    )
 }
 
 @Composable

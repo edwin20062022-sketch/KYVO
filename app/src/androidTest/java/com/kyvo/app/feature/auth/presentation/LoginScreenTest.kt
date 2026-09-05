@@ -24,6 +24,7 @@ class LoginScreenTest {
         composeRule.onNodeWithTag(CREATE_ACCOUNT_TAG).assertIsDisplayed()
         composeRule.onNodeWithTag(OPEN_EMAIL_LOGIN_TAG).assertIsDisplayed()
         composeRule.onNodeWithTag(GOOGLE_LOGIN_TAG).assertIsDisplayed()
+        composeRule.onNodeWithText("TRACKING SIMPLE Y PRECISO").assertIsDisplayed()
     }
 
     @Test
