@@ -13,9 +13,14 @@ com.kyvo.app
 │   ├── auth
 │   │   ├── presentation
 │   │   └── domain
-│   └── <feature>
+│   └── onboarding
 │       ├── presentation
+│       │   └── components
 │       ├── domain
+│       │   ├── model
+│       │   ├── validation
+│       │   ├── calculator
+│       │   └── repository
 │       └── data
 ├── domain
 └── data
@@ -25,7 +30,7 @@ Las abstracciones compartidas viven en `domain`; los adaptadores en `data`; los 
 
 ## Navegación
 
-La navegación aprobada es Inicio, Comidas, Meal Share, Progreso y Perfil. Login es el destino inicial. Al autenticar correctamente se navega a un destino mínimo de Onboarding; la pantalla real del wizard no se implementará hasta aprobar la Fase 2. Las rutas restantes se incorporarán únicamente al aprobar su fase.
+Login es el destino inicial. Una autenticación correcta abre el wizard de Onboarding de 15 pasos. El `OnboardingViewModel` mantiene una única fuente de verdad y permite avanzar o regresar conservando respuestas. Al completar el resumen se marca el onboarding como finalizado y se navega a un placeholder mínimo de Home; Home no está implementado.
 
 ## Autenticación
 
@@ -38,4 +43,4 @@ La navegación aprobada es Inicio, Comidas, Meal Share, Progreso y Perfil. Login
 - Estado temporal: `SavedStateHandle` o estado de ViewModel.
 - Información sensible: almacenamiento cifrado o credenciales administradas por el proveedor de autenticación.
 
-Room y DataStore no se agregan aún: se incorporarán cuando exista el primer caso de uso real para evitar dependencias y esquemas vacíos.
+Fase 2 incorpora Preferences DataStore detrás de `OnboardingRepository`. Guarda únicamente el borrador, paso actual, respuestas necesarias, plan calculado y bandera de finalización. Room sigue reservado para datos relacionales futuros como alimentos e historial.

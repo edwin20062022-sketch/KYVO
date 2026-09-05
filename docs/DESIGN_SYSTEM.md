@@ -38,14 +38,19 @@ La escala espacial base es 4, 8, 12, 16, 20, 24, 32 y 40 dp. Los radios base son
 
 La tipografía actual usa la familia sans-serif del sistema. Los mockups muestran una sans geométrica y, en marketing, una variante condensada; no se añadirá una fuente externa hasta conocer el archivo y su licencia.
 
-## Componentes incorporados en Fase 1
+## Componentes incorporados
 
-- `KyvoBrandLockup`: marca vectorial reconstruida en Compose; no usa el mockup como imagen.
+- `KyvoBrandLockup`: imagotipo vectorial oficial suministrado, con variante nocturna.
 - `KyvoTextField`: campo con estados de foco, error, teclado y transformación visual.
 - `KyvoPrimaryButton`: acción primaria con loading y bloqueo de envíos múltiples.
 - `KyvoSecondaryButton`: acción secundaria delineada.
 
-La marca reconstruida es provisional hasta recibir el recurso vectorial oficial de KYVO.
+- `KyvoStepProgress`: indicador segmentado de 15 pasos.
+- `KyvoOptionCard`: tarjeta seleccionable con borde, check y semántica de radio.
+- `KyvoNumericInput`: entrada numérica con teclado, IME y error contextual.
+- `WizardActions`: CTA primaria y regreso con targets táctiles mínimos.
+
+El onboarding usa un scaffold común, contenido desplazable y acciones estables. Las pantallas reveal reutilizan superficies y colores semánticos de macronutrientes sin copiar números de los mockups.
 
 ## Responsive y accesibilidad
 

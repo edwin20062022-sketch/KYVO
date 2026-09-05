@@ -4,13 +4,14 @@ Aplicación Android nativa de nutrición para personas que entrenan en gimnasio.
 
 ## Estado
 
-Fase 1 — Login. La portada de acceso, el formulario de correo/contraseña, sus estados y la navegación mínima posterior están implementados. El proveedor real de identidad permanece pendiente de configuración externa.
+Fase 2 — Onboarding Wizard. El flujo progresivo de 15 pasos, validaciones, cálculo nutricional, reveals y persistencia local están implementados. Home permanece como placeholder hasta la Fase 3.
 
 ## Stack
 
 - Kotlin 2.4.10
 - Jetpack Compose + Material 3
 - Navigation Compose
+- Preferences DataStore
 - Gradle Kotlin DSL
 - AGP 9.4.0 y Gradle 9.7.1
 - minSdk 26, targetSdk/compileSdk 37

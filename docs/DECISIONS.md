@@ -35,3 +35,21 @@ El único mockup de Login representa la portada de autenticación, pero la fase 
 Sin backend, configuración OAuth o proyecto Firebase, `PendingAuthRepository` devuelve `ConfigurationRequired`. Los flujos de éxito se prueban con un fake aislado; no existe ninguna credencial aceptada localmente. La futura integración de Google utilizará Android Credential Manager, no `GoogleSignInClient`, que está deprecado.
 
 Referencia: [migración oficial hacia Credential Manager](https://developer.android.com/identity/sign-in/legacy-gsi-migration).
+
+## ADR-009 — Secuencia canónica de onboarding
+
+Los mockups mezclan indicadores de 18, 11 y 15 pasos; Objetivo y Experiencia también muestran numeración desplazada. La secuencia funcional aprobada de 15 pasos es la fuente de verdad. “Otro” en entrenamiento y “Muy avanzado/Experto” en experiencia se omiten porque las listas funcionales definitivas establecen cuatro tipos de entrenamiento y tres niveles.
+
+## ADR-010 — Género y Mifflin-St Jeor
+
+El mockup pregunta género, mientras Mifflin-St Jeor utiliza una constante asociada al sexo del modelo original. El dominio conserva las tres respuestas visuales sin convertirlas a cadenas arbitrarias. Masculino y Femenino aplican sus constantes explícitas; “Prefiero no decirlo” utiliza el punto medio de ambas constantes (`-78`) como estimación neutral y muestra una nota visible en el reveal. Es una decisión auditable, no una equivalencia médica oculta.
+
+## ADR-011 — Persistencia del onboarding
+
+Preferences DataStore es suficiente porque el onboarding es un conjunto pequeño de valores escalares sin relaciones ni consultas complejas. Se guarda de forma asíncrona y transaccional detrás de un repositorio. Room no aporta valor en esta fase.
+
+Referencia: [DataStore en la arquitectura Android](https://developer.android.com/topic/libraries/architecture/datastore).
+
+## ADR-012 — Opciones de preferencias
+
+El mockup utiliza controles de selección exclusiva y presenta “Sin restricciones”, “Vegetariano”, “Vegano”, “Sin gluten”, “Sin lácteos” y “Otra”. La implementación respeta ese comportamiento. Si producto decide admitir combinaciones de restricciones, el enum puede migrarse a un conjunto sin alterar el resto del wizard.
