@@ -10,8 +10,22 @@ data class AuthSession(
     val provider: AuthProvider,
 )
 
+sealed interface AuthError {
+    data object InvalidCredentials : AuthError
+    data object Network : AuthError
+    data object ConfigurationRequired : AuthError
+    data object Unknown : AuthError
+}
+
+sealed interface AuthResult {
+    data class Success(val session: AuthSession) : AuthResult
+    data class Failure(val error: AuthError) : AuthResult
+}
+
 interface AuthRepository {
     fun observeSession(): Flow<AuthSession?>
+    suspend fun signInWithEmail(email: String, password: CharArray): AuthResult
+    suspend fun signInWithGoogle(): AuthResult
     suspend fun signOut()
 }
 
