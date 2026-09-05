@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "MiPrograma"
+rootProject.name = "KYVO"
 include(":app")

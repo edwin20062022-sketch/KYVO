@@ -1,6 +1,15 @@
-﻿.gradle/
+.gradle/
 .kotlin/
 build/
+**/build/
 out/
 .idea/
 *.iml
+local.properties
+*.hprof
+Kotlin/
+Kotlin.kt
+captures/
+*.jks
+*.keystore
+keystore.properties

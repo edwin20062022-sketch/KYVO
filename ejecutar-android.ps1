@@ -9,22 +9,20 @@ $devices = & $adb devices
 $authorized = @($devices | Where-Object { $_ -match "\sdevice$" })
 
 if ($authorized.Count -eq 0) {
-    Write-Host 'No hay un celular Android autorizado.' -ForegroundColor Yellow
-    Write-Host 'Conecta el celular, desbloquealo y acepta la depuracion USB.' -ForegroundColor Yellow
+    Write-Host 'No hay un dispositivo Android autorizado.' -ForegroundColor Yellow
     & $adb devices -l
     exit 2
 }
-
 Push-Location $PSScriptRoot
 try {
     & "$PSScriptRoot\gradlew.bat" :app:installDebug
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-    & $adb shell am force-stop com.example.miprograma
-    & $adb shell am start -n 'com.example.miprograma/.MainActivity'
+    & $adb shell am force-stop com.kyvo.app.debug
+    & $adb shell am start -n 'com.kyvo.app.debug/com.kyvo.app.MainActivity'
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-    Write-Host 'Aplicacion instalada y abierta en el celular.' -ForegroundColor Green
+    Write-Host 'KYVO instalada y abierta en el dispositivo.' -ForegroundColor Green
 }
 finally {
     Pop-Location

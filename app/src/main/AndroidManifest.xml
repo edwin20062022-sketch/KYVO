@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:allowBackup="true"
-        android:icon="@drawable/ic_event_app"
-        android:label="Registro de eventos"
-        android:roundIcon="@drawable/ic_event_app"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="false"
+        android:icon="@drawable/ic_kyvo_app"
+        android:label="KYVO"
+        android:roundIcon="@drawable/ic_kyvo_app"
         android:supportsRtl="true"
-        android:theme="@style/Theme.MiPrograma">
+        android:theme="@style/Theme.Kyvo"
+        android:usesCleartextTraffic="false">
         <activity
             android:name=".MainActivity"
             android:exported="true">
