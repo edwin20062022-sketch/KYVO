@@ -31,6 +31,4 @@
     <string name="dismiss_message">Cerrar mensaje</string>
     <string name="google_logo_description">Google</string>
     <string name="kyvo_logo_description">Logotipo de KYVO</string>
-    <string name="onboarding_pending_title">Onboarding pendiente</string>
-    <string name="onboarding_pending_body">La navegación desde Login funciona. El onboarding se implementará únicamente al aprobar la Fase 2.</string>
 </resources>
