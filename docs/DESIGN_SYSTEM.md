@@ -52,6 +52,8 @@ La tipografía actual usa la familia sans-serif del sistema. Los mockups muestra
 
 El onboarding usa un scaffold común, contenido desplazable y acciones estables. Las pantallas reveal reutilizan superficies y colores semánticos de macronutrientes sin copiar números de los mockups.
 
+Los SVG suministrados para género, edad, altura, peso, fuerza, funcional y cardio se integran como `VectorDrawable` nativos. El asset PNG de hipertrofia se conserva sin redibujarlo; las opciones sin asset entregado usan indicadores tipográficos neutros del sistema.
+
 ## Responsive y accesibilidad
 
 - Padding horizontal: 16 dp en teléfonos compactos y 24 dp en anchos estándar.

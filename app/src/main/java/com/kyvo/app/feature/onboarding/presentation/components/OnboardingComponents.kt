@@ -1,6 +1,8 @@
 package com.kyvo.app.feature.onboarding.presentation.components
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.semantics
@@ -66,6 +69,7 @@ fun KyvoOptionCard(
     modifier: Modifier = Modifier,
     description: String? = null,
     badge: String = title.take(1),
+    @DrawableRes iconRes: Int? = null,
     testTag: String? = null,
 ) {
     Surface(
@@ -87,7 +91,11 @@ fun KyvoOptionCard(
                 modifier = Modifier.size(48.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Text(badge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    if (iconRes == null) {
+                        Text(badge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    } else {
+                        Image(painterResource(iconRes), contentDescription = null, modifier = Modifier.size(32.dp))
+                    }
                 }
             }
             Spacer(Modifier.width(16.dp))
@@ -129,6 +137,7 @@ fun KyvoNumericInput(
     focusRequester: FocusRequester,
     onDone: () -> Unit,
     testTag: String,
+    @DrawableRes iconRes: Int? = null,
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -141,6 +150,10 @@ fun KyvoNumericInput(
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            iconRes?.let {
+                Image(painterResource(it), contentDescription = null, modifier = Modifier.size(48.dp))
+                Spacer(Modifier.height(12.dp))
+            }
             Text(label, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(20.dp))
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {

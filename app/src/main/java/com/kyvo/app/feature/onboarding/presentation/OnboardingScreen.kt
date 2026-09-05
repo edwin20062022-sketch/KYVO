@@ -45,6 +45,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.kyvo.app.R
 import com.kyvo.app.core.designsystem.KyvoColors
 import com.kyvo.app.core.designsystem.component.KyvoBrandLockup
 import com.kyvo.app.feature.onboarding.domain.model.ExperienceLevel
@@ -163,9 +164,9 @@ private fun StepContent(
             StepHeading("DATOS PERSONALES", "¿Cuál es tu género?", "Esta información nos ayuda a calcular tus necesidades nutricionales.", compact)
             OptionList(
                 listOf(
-                    Option("Masculino", "M", state.gender == GenderOption.Male) { onEvent(OnboardingEvent.SelectGender(GenderOption.Male)) },
-                    Option("Femenino", "F", state.gender == GenderOption.Female) { onEvent(OnboardingEvent.SelectGender(GenderOption.Female)) },
-                    Option("Prefiero no decirlo", "—", state.gender == GenderOption.PreferNotToSay) { onEvent(OnboardingEvent.SelectGender(GenderOption.PreferNotToSay)) },
+                    Option("Masculino", "M", state.gender == GenderOption.Male, iconRes = R.drawable.ic_onboarding_male) { onEvent(OnboardingEvent.SelectGender(GenderOption.Male)) },
+                    Option("Femenino", "F", state.gender == GenderOption.Female, iconRes = R.drawable.ic_onboarding_female) { onEvent(OnboardingEvent.SelectGender(GenderOption.Female)) },
+                    Option("Prefiero no decirlo", "—", state.gender == GenderOption.PreferNotToSay, iconRes = R.drawable.ic_onboarding_undisclosed) { onEvent(OnboardingEvent.SelectGender(GenderOption.PreferNotToSay)) },
                 ),
             )
             StepError(state.validationError)
@@ -175,18 +176,21 @@ private fun StepContent(
             "Tu edad nos ayuda a calcular tu gasto calórico y necesidades nutricionales.",
             "Ingresa tu edad", state.ageInput, "años", KeyboardType.Number, state.validationError, compact,
             { onEvent(OnboardingEvent.ChangeAge(it)) }, { onEvent(OnboardingEvent.Continue) }, AGE_INPUT_TAG,
+            iconRes = R.drawable.ic_onboarding_age,
         )
         OnboardingStep.Height -> NumericStep(
             "DATOS PERSONALES", "¿Cuál es tu altura?",
             "Tu altura nos ayuda a estimar tu gasto calórico y calcular tus macros.",
             "Ingresa tu altura", state.heightInput, "cm", KeyboardType.Decimal, state.validationError, compact,
             { onEvent(OnboardingEvent.ChangeHeight(it)) }, { onEvent(OnboardingEvent.Continue) }, HEIGHT_INPUT_TAG,
+            iconRes = R.drawable.ic_onboarding_height,
         )
         OnboardingStep.CurrentWeight -> NumericStep(
             "DATOS PERSONALES", "¿Cuál es tu peso actual?",
             "Tu peso actual nos ayuda a calcular tus necesidades calóricas diarias.",
             "Ingresa tu peso", state.weightInput, "kg", KeyboardType.Decimal, state.validationError, compact,
             { onEvent(OnboardingEvent.ChangeWeight(it)) }, { onEvent(OnboardingEvent.Continue) }, WEIGHT_INPUT_TAG,
+            iconRes = R.drawable.ic_onboarding_weight,
         )
         OnboardingStep.TrainingDays -> {
             StepHeading("ACTIVIDAD", "¿Cuántos días entrenas a la semana?", "Esto nos ayuda a calcular tu nivel de actividad física.", compact)
@@ -200,7 +204,7 @@ private fun StepContent(
         OnboardingStep.TrainingType -> {
             StepHeading("ACTIVIDAD", "¿Qué tipo de entrenamiento realizas principalmente?", "Selecciona el que mejor representa tu entrenamiento.", compact)
             OptionList(TrainingType.entries.map { value ->
-                Option(value.label(), value.label().take(1), state.trainingType == value, value.description()) {
+                Option(value.label(), value.label().take(1), state.trainingType == value, value.description(), value.iconRes()) {
                     onEvent(OnboardingEvent.SelectTrainingType(value))
                 }
             })
@@ -277,6 +281,7 @@ private data class Option(
     val badge: String,
     val selected: Boolean,
     val description: String? = null,
+    val iconRes: Int? = null,
     val onClick: () -> Unit,
 )
 
@@ -288,6 +293,7 @@ private fun OptionList(options: List<Option>) {
                 title = it.title,
                 description = it.description,
                 badge = it.badge,
+                iconRes = it.iconRes,
                 selected = it.selected,
                 onClick = it.onClick,
                 testTag = OPTION_TAG_PREFIX + it.title,
@@ -310,6 +316,7 @@ private fun NumericStep(
     onChange: (String) -> Unit,
     onDone: () -> Unit,
     testTag: String,
+    iconRes: Int? = null,
 ) {
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
@@ -329,6 +336,7 @@ private fun NumericStep(
             onDone()
         },
         testTag = testTag,
+        iconRes = iconRes,
     )
 }
 
@@ -543,6 +551,12 @@ private fun TrainingType.description() = when (this) {
     TrainingType.Hypertrophy -> "Entrenamiento enfocado en masa muscular."
     TrainingType.Functional -> "Funcional, HIIT, crossfit o calistenia."
     TrainingType.Cardio -> "Carrera, bicicleta, elíptica u otro cardio."
+}
+private fun TrainingType.iconRes() = when (this) {
+    TrainingType.Strength -> R.drawable.ic_onboarding_strength
+    TrainingType.Hypertrophy -> R.drawable.ic_onboarding_hypertrophy
+    TrainingType.Functional -> R.drawable.ic_onboarding_functional
+    TrainingType.Cardio -> R.drawable.ic_onboarding_cardio
 }
 private fun WorkActivity.label() = when (this) {
     WorkActivity.Sedentary -> "Oficina / Sedentario"
