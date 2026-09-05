@@ -1,0 +1,8 @@
+{
+    "java.jdt.ls.java.home": "C:\\Users\\edwin\\OneDrive\\Escritorio\\Aplicaciones\\Kotlin\\kotlin-dev\\jdk",
+    "terminal.integrated.env.windows": {
+        "JAVA_HOME": "C:\\Users\\edwin\\OneDrive\\Escritorio\\Aplicaciones\\Kotlin\\kotlin-dev\\jdk",
+        "ANDROID_HOME": "C:\\Users\\edwin\\AppData\\Local\\Android\\Sdk",
+        "Path": "C:\\Users\\edwin\\OneDrive\\Escritorio\\Aplicaciones\\Kotlin\\kotlin-dev\\jdk\\bin;C:\\Users\\edwin\\AppData\\Local\\Android\\Sdk\\platform-tools;${env:Path}"
+    }
+}

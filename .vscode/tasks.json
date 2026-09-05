@@ -1,0 +1,55 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Android: compilar APK",
+            "type": "shell",
+            "command": "powershell.exe",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}\\compilar-android.ps1"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Android: instalar y abrir",
+            "type": "shell",
+            "command": "powershell.exe",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}\\ejecutar-android.ps1"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "Android: modo desarrollo automatico",
+            "type": "shell",
+            "command": "powershell.exe",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}\\modo-desarrollo.ps1"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "Android: listar celulares",
+            "type": "shell",
+            "command": "C:\\Users\\edwin\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+            "args": ["devices", "-l"],
+            "problemMatcher": []
+        }
+    ]
+}
