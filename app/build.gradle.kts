@@ -1,6 +1,19 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
+}
+
+val localProperties = Properties().apply {
+    val propertiesFile = rootProject.file("local.properties")
+    if (propertiesFile.exists()) propertiesFile.inputStream().use(::load)
+}
+
+fun localBuildConfigString(name: String): String {
+    val value = localProperties.getProperty(name, "")
+    return "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
 }
 
 android {
@@ -14,12 +27,15 @@ android {
         versionCode = 1
         versionName = "0.1.0"
 
+        buildConfigField("String", "SUPABASE_URL", localBuildConfigString("SUPABASE_URL"))
+        buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", localBuildConfigString("SUPABASE_PUBLISHABLE_KEY"))
+        buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", localBuildConfigString("GOOGLE_WEB_CLIENT_ID"))
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         debug {
-            applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
         }
         release {
@@ -66,6 +82,11 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons.core)
     implementation(libs.androidx.datastore.preferences)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
+    implementation(libs.supabase.auth)
+    implementation(libs.ktor.client.okhttp)
 
     testImplementation(libs.junit4)
     testImplementation(libs.kotlinx.coroutines.test)
