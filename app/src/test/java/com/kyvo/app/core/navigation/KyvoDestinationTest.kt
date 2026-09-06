@@ -1,5 +1,8 @@
 package com.kyvo.app.core.navigation
 
+import com.kyvo.app.domain.auth.AuthProvider
+import com.kyvo.app.domain.auth.AuthSession
+import com.kyvo.app.domain.auth.AuthState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -20,5 +23,23 @@ class KyvoDestinationTest {
             mainDestinations.map(KyvoDestination::route),
         )
     }
-}
 
+    @Test
+    fun `signed out session routes to login`() {
+        assertEquals(KyvoDestination.Login, resolveStartDestination(AuthState.SignedOut, false))
+    }
+
+    @Test
+    fun `existing session with incomplete onboarding routes to onboarding`() {
+        assertEquals(KyvoDestination.Onboarding, resolveStartDestination(signedIn(), false))
+    }
+
+    @Test
+    fun `existing session with complete onboarding routes to home placeholder`() {
+        assertEquals(KyvoDestination.Home, resolveStartDestination(signedIn(), true))
+    }
+
+    private fun signedIn() = AuthState.SignedIn(
+        AuthSession("user-1", "athlete@kyvo.app", AuthProvider.Email),
+    )
+}

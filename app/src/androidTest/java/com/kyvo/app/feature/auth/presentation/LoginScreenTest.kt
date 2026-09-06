@@ -31,7 +31,7 @@ class LoginScreenTest {
     fun emailModeShowsFieldsAndSubmitCta() {
         composeRule.setContent {
             KyvoTheme(darkTheme = false) {
-                LoginScreen(LoginUiState(mode = LoginMode.Email), onEvent = {})
+                LoginScreen(LoginUiState(mode = LoginMode.SignIn), onEvent = {})
             }
         }
 
@@ -46,7 +46,7 @@ class LoginScreenTest {
             KyvoTheme(darkTheme = false) {
                 LoginScreen(
                     state = LoginUiState(
-                        mode = LoginMode.Email,
+                        mode = LoginMode.SignIn,
                         emailError = EmailValidationError.Invalid,
                         passwordError = PasswordValidationError.Empty,
                     ),
@@ -64,7 +64,7 @@ class LoginScreenTest {
         composeRule.setContent {
             KyvoTheme(darkTheme = false) {
                 LoginScreen(
-                    LoginUiState(mode = LoginMode.Email, isLoading = true),
+                    LoginUiState(mode = LoginMode.SignIn, isLoading = true),
                     onEvent = {},
                 )
             }

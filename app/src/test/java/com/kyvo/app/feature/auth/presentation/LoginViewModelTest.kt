@@ -5,6 +5,7 @@ import com.kyvo.app.domain.auth.AuthProvider
 import com.kyvo.app.domain.auth.AuthRepository
 import com.kyvo.app.domain.auth.AuthResult
 import com.kyvo.app.domain.auth.AuthSession
+import com.kyvo.app.domain.auth.AuthState
 import com.kyvo.app.test.MainDispatcherRule
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -127,13 +128,20 @@ private class FakeAuthRepository(
     private val emailResult: suspend () -> AuthResult = { AuthResult.Failure(AuthError.Unknown) },
     private val googleResult: suspend () -> AuthResult = { AuthResult.Failure(AuthError.Unknown) },
 ) : AuthRepository {
-    private val session = MutableStateFlow<AuthSession?>(null)
+    private val session = MutableStateFlow<AuthState>(AuthState.SignedOut)
     var emailAttempts = 0
         private set
     var googleAttempts = 0
         private set
 
-    override fun observeSession(): Flow<AuthSession?> = session
+    override fun observeSession(): Flow<AuthState> = session
+
+    override fun currentSession(): AuthSession? = (session.value as? AuthState.SignedIn)?.session
+
+    override suspend fun signUpWithEmail(email: String, password: CharArray): AuthResult {
+        emailAttempts += 1
+        return emailResult()
+    }
 
     override suspend fun signInWithEmail(email: String, password: CharArray): AuthResult {
         emailAttempts += 1
@@ -146,7 +154,6 @@ private class FakeAuthRepository(
     }
 
     override suspend fun signOut() {
-        session.value = null
+        session.value = AuthState.SignedOut
     }
 }
-
