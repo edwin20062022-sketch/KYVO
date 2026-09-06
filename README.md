@@ -4,7 +4,7 @@ Aplicación Android nativa de nutrición para personas que entrenan en gimnasio.
 
 ## Estado
 
-Fase 2 — Onboarding Wizard. El flujo progresivo de 15 pasos, validaciones, cálculo nutricional, reveals y persistencia local están implementados. Home permanece como placeholder hasta la Fase 3.
+Fase 2 — Onboarding Wizard completada. Autenticación real con Supabase y Google Credential Manager implementada; queda completar la configuración manual externa de OAuth/Provider y colocar las claves públicas locales. Home permanece como placeholder hasta la Fase 3.
 
 ## Stack
 
@@ -12,6 +12,8 @@ Fase 2 — Onboarding Wizard. El flujo progresivo de 15 pasos, validaciones, cá
 - Jetpack Compose + Material 3
 - Navigation Compose
 - Preferences DataStore
+- Supabase Auth Kotlin 3.8.0
+- Android Credential Manager 1.6.0 + Google ID 1.2.0
 - Gradle Kotlin DSL
 - AGP 9.4.0 y Gradle 9.7.1
 - minSdk 26, targetSdk/compileSdk 37

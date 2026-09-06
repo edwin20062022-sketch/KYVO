@@ -14,9 +14,9 @@ Se usa compile/target SDK 37. El requisito de Google Play vigente desde el 31 de
 
 Referencias: [requisito de API de Google Play](https://developer.android.com/google/play/requirements/target-sdk) y [compatibilidad de AGP 9.4](https://developer.android.com/build/releases/agp-9-4-0-release-notes).
 
-## ADR-004 — Identificador provisional
+## ADR-004 — Identificador definitivo
 
-`com.kyvo.app` es provisional. El identificador definitivo debe confirmarse antes de publicar porque el `applicationId` no debe cambiar después de distribuir la app.
+`com.kyvo.app` es el `applicationId` definitivo. Debug conserva ese mismo paquete para coincidir con el cliente OAuth Android solicitado; se diferencia por el sufijo de versión, no por paquete.
 
 ## ADR-005 — Sin persistencia ni autenticación concreta en Fase 0
 
@@ -30,9 +30,9 @@ Algunos indicadores del onboarding muestran 18 pasos aunque el flujo aprobado ti
 
 El único mockup de Login representa la portada de autenticación, pero la fase exige correo y contraseña. Se conserva la portada con alta fidelidad y el botón “Iniciar sesión” abre un formulario nativo dentro de la misma feature. Esto evita inventar una pantalla de producto adicional y permite teclado, foco, validación y errores accesibles.
 
-## ADR-008 — Proveedor de autenticación no simulado
+## ADR-008 — Autenticación externa no simulada
 
-Sin backend, configuración OAuth o proyecto Firebase, `PendingAuthRepository` devuelve `ConfigurationRequired`. Los flujos de éxito se prueban con un fake aislado; no existe ninguna credencial aceptada localmente. La futura integración de Google utilizará Android Credential Manager, no `GoogleSignInClient`, que está deprecado.
+Sin configuración pública local completa, `ConfigurationRequiredAuthRepository` devuelve `ConfigurationRequired`. Con ella, `SupabaseAuthRepository` ejecuta email/password y Google reales; los tests usan fakes aislados y ninguna credencial se acepta localmente. Google utiliza Android Credential Manager, no `GoogleSignInClient`, que está deprecado.
 
 Referencia: [migración oficial hacia Credential Manager](https://developer.android.com/identity/sign-in/legacy-gsi-migration).
 
@@ -53,3 +53,19 @@ Referencia: [DataStore en la arquitectura Android](https://developer.android.com
 ## ADR-012 — Opciones de preferencias
 
 El mockup utiliza controles de selección exclusiva y presenta “Sin restricciones”, “Vegetariano”, “Vegano”, “Sin gluten”, “Sin lácteos” y “Otra”. La implementación respeta ese comportamiento. Si producto decide admitir combinaciones de restricciones, el enum puede migrarse a un conjunto sin alterar el resto del wizard.
+
+## ADR-013 — Supabase Auth como autoridad de sesión
+
+Email/password y Google terminan en una sesión de Supabase. El SDK conserva y renueva la sesión; la app deriva su navegación del estado observado y nunca persiste contraseñas ni tokens manualmente.
+
+## ADR-014 — Google nativo mediante Credential Manager
+
+El botón de Google usa `GetSignInWithGoogleOption`, un Web Client ID como `serverClientId` y un nonce aleatorio de 256 bits. El hash SHA-256 va a Google y el nonce crudo a Supabase. Se descartan GoogleSignInClient, WebView y Firebase Auth.
+
+## ADR-015 — OAuth estándar queda fuera de gcloud IAM
+
+Los comandos `gcloud iam oauth-clients` no corresponden a los clientes estándar de Google Auth Platform usados por Sign in with Google. Branding, Audience, Data Access y clientes Web/Android se documentan como configuración manual hasta que Google publique una API/CLI soportada.
+
+## ADR-016 — Configuración pública local y sin secrets Android
+
+URL, publishable key y Web Client ID se leen de `local.properties` hacia `BuildConfig`. El archivo está ignorado; el ejemplo versionado tiene valores vacíos. El Client Secret de Google se guarda únicamente en Supabase.

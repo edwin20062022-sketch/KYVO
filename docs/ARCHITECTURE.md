@@ -30,11 +30,11 @@ Las abstracciones compartidas viven en `domain`; los adaptadores en `data`; los 
 
 ## Navegación
 
-Login es el destino inicial. Una autenticación correcta abre el wizard de Onboarding de 15 pasos. El `OnboardingViewModel` mantiene una única fuente de verdad y permite avanzar o regresar conservando respuestas. Al completar el resumen se marca el onboarding como finalizado y se navega a un placeholder mínimo de Home; Home no está implementado.
+El destino se deriva de sesión y onboarding: sin sesión abre Login; con sesión y onboarding incompleto abre el wizard; con ambos completos abre el placeholder mínimo de Home. El `OnboardingViewModel` mantiene una única fuente de verdad y permite avanzar o regresar conservando respuestas. Home no está implementado.
 
 ## Autenticación
 
-`LoginViewModel` depende únicamente de `AuthRepository`. La implementación actual, `PendingAuthRepository`, rechaza de forma segura cualquier intento porque aún no existe un proveedor configurado. Nunca acepta credenciales locales como autenticación válida. Un adaptador futuro podrá integrar Firebase Authentication o un backend propio sin modificar la pantalla ni el ViewModel.
+`LoginViewModel` depende únicamente de `AuthRepository`. `SupabaseAuthRepository` coordina `SupabaseSdkAuthDataSource` y `CredentialManagerGoogleGateway`; la UI no conoce tokens, clientes OAuth ni detalles del SDK. `AuthState` distingue inicialización, sesión cerrada y sesión restaurada para evitar mostrar Login mientras Supabase carga su almacenamiento. Cuando faltan claves públicas locales se inyecta `ConfigurationRequiredAuthRepository`, que rechaza de forma segura los intentos sin simular autenticación.
 
 ## Persistencia
 
