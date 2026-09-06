@@ -13,19 +13,28 @@ data class AuthSession(
 sealed interface AuthError {
     data object InvalidCredentials : AuthError
     data object Network : AuthError
+    data object Cancelled : AuthError
     data object ConfigurationRequired : AuthError
     data object Unknown : AuthError
 }
 
+sealed interface AuthState {
+    data object Initializing : AuthState
+    data object SignedOut : AuthState
+    data class SignedIn(val session: AuthSession) : AuthState
+}
+
 sealed interface AuthResult {
     data class Success(val session: AuthSession) : AuthResult
+    data class ConfirmationRequired(val email: String) : AuthResult
     data class Failure(val error: AuthError) : AuthResult
 }
 
 interface AuthRepository {
-    fun observeSession(): Flow<AuthSession?>
+    fun observeSession(): Flow<AuthState>
+    fun currentSession(): AuthSession?
+    suspend fun signUpWithEmail(email: String, password: CharArray): AuthResult
     suspend fun signInWithEmail(email: String, password: CharArray): AuthResult
     suspend fun signInWithGoogle(): AuthResult
     suspend fun signOut()
 }
-
