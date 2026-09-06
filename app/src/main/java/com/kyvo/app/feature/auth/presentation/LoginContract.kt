@@ -1,6 +1,6 @@
 package com.kyvo.app.feature.auth.presentation
 
-enum class LoginMode { Welcome, Email }
+enum class LoginMode { Welcome, SignIn, SignUp }
 
 enum class EmailValidationError { Empty, Invalid }
 
@@ -11,7 +11,8 @@ enum class LoginMessage {
     Network,
     ConfigurationRequired,
     Unknown,
-    AccountCreationUnavailable,
+    GoogleCancelled,
+    CheckYourEmail,
 }
 
 data class LoginUiState(
@@ -28,14 +29,13 @@ data class LoginUiState(
 
 sealed interface LoginEvent {
     data object OpenEmailLogin : LoginEvent
+    data object OpenEmailSignUp : LoginEvent
     data object BackToWelcome : LoginEvent
     data class EmailChanged(val value: String) : LoginEvent
     data class PasswordChanged(val value: String) : LoginEvent
     data object TogglePasswordVisibility : LoginEvent
     data object SubmitEmail : LoginEvent
     data object SubmitGoogle : LoginEvent
-    data object CreateAccount : LoginEvent
     data object DismissMessage : LoginEvent
     data object NavigationHandled : LoginEvent
 }
-

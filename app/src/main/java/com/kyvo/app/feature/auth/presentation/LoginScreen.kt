@@ -35,7 +35,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -77,16 +76,9 @@ import com.kyvo.app.domain.auth.AuthRepository
 @Composable
 fun LoginRoute(
     authRepository: AuthRepository,
-    onAuthenticated: () -> Unit,
     viewModel: LoginViewModel = viewModel(factory = LoginViewModel.factory(authRepository)),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    LaunchedEffect(state.isAuthenticated) {
-        if (state.isAuthenticated) {
-            onAuthenticated()
-            viewModel.onEvent(LoginEvent.NavigationHandled)
-        }
-    }
     LoginScreen(state = state, onEvent = viewModel::onEvent)
 }
 
@@ -105,7 +97,7 @@ fun LoginScreen(
             AuthBackground()
             when (state.mode) {
                 LoginMode.Welcome -> WelcomeContent(state = state, onEvent = onEvent)
-                LoginMode.Email -> EmailLoginContent(state = state, onEvent = onEvent)
+                LoginMode.SignIn, LoginMode.SignUp -> EmailLoginContent(state = state, onEvent = onEvent)
             }
         }
     }
@@ -157,7 +149,7 @@ private fun WelcomeContent(state: LoginUiState, onEvent: (LoginEvent) -> Unit) {
             KyvoPrimaryButton(
                 text = stringResource(R.string.create_account),
                 enabled = !state.isLoading,
-                onClick = { onEvent(LoginEvent.CreateAccount) },
+                onClick = { onEvent(LoginEvent.OpenEmailSignUp) },
                 modifier = Modifier.testTag(CREATE_ACCOUNT_TAG),
             )
             Spacer(Modifier.height(12.dp))
@@ -215,12 +207,18 @@ private fun EmailLoginContent(state: LoginUiState, onEvent: (LoginEvent) -> Unit
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Text(
-                    text = stringResource(R.string.email_login_title),
+                    text = stringResource(
+                        if (state.mode == LoginMode.SignUp) R.string.email_signup_title
+                        else R.string.email_login_title,
+                    ),
                     style = MaterialTheme.typography.headlineLarge,
                     modifier = Modifier.semantics { heading() },
                 )
                 Text(
-                    text = stringResource(R.string.email_login_description),
+                    text = stringResource(
+                        if (state.mode == LoginMode.SignUp) R.string.email_signup_description
+                        else R.string.email_login_description,
+                    ),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -296,7 +294,10 @@ private fun EmailLoginContent(state: LoginUiState, onEvent: (LoginEvent) -> Unit
                     LoginMessageBanner(message = it, onDismiss = { onEvent(LoginEvent.DismissMessage) })
                 }
                 KyvoPrimaryButton(
-                    text = stringResource(R.string.sign_in),
+                    text = stringResource(
+                        if (state.mode == LoginMode.SignUp) R.string.create_account
+                        else R.string.sign_in,
+                    ),
                     isLoading = state.isLoading,
                     onClick = {
                         focusManager.clearFocus()
@@ -471,7 +472,8 @@ private fun LoginMessage.message(): String = stringResource(
         LoginMessage.Network -> R.string.network_error
         LoginMessage.ConfigurationRequired -> R.string.configuration_required_error
         LoginMessage.Unknown -> R.string.unknown_auth_error
-        LoginMessage.AccountCreationUnavailable -> R.string.account_creation_unavailable
+        LoginMessage.GoogleCancelled -> R.string.google_cancelled
+        LoginMessage.CheckYourEmail -> R.string.check_your_email
     },
 )
 

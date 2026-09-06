@@ -35,7 +35,7 @@ private fun EmailErrorPreview() {
     KyvoTheme(darkTheme = false) {
         LoginScreen(
             state = LoginUiState(
-                mode = LoginMode.Email,
+                mode = LoginMode.SignIn,
                 email = "correo-invalido",
                 emailError = EmailValidationError.Invalid,
                 passwordError = PasswordValidationError.Empty,
@@ -56,4 +56,3 @@ private fun EmailErrorPreview() {
 private fun DarkLoginPreview() {
     KyvoTheme(darkTheme = true) { LoginScreen(LoginUiState(), onEvent = {}) }
 }
-

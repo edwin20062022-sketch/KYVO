@@ -24,7 +24,8 @@ class LoginViewModel(
 
     fun onEvent(event: LoginEvent) {
         when (event) {
-            LoginEvent.OpenEmailLogin -> updateState { copy(mode = LoginMode.Email, message = null) }
+            LoginEvent.OpenEmailLogin -> updateState { copy(mode = LoginMode.SignIn, message = null) }
+            LoginEvent.OpenEmailSignUp -> updateState { copy(mode = LoginMode.SignUp, message = null) }
             LoginEvent.BackToWelcome -> updateState {
                 copy(
                     mode = LoginMode.Welcome,
@@ -45,9 +46,6 @@ class LoginViewModel(
             }
             LoginEvent.SubmitEmail -> submitEmail()
             LoginEvent.SubmitGoogle -> authenticate { authRepository.signInWithGoogle() }
-            LoginEvent.CreateAccount -> updateState {
-                copy(message = LoginMessage.AccountCreationUnavailable)
-            }
             LoginEvent.DismissMessage -> updateState { copy(message = null) }
             LoginEvent.NavigationHandled -> updateState { copy(isAuthenticated = false) }
         }
@@ -73,7 +71,11 @@ class LoginViewModel(
         val password = current.password.toCharArray()
         authenticate {
             try {
-                authRepository.signInWithEmail(email, password)
+                if (current.mode == LoginMode.SignUp) {
+                    authRepository.signUpWithEmail(email, password)
+                } else {
+                    authRepository.signInWithEmail(email, password)
+                }
             } finally {
                 password.fill('\u0000')
             }
@@ -92,6 +94,9 @@ class LoginViewModel(
             when (result) {
                 is AuthResult.Success -> updateState {
                     copy(password = "", isLoading = false, isAuthenticated = true)
+                }
+                is AuthResult.ConfirmationRequired -> updateState {
+                    copy(password = "", isLoading = false, message = LoginMessage.CheckYourEmail)
                 }
                 is AuthResult.Failure -> updateState {
                     copy(isLoading = false, message = result.error.toLoginMessage())
@@ -114,6 +119,7 @@ class LoginViewModel(
 private fun AuthError.toLoginMessage(): LoginMessage = when (this) {
     AuthError.InvalidCredentials -> LoginMessage.InvalidCredentials
     AuthError.Network -> LoginMessage.Network
+    AuthError.Cancelled -> LoginMessage.GoogleCancelled
     AuthError.ConfigurationRequired -> LoginMessage.ConfigurationRequired
     AuthError.Unknown -> LoginMessage.Unknown
 }

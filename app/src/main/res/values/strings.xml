@@ -12,6 +12,8 @@
     <string name="continue_with_google">Continuar con Google</string>
     <string name="email_login_title">Inicia sesión en KYVO</string>
     <string name="email_login_description">Continúa construyendo tu mejor versión.</string>
+    <string name="email_signup_title">Crea tu cuenta de KYVO</string>
+    <string name="email_signup_description">Empieza a construir tu plan nutricional personalizado.</string>
     <string name="email_label">Correo electrónico</string>
     <string name="password_label">Contraseña</string>
     <string name="show_password">Mostrar contraseña</string>
@@ -27,7 +29,8 @@
     <string name="network_error">No pudimos conectarnos. Revisa tu conexión e inténtalo de nuevo.</string>
     <string name="configuration_required_error">El proveedor de autenticación aún no está configurado.</string>
     <string name="unknown_auth_error">Ocurrió un error inesperado. Inténtalo nuevamente.</string>
-    <string name="account_creation_unavailable">La creación de cuenta se habilitará al configurar el proveedor de autenticación.</string>
+    <string name="google_cancelled">Cancelaste el acceso con Google.</string>
+    <string name="check_your_email">Revisa tu correo para confirmar tu cuenta y después inicia sesión.</string>
     <string name="dismiss_message">Cerrar mensaje</string>
     <string name="google_logo_description">Google</string>
     <string name="kyvo_logo_description">Logotipo de KYVO</string>
