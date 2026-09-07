@@ -41,6 +41,7 @@ fun KyvoApp(authIntent: Intent? = null) {
             val client = SupabaseClientFactory.create(
                 url = BuildConfig.SUPABASE_URL,
                 publishableKey = BuildConfig.SUPABASE_PUBLISHABLE_KEY,
+                authScheme = BuildConfig.AUTH_SCHEME,
             )
             AuthDependencies(
                 repository = SupabaseAuthRepository(

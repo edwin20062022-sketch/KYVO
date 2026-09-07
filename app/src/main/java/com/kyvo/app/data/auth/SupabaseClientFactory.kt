@@ -6,12 +6,16 @@ import io.github.jan.supabase.auth.FlowType
 import io.github.jan.supabase.createSupabaseClient
 
 object SupabaseClientFactory {
-    fun create(url: String, publishableKey: String): SupabaseClient = createSupabaseClient(
+    fun create(
+        url: String,
+        publishableKey: String,
+        authScheme: String,
+    ): SupabaseClient = createSupabaseClient(
         supabaseUrl = url,
         supabaseKey = publishableKey,
     ) {
         install(Auth) {
-            scheme = "com.kyvo.app"
+            scheme = authScheme
             host = "auth-callback"
             flowType = FlowType.PKCE
             alwaysAutoRefresh = true
