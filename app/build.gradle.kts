@@ -30,13 +30,18 @@ android {
         buildConfigField("String", "SUPABASE_URL", localBuildConfigString("SUPABASE_URL"))
         buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", localBuildConfigString("SUPABASE_PUBLISHABLE_KEY"))
         buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", localBuildConfigString("GOOGLE_WEB_CLIENT_ID"))
+        buildConfigField("String", "AUTH_SCHEME", "\"com.kyvo.app\"")
+        manifestPlaceholders["authScheme"] = "com.kyvo.app"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         debug {
+            applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
+            buildConfigField("String", "AUTH_SCHEME", "\"com.kyvo.app.debug\"")
+            manifestPlaceholders["authScheme"] = "com.kyvo.app.debug"
         }
         release {
             isMinifyEnabled = true
