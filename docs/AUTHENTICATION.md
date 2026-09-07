@@ -31,6 +31,24 @@ GOOGLE_WEB_CLIENT_ID=....apps.googleusercontent.com
 
 No agregar `GOOGLE_CLIENT_SECRET`, `SUPABASE_SECRET_KEY`, `service_role` ni contraseñas. `local.properties.example` contiene únicamente nombres y valores vacíos.
 
+## Identidades por build
+
+### DEBUG
+
+- Package: `com.kyvo.app.debug`
+- Callback: `com.kyvo.app.debug://auth-callback`
+- OAuth Android Client: `KYVO Android Debug`
+- SHA-1: `D4:60:E4:2C:55:37:2E:DF:60:61:5C:C3:99:BF:8B:F0:CD:FC:A4:0B`
+
+### PRODUCTION
+
+- Package: `com.kyvo.app`
+- Callback: `com.kyvo.app://auth-callback`
+- OAuth Android Client: `KYVO Android Production`
+- SHA-1: pendiente de Google Play App Signing.
+
+El Web Client ID puede compartirse entre variantes como `serverClientId`. Los clientes OAuth Android no se comparten: Google los identifica por la combinación exacta de package name y certificado SHA-1.
+
 ## Auditoría Google Cloud por CLI
 
 Clasificación: `CLI_OFICIAL`.
@@ -69,7 +87,7 @@ En el proyecto `kyvo-507802`:
 5. Copiar su Client ID a `GOOGLE_WEB_CLIENT_ID` en `local.properties`. Guardar el Client Secret solo para el paso de Supabase; nunca incorporarlo al proyecto Android.
 6. En **Clients**, comprobar si ya existe el Android client equivalente. Si no existe, seleccionar **Create client → Android**:
    - Name: `KYVO Android Debug`
-   - Package name: `com.kyvo.app`
+   - Package name: `com.kyvo.app.debug`
    - SHA-1: `D4:60:E4:2C:55:37:2E:DF:60:61:5C:C3:99:BF:8B:F0:CD:FC:A4:0B`
 
 ## Acción manual mínima: Supabase
@@ -80,7 +98,9 @@ Clasificación: `MANUAL_REQUERIDO`.
 2. Habilitar Google e introducir el Client ID y Client Secret de `KYVO Web Client`.
 3. Guardar. El secret permanece exclusivamente en Supabase.
 4. Copiar la **publishable key** del proyecto a `SUPABASE_PUBLISHABLE_KEY` en `local.properties`. No usar `secret` ni `service_role`.
-5. Verificar en **Authentication → URL Configuration → Redirect URLs** que existe `com.kyvo.app://auth-callback`.
+5. Verificar en **Authentication → URL Configuration → Redirect URLs** que existen:
+   - `com.kyvo.app.debug://auth-callback`
+   - `com.kyvo.app://auth-callback`
 
 Supabase CLI no estaba instalada ni autenticada. La configuración del proveedor se mantiene manual para no introducir el Client Secret en el historial del shell, scripts o Git.
 
@@ -93,4 +113,4 @@ Supabase CLI no estaba instalada ni autenticada. La configuración del proveedor
 
 ## Deep link
 
-`AndroidManifest.xml` declara un `intent-filter` BROWSABLE para `com.kyvo.app://auth-callback`. `MainActivity` entrega intents iniciales y nuevos a `supabase.handleDeeplinks`, cubriendo confirmación de email, recuperación y callbacks compatibles con Supabase Auth.
+`AndroidManifest.xml` declara un único `intent-filter` BROWSABLE con un placeholder resuelto por variante. Debug produce `com.kyvo.app.debug://auth-callback`; release produce `com.kyvo.app://auth-callback`. El mismo valor se genera en `BuildConfig.AUTH_SCHEME` y configura Supabase Auth. `MainActivity` entrega intents iniciales y nuevos a `supabase.handleDeeplinks`, cubriendo confirmación de email, recuperación y callbacks compatibles con Supabase Auth.

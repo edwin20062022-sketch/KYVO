@@ -16,7 +16,7 @@ Referencias: [requisito de API de Google Play](https://developer.android.com/goo
 
 ## ADR-004 — Identificador definitivo
 
-`com.kyvo.app` es el `applicationId` definitivo. Debug conserva ese mismo paquete para coincidir con el cliente OAuth Android solicitado; se diferencia por el sufijo de versión, no por paquete.
+`com.kyvo.app` es el `applicationId` definitivo de producción. Debug usa `com.kyvo.app.debug` mediante `applicationIdSuffix = ".debug"`; el `namespace` compartido permanece en `com.kyvo.app`. Cada variante usa su propio callback y requiere un cliente OAuth Android asociado a su package y certificado.
 
 ## ADR-005 — Sin persistencia ni autenticación concreta en Fase 0
 
