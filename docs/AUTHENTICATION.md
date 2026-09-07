@@ -19,6 +19,8 @@ La navegación deriva de dos fuentes persistentes:
 - sesión + onboarding incompleto: Onboarding;
 - sesión + onboarding completo: placeholder mínimo de Home.
 
+El progreso local de onboarding se guarda en Preferences DataStore con claves separadas por el `user.id` de la sesión Supabase. Cambiar de cuenta no reutiliza el progreso ni la bandera de finalización de otro usuario.
+
 ## Configuración local
 
 Copiar las claves públicas a `local.properties`, archivo ignorado por Git:

@@ -69,3 +69,7 @@ Los comandos `gcloud iam oauth-clients` no corresponden a los clientes estándar
 ## ADR-016 — Configuración pública local y sin secrets Android
 
 URL, publishable key y Web Client ID se leen de `local.properties` hacia `BuildConfig`. El archivo está ignorado; el ejemplo versionado tiene valores vacíos. El Client Secret de Google se guarda únicamente en Supabase.
+
+## ADR-017 — Onboarding local aislado por usuario
+
+El borrador y la finalización del onboarding permanecen en Preferences DataStore, pero cada clave usa como namespace el `user.id` estable de Supabase. El repositorio solo se crea después de restaurar una sesión autenticada y al cerrar sesión deja de exponerse. Así, dos cuentas en el mismo dispositivo no comparten estado; una futura sincronización multidispositivo podrá mover la autoridad a un perfil remoto sin cambiar el contrato del repositorio.
