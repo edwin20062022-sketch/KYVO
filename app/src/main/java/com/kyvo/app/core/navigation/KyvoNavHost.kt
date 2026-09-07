@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 fun KyvoNavHost(
     navController: NavHostController,
     authRepository: AuthRepository,
-    onboardingRepository: OnboardingRepository,
+    onboardingRepository: OnboardingRepository?,
     authState: AuthState,
     onboardingCompleted: Boolean,
 ) {
@@ -37,11 +37,13 @@ fun KyvoNavHost(
             LoginRoute(authRepository = authRepository)
         }
         composable(KyvoDestination.Onboarding.route) {
-            OnboardingRoute(
-                repository = onboardingRepository,
-                onExit = { scope.launch { authRepository.signOut() } },
-                onCompleted = {},
-            )
+            onboardingRepository?.let { repository ->
+                OnboardingRoute(
+                    repository = repository,
+                    onExit = { scope.launch { authRepository.signOut() } },
+                    onCompleted = {},
+                )
+            }
         }
         composable(KyvoDestination.Home.route) {
             HomePendingScreen(onSignOut = { scope.launch { authRepository.signOut() } })

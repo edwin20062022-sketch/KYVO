@@ -56,25 +56,46 @@ fun KyvoApp(authIntent: Intent? = null) {
         }
     }
     val authRepository = authDependencies.repository
-    val onboardingRepository = remember(context) { DataStoreOnboardingRepository(context) }
     val authState by authRepository.observeSession().collectAsStateWithLifecycle(AuthState.Initializing)
-    val onboarding by onboardingRepository.observe().collectAsStateWithLifecycle(initialValue = null)
     LaunchedEffect(authIntent, authDependencies.client) {
         if (authIntent != null) authDependencies.client?.handleDeeplinks(authIntent)
     }
     KyvoTheme {
-        if (authState != AuthState.Initializing && onboarding != null) {
-            KyvoNavHost(
-                navController = rememberNavController(),
+        val navController = rememberNavController()
+        when (val state = authState) {
+            AuthState.Initializing -> LoadingScreen()
+            AuthState.SignedOut -> KyvoNavHost(
+                navController = navController,
                 authRepository = authRepository,
-                onboardingRepository = onboardingRepository,
-                authState = authState,
-                onboardingCompleted = onboarding?.isCompleted == true,
+                onboardingRepository = null,
+                authState = state,
+                onboardingCompleted = false,
             )
-        } else {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+            is AuthState.SignedIn -> {
+                val onboardingRepository = remember(context, state.session.userId) {
+                    DataStoreOnboardingRepository(context, state.session.userId)
+                }
+                val onboarding by onboardingRepository.observe()
+                    .collectAsStateWithLifecycle(initialValue = null)
+                if (onboarding == null) {
+                    LoadingScreen()
+                } else {
+                    KyvoNavHost(
+                        navController = navController,
+                        authRepository = authRepository,
+                        onboardingRepository = onboardingRepository,
+                        authState = state,
+                        onboardingCompleted = onboarding?.isCompleted == true,
+                    )
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun LoadingScreen() {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        CircularProgressIndicator()
     }
 }

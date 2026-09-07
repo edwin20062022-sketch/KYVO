@@ -26,8 +26,9 @@ import kotlinx.coroutines.flow.map
 
 private val Context.onboardingDataStore by preferencesDataStore(name = "kyvo_onboarding")
 
-class DataStoreOnboardingRepository(context: Context) : OnboardingRepository {
+class DataStoreOnboardingRepository(context: Context, userId: String) : OnboardingRepository {
     private val dataStore = context.applicationContext.onboardingDataStore
+    private val keys = Keys(userId.also { require(it.isNotBlank()) { "userId must not be blank" } })
 
     override fun observe(): Flow<SavedOnboarding> = dataStore.data
         .catch { error ->
@@ -37,90 +38,102 @@ class DataStoreOnboardingRepository(context: Context) : OnboardingRepository {
 
     override suspend fun save(progress: SavedOnboarding) {
         dataStore.edit { preferences ->
-            preferences.clear()
-            preferences[Keys.Step] = progress.currentStep.name
-            preferences[Keys.Completed] = progress.isCompleted
-            progress.gender?.let { preferences[Keys.Gender] = it.name }
-            progress.ageYears?.let { preferences[Keys.Age] = it }
-            progress.heightCm?.let { preferences[Keys.Height] = it }
-            progress.weightKg?.let { preferences[Keys.Weight] = it }
-            progress.trainingDaysPerWeek?.let { preferences[Keys.TrainingDays] = it }
-            progress.trainingType?.let { preferences[Keys.TrainingTypeKey] = it.name }
-            progress.workActivity?.let { preferences[Keys.WorkActivityKey] = it.name }
-            progress.goal?.let { preferences[Keys.Goal] = it.name }
-            progress.experience?.let { preferences[Keys.Experience] = it.name }
-            progress.foodPreference?.let { preferences[Keys.FoodPreferenceKey] = it.name }
-            progress.mealsPerDay?.let { preferences[Keys.Meals] = it }
+            keys.all.forEach { preferences.remove(it) }
+            preferences[keys.Step] = progress.currentStep.name
+            preferences[keys.Completed] = progress.isCompleted
+            progress.gender?.let { preferences[keys.Gender] = it.name }
+            progress.ageYears?.let { preferences[keys.Age] = it }
+            progress.heightCm?.let { preferences[keys.Height] = it }
+            progress.weightKg?.let { preferences[keys.Weight] = it }
+            progress.trainingDaysPerWeek?.let { preferences[keys.TrainingDays] = it }
+            progress.trainingType?.let { preferences[keys.TrainingTypeKey] = it.name }
+            progress.workActivity?.let { preferences[keys.WorkActivityKey] = it.name }
+            progress.goal?.let { preferences[keys.Goal] = it.name }
+            progress.experience?.let { preferences[keys.Experience] = it.name }
+            progress.foodPreference?.let { preferences[keys.FoodPreferenceKey] = it.name }
+            progress.mealsPerDay?.let { preferences[keys.Meals] = it }
             progress.plan?.let { plan ->
-                preferences[Keys.Bmr] = plan.bmrKcal
-                preferences[Keys.Tdee] = plan.tdeeKcal
-                preferences[Keys.ActivityFactor] = plan.activityFactor
-                preferences[Keys.GoalAdjustment] = plan.goalAdjustmentFraction
-                preferences[Keys.TargetCalories] = plan.targetCaloriesKcal
-                preferences[Keys.Protein] = plan.proteinGrams
-                preferences[Keys.Carbohydrates] = plan.carbohydrateGrams
-                preferences[Keys.Fat] = plan.fatGrams
-                plan.calculationNote?.let { preferences[Keys.CalculationNote] = it }
+                preferences[keys.Bmr] = plan.bmrKcal
+                preferences[keys.Tdee] = plan.tdeeKcal
+                preferences[keys.ActivityFactor] = plan.activityFactor
+                preferences[keys.GoalAdjustment] = plan.goalAdjustmentFraction
+                preferences[keys.TargetCalories] = plan.targetCaloriesKcal
+                preferences[keys.Protein] = plan.proteinGrams
+                preferences[keys.Carbohydrates] = plan.carbohydrateGrams
+                preferences[keys.Fat] = plan.fatGrams
+                plan.calculationNote?.let { preferences[keys.CalculationNote] = it }
             }
         }
     }
 
     private fun decode(preferences: Preferences): SavedOnboarding = SavedOnboarding(
-        currentStep = preferences[Keys.Step].enumValueOr(OnboardingStep.Gender),
-        gender = preferences[Keys.Gender].enumValueOrNull(),
-        ageYears = preferences[Keys.Age],
-        heightCm = preferences[Keys.Height],
-        weightKg = preferences[Keys.Weight],
-        trainingDaysPerWeek = preferences[Keys.TrainingDays],
-        trainingType = preferences[Keys.TrainingTypeKey].enumValueOrNull(),
-        workActivity = preferences[Keys.WorkActivityKey].enumValueOrNull(),
-        goal = preferences[Keys.Goal].enumValueOrNull(),
-        experience = preferences[Keys.Experience].enumValueOrNull(),
-        foodPreference = preferences[Keys.FoodPreferenceKey].enumValueOrNull(),
-        mealsPerDay = preferences[Keys.Meals],
+        currentStep = preferences[keys.Step].enumValueOr(OnboardingStep.Gender),
+        gender = preferences[keys.Gender].enumValueOrNull(),
+        ageYears = preferences[keys.Age],
+        heightCm = preferences[keys.Height],
+        weightKg = preferences[keys.Weight],
+        trainingDaysPerWeek = preferences[keys.TrainingDays],
+        trainingType = preferences[keys.TrainingTypeKey].enumValueOrNull(),
+        workActivity = preferences[keys.WorkActivityKey].enumValueOrNull(),
+        goal = preferences[keys.Goal].enumValueOrNull(),
+        experience = preferences[keys.Experience].enumValueOrNull(),
+        foodPreference = preferences[keys.FoodPreferenceKey].enumValueOrNull(),
+        mealsPerDay = preferences[keys.Meals],
         plan = decodePlan(preferences),
-        isCompleted = preferences[Keys.Completed] ?: false,
+        isCompleted = preferences[keys.Completed] ?: false,
     )
 
     private fun decodePlan(preferences: Preferences): NutritionPlan? {
-        val calories = preferences[Keys.TargetCalories] ?: return null
+        val calories = preferences[keys.TargetCalories] ?: return null
         return NutritionPlan(
-            bmrKcal = preferences[Keys.Bmr] ?: return null,
-            tdeeKcal = preferences[Keys.Tdee] ?: return null,
-            activityFactor = preferences[Keys.ActivityFactor] ?: return null,
-            goalAdjustmentFraction = preferences[Keys.GoalAdjustment] ?: return null,
+            bmrKcal = preferences[keys.Bmr] ?: return null,
+            tdeeKcal = preferences[keys.Tdee] ?: return null,
+            activityFactor = preferences[keys.ActivityFactor] ?: return null,
+            goalAdjustmentFraction = preferences[keys.GoalAdjustment] ?: return null,
             targetCaloriesKcal = calories,
-            proteinGrams = preferences[Keys.Protein] ?: return null,
-            carbohydrateGrams = preferences[Keys.Carbohydrates] ?: return null,
-            fatGrams = preferences[Keys.Fat] ?: return null,
-            calculationNote = preferences[Keys.CalculationNote],
+            proteinGrams = preferences[keys.Protein] ?: return null,
+            carbohydrateGrams = preferences[keys.Carbohydrates] ?: return null,
+            fatGrams = preferences[keys.Fat] ?: return null,
+            calculationNote = preferences[keys.CalculationNote],
         )
     }
 
-    private object Keys {
-        val Step = stringPreferencesKey("step")
-        val Completed = booleanPreferencesKey("completed")
-        val Gender = stringPreferencesKey("gender")
-        val Age = intPreferencesKey("age_years")
-        val Height = doublePreferencesKey("height_cm")
-        val Weight = doublePreferencesKey("weight_kg")
-        val TrainingDays = intPreferencesKey("training_days")
-        val TrainingTypeKey = stringPreferencesKey("training_type")
-        val WorkActivityKey = stringPreferencesKey("work_activity")
-        val Goal = stringPreferencesKey("goal")
-        val Experience = stringPreferencesKey("experience")
-        val FoodPreferenceKey = stringPreferencesKey("food_preference")
-        val Meals = intPreferencesKey("meals_per_day")
-        val Bmr = doublePreferencesKey("bmr_kcal")
-        val Tdee = doublePreferencesKey("tdee_kcal")
-        val ActivityFactor = doublePreferencesKey("activity_factor")
-        val GoalAdjustment = doublePreferencesKey("goal_adjustment")
-        val TargetCalories = intPreferencesKey("target_calories")
-        val Protein = intPreferencesKey("protein_grams")
-        val Carbohydrates = intPreferencesKey("carbohydrate_grams")
-        val Fat = intPreferencesKey("fat_grams")
-        val CalculationNote = stringPreferencesKey("calculation_note")
+    private class Keys(userId: String) {
+        private val prefix = onboardingPreferencePrefix(userId)
+        val Step = stringPreferencesKey(prefix + "step")
+        val Completed = booleanPreferencesKey(prefix + "completed")
+        val Gender = stringPreferencesKey(prefix + "gender")
+        val Age = intPreferencesKey(prefix + "age_years")
+        val Height = doublePreferencesKey(prefix + "height_cm")
+        val Weight = doublePreferencesKey(prefix + "weight_kg")
+        val TrainingDays = intPreferencesKey(prefix + "training_days")
+        val TrainingTypeKey = stringPreferencesKey(prefix + "training_type")
+        val WorkActivityKey = stringPreferencesKey(prefix + "work_activity")
+        val Goal = stringPreferencesKey(prefix + "goal")
+        val Experience = stringPreferencesKey(prefix + "experience")
+        val FoodPreferenceKey = stringPreferencesKey(prefix + "food_preference")
+        val Meals = intPreferencesKey(prefix + "meals_per_day")
+        val Bmr = doublePreferencesKey(prefix + "bmr_kcal")
+        val Tdee = doublePreferencesKey(prefix + "tdee_kcal")
+        val ActivityFactor = doublePreferencesKey(prefix + "activity_factor")
+        val GoalAdjustment = doublePreferencesKey(prefix + "goal_adjustment")
+        val TargetCalories = intPreferencesKey(prefix + "target_calories")
+        val Protein = intPreferencesKey(prefix + "protein_grams")
+        val Carbohydrates = intPreferencesKey(prefix + "carbohydrate_grams")
+        val Fat = intPreferencesKey(prefix + "fat_grams")
+        val CalculationNote = stringPreferencesKey(prefix + "calculation_note")
+        val all: List<Preferences.Key<*>> = listOf(
+            Step, Completed, Gender, Age, Height, Weight, TrainingDays, TrainingTypeKey,
+            WorkActivityKey, Goal, Experience, FoodPreferenceKey, Meals, Bmr, Tdee,
+            ActivityFactor, GoalAdjustment, TargetCalories, Protein, Carbohydrates, Fat,
+            CalculationNote,
+        )
     }
+}
+
+internal fun onboardingPreferencePrefix(userId: String): String {
+    require(userId.isNotBlank()) { "userId must not be blank" }
+    return "user_${userId}_"
 }
 
 private inline fun <reified T : Enum<T>> String?.enumValueOrNull(): T? =
