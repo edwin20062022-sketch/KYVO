@@ -30,7 +30,11 @@ Las abstracciones compartidas viven en `domain`; los adaptadores en `data`; los 
 
 ## Navegación
 
-El destino se deriva de sesión y onboarding: sin sesión abre Login; con sesión y onboarding incompleto abre el wizard; con ambos completos abre el placeholder mínimo de Home. El `OnboardingViewModel` mantiene una única fuente de verdad y permite avanzar o regresar conservando respuestas. Home no está implementado.
+El destino se deriva de sesión y onboarding: sin sesión abre Login; con sesión y onboarding incompleto abre el wizard; con ambos completos abre Home. El `OnboardingViewModel` mantiene una única fuente de verdad y permite avanzar o regresar conservando respuestas.
+
+## Home / Dashboard
+
+`HomeViewModel` combina el plan persistido por `OnboardingRepository` con las comidas del día expuestas por `MealRepository`. Compose sólo recibe `HomeUiState`; no conoce la procedencia de los alimentos ni recalcula el plan. En Fase 3 el adaptador local de comidas es deliberadamente temporal: USDA FoodData Central, Open Food Facts y la persistencia relacional se integrarán en la fase de Registro de Alimentos, sin cambiar los modelos de UI.
 
 ## Autenticación
 

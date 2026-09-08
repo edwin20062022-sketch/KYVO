@@ -10,7 +10,8 @@ import com.kyvo.app.domain.auth.AuthRepository
 import com.kyvo.app.domain.auth.AuthState
 import com.kyvo.app.feature.auth.presentation.LoginRoute
 import com.kyvo.app.feature.onboarding.domain.repository.OnboardingRepository
-import com.kyvo.app.feature.onboarding.presentation.HomePendingScreen
+import com.kyvo.app.feature.home.domain.repository.MealRepository
+import com.kyvo.app.feature.home.presentation.HomeRoute
 import com.kyvo.app.feature.onboarding.presentation.OnboardingRoute
 import kotlinx.coroutines.launch
 
@@ -19,6 +20,7 @@ fun KyvoNavHost(
     navController: NavHostController,
     authRepository: AuthRepository,
     onboardingRepository: OnboardingRepository?,
+    mealRepository: MealRepository?,
     authState: AuthState,
     onboardingCompleted: Boolean,
 ) {
@@ -46,7 +48,9 @@ fun KyvoNavHost(
             }
         }
         composable(KyvoDestination.Home.route) {
-            HomePendingScreen(onSignOut = { scope.launch { authRepository.signOut() } })
+            if (onboardingRepository != null && mealRepository != null) {
+                HomeRoute(onboardingRepository, mealRepository)
+            }
         }
     }
 }

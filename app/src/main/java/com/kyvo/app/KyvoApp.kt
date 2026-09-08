@@ -20,6 +20,7 @@ import com.kyvo.app.data.auth.CredentialManagerGoogleGateway
 import com.kyvo.app.data.auth.SupabaseAuthRepository
 import com.kyvo.app.data.auth.SupabaseClientFactory
 import com.kyvo.app.data.auth.SupabaseSdkAuthDataSource
+import com.kyvo.app.feature.home.data.InMemoryMealRepository
 import com.kyvo.app.domain.auth.AuthRepository
 import com.kyvo.app.domain.auth.AuthState
 import com.kyvo.app.feature.onboarding.data.DataStoreOnboardingRepository
@@ -68,6 +69,7 @@ fun KyvoApp(authIntent: Intent? = null) {
                 navController = navController,
                 authRepository = authRepository,
                 onboardingRepository = null,
+                mealRepository = null,
                 authState = state,
                 onboardingCompleted = false,
             )
@@ -75,6 +77,7 @@ fun KyvoApp(authIntent: Intent? = null) {
                 val onboardingRepository = remember(context, state.session.userId) {
                     DataStoreOnboardingRepository(context, state.session.userId)
                 }
+                val mealRepository = remember(state.session.userId) { InMemoryMealRepository() }
                 val onboarding by onboardingRepository.observe()
                     .collectAsStateWithLifecycle(initialValue = null)
                 if (onboarding == null) {
@@ -84,6 +87,7 @@ fun KyvoApp(authIntent: Intent? = null) {
                         navController = navController,
                         authRepository = authRepository,
                         onboardingRepository = onboardingRepository,
+                        mealRepository = mealRepository,
                         authState = state,
                         onboardingCompleted = onboarding?.isCompleted == true,
                     )
