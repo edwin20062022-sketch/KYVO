@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
@@ -43,6 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kyvo.app.R
@@ -213,7 +215,7 @@ private fun StepContent(
         OnboardingStep.WorkActivity -> {
             StepHeading("ACTIVIDAD LABORAL", "¿Cuál describe mejor tu actividad laboral?", "Consideramos tu actividad diaria fuera del entrenamiento.", compact)
             OptionList(WorkActivity.entries.map { value ->
-                Option(value.label(), value.label().take(1), state.workActivity == value, value.description()) {
+                Option(value.label(), value.label().take(1), state.workActivity == value, value.description(), value.iconRes()) {
                     onEvent(OnboardingEvent.SelectWorkActivity(value))
                 }
             })
@@ -222,7 +224,7 @@ private fun StepContent(
         OnboardingStep.Goal -> {
             StepHeading("OBJETIVO", "¿Cuál es tu objetivo principal?", "Esto nos ayuda a crear un plan nutricional personalizado para ti.", compact)
             OptionList(FitnessGoal.entries.map { value ->
-                Option(value.label(), value.label().take(1), state.goal == value, value.description()) {
+                Option(value.label(), value.label().take(1), state.goal == value, value.description(), value.iconRes()) {
                     onEvent(OnboardingEvent.SelectGoal(value))
                 }
             })
@@ -231,7 +233,7 @@ private fun StepContent(
         OnboardingStep.Experience -> {
             StepHeading("EXPERIENCIA", "¿Cuál es tu nivel de experiencia?", "Conservaremos este dato para adaptar el tono de futuras recomendaciones.", compact)
             OptionList(ExperienceLevel.entries.map { value ->
-                Option(value.label(), value.label().take(1), state.experience == value, value.description()) {
+                Option(value.label(), value.label().take(1), state.experience == value, value.description(), value.iconRes()) {
                     onEvent(OnboardingEvent.SelectExperience(value))
                 }
             })
@@ -240,7 +242,7 @@ private fun StepContent(
         OnboardingStep.FoodPreference -> {
             StepHeading("PREFERENCIAS ALIMENTICIAS", "¿Tienes alguna preferencia o restricción alimenticia?", "Selecciona la opción que mejor representa tu alimentación.", compact)
             OptionList(FoodPreference.entries.map { value ->
-                Option(value.label(), value.label().take(1), state.foodPreference == value, value.description()) {
+                Option(value.label(), value.label().take(1), state.foodPreference == value, value.description(), value.iconRes()) {
                     onEvent(OnboardingEvent.SelectFoodPreference(value))
                 }
             })
@@ -345,10 +347,10 @@ private fun MealsStep(state: OnboardingUiState, onEvent: (OnboardingEvent) -> Un
     StepHeading("ALIMENTACIÓN", "¿Cuántas comidas sueles hacer al día?", "Este dato organiza tu plan; no modifica tus calorías.", compact)
     val fixed = listOf(2, 3, 4, 5)
     OptionList(fixed.map { count ->
-        Option(count.toString() + " comidas", count.toString(), !state.isCustomMeals && state.mealsPerDay == count, mealDescription(count)) {
+        Option(count.toString() + " comidas", count.toString(), !state.isCustomMeals && state.mealsPerDay == count, mealDescription(count), count.mealIconRes()) {
             onEvent(OnboardingEvent.SelectMeals(count))
         }
-    } + Option("Personalizado", "±", state.isCustomMeals, "Define entre 1 y 8 comidas.") {
+    } + Option("Personalizado", "±", state.isCustomMeals, "Define entre 1 y 8 comidas.", R.drawable.ic_meals_custom) {
         onEvent(OnboardingEvent.SelectMeals(state.mealsPerDay, custom = true))
     })
     if (state.isCustomMeals) {
@@ -378,6 +380,8 @@ private fun CalculatingStep() {
         Spacer(Modifier.height(16.dp))
         Text("Estamos analizando tu información para crear un punto de partida para ti.", textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(48.dp))
+        Image(painterResource(R.drawable.ic_reveal_calculating), contentDescription = null, modifier = Modifier.size(120.dp))
+        Spacer(Modifier.height(20.dp))
         CircularProgressIndicator(modifier = Modifier.size(156.dp), strokeWidth = 10.dp)
         Spacer(Modifier.height(32.dp))
         Text("Calculando calorías y macros", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleMedium)
@@ -390,11 +394,11 @@ private fun CalculatingStep() {
 private fun CalorieReveal(plan: NutritionPlan?) {
     StepHeading("¡LO TENEMOS!", "Tu plan de calorías está listo", "Calculamos tu gasto energético y el ajuste correspondiente a tu objetivo.", false)
     if (plan == null) return
-    ResultCard("Tu gasto energético diario (TDEE)", format(plan.tdeeKcal) + " kcal", "Estimación para mantener tu peso actual.")
+    ResultCard("Tu gasto energético diario (TDEE)", format(plan.tdeeKcal) + " kcal", "Estimación para mantener tu peso actual.", R.drawable.ic_reveal_expenditure)
     Spacer(Modifier.height(16.dp))
     Text("Ajuste por objetivo: " + signedPercent(plan.goalAdjustmentFraction), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleMedium)
     Spacer(Modifier.height(16.dp))
-    ResultCard("Tu objetivo calórico diario", format(plan.targetCaloriesKcal) + " kcal", "Punto de partida moderado y ajustable.")
+    ResultCard("Tu objetivo calórico diario", format(plan.targetCaloriesKcal) + " kcal", "Punto de partida moderado y ajustable.", R.drawable.ic_reveal_intake)
     plan.calculationNote?.let {
         Spacer(Modifier.height(16.dp))
         InfoCard(it)
@@ -405,17 +409,17 @@ private fun CalorieReveal(plan: NutritionPlan?) {
 private fun MacroReveal(plan: NutritionPlan?) {
     StepHeading("TU PLAN KYVO", "Tus macronutrientes diarios", "La distribución mantiene consistencia energética con tu objetivo calórico.", false)
     if (plan == null) return
-    MacroRow("Proteína", plan.proteinGrams, KyvoColors.Protein, plan.targetCaloriesKcal)
+    MacroRow("Proteína", plan.proteinGrams, KyvoColors.Protein, plan.targetCaloriesKcal, iconRes = R.drawable.ic_macro_protein)
     Spacer(Modifier.height(12.dp))
-    MacroRow("Carbohidratos", plan.carbohydrateGrams, KyvoColors.Carbohydrate, plan.targetCaloriesKcal)
+    MacroRow("Carbohidratos", plan.carbohydrateGrams, KyvoColors.Carbohydrate, plan.targetCaloriesKcal, iconRes = R.drawable.ic_macro_carbohydrates)
     Spacer(Modifier.height(12.dp))
-    MacroRow("Grasas", plan.fatGrams, KyvoColors.Fat, plan.targetCaloriesKcal, caloriesPerGram = 9)
+    MacroRow("Grasas", plan.fatGrams, KyvoColors.Fat, plan.targetCaloriesKcal, caloriesPerGram = 9, iconRes = R.drawable.ic_macro_fat)
     Spacer(Modifier.height(20.dp))
     InfoCard("La diferencia máxima frente al objetivo es producto del redondeo de gramos.")
 }
 
 @Composable
-private fun MacroRow(name: String, grams: Int, color: androidx.compose.ui.graphics.Color, calories: Int, caloriesPerGram: Int = 4) {
+private fun MacroRow(name: String, grams: Int, color: androidx.compose.ui.graphics.Color, calories: Int, caloriesPerGram: Int = 4, iconRes: Int? = null) {
     val macroCalories = grams * caloriesPerGram
     val fraction = (macroCalories.toFloat() / calories).coerceIn(0f, 1f)
     Surface(
@@ -426,7 +430,11 @@ private fun MacroRow(name: String, grams: Int, color: androidx.compose.ui.graphi
     ) {
         Column(Modifier.padding(18.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(name, color = color, style = MaterialTheme.typography.titleMedium)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    iconRes?.let { Image(painterResource(it), contentDescription = null, modifier = Modifier.size(28.dp)) }
+                    Spacer(Modifier.width(8.dp))
+                    Text(name, color = color, style = MaterialTheme.typography.titleMedium)
+                }
                 Text(grams.toString() + " g", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.height(8.dp))
@@ -479,7 +487,7 @@ private fun SummaryStep(state: OnboardingUiState) {
 }
 
 @Composable
-private fun ResultCard(title: String, value: String, description: String) {
+private fun ResultCard(title: String, value: String, description: String, iconRes: Int? = null) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
@@ -487,6 +495,7 @@ private fun ResultCard(title: String, value: String, description: String) {
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = .3f)),
     ) {
         Column(Modifier.padding(22.dp)) {
+            iconRes?.let { Image(painterResource(it), contentDescription = null, modifier = Modifier.size(52.dp)) }
             Text(title, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))
             Text(value, style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Black)
@@ -568,6 +577,11 @@ private fun WorkActivity.description() = when (this) {
     WorkActivity.Active -> "Camino, estoy de pie o realizo tareas ligeras."
     WorkActivity.Physical -> "Realizo trabajo físico exigente."
 }
+private fun WorkActivity.iconRes() = when (this) {
+    WorkActivity.Sedentary -> R.drawable.ic_onboarding_office
+    WorkActivity.Active -> R.drawable.ic_work_active
+    WorkActivity.Physical -> R.drawable.ic_work_physical
+}
 private fun FitnessGoal.label() = when (this) {
     FitnessGoal.FatLoss -> "Bajar grasa"
     FitnessGoal.MuscleGain -> "Ganancia muscular"
@@ -582,6 +596,13 @@ private fun FitnessGoal.description() = when (this) {
     FitnessGoal.Maintenance -> "Mantener el peso y rendimiento actuales."
     FitnessGoal.Performance -> "Apoyar fuerza y capacidad física."
 }
+private fun FitnessGoal.iconRes() = when (this) {
+    FitnessGoal.FatLoss -> R.drawable.ic_goal_fat_loss
+    FitnessGoal.MuscleGain -> R.drawable.ic_goal_muscle_gain
+    FitnessGoal.Recomposition -> R.drawable.ic_goal_recomposition
+    FitnessGoal.Maintenance -> R.drawable.ic_goal_maintenance
+    FitnessGoal.Performance -> R.drawable.ic_goal_performance
+}
 private fun ExperienceLevel.label() = when (this) {
     ExperienceLevel.Beginner -> "Principiante"
     ExperienceLevel.Intermediate -> "Intermedio"
@@ -591,6 +612,11 @@ private fun ExperienceLevel.description() = when (this) {
     ExperienceLevel.Beginner -> "Estoy comenzando mi camino en el gimnasio."
     ExperienceLevel.Intermediate -> "Entreno de manera regular."
     ExperienceLevel.Advanced -> "Tengo una base sólida de entrenamiento."
+}
+private fun ExperienceLevel.iconRes() = when (this) {
+    ExperienceLevel.Beginner -> R.drawable.ic_experience_beginner
+    ExperienceLevel.Intermediate -> R.drawable.ic_experience_intermediate
+    ExperienceLevel.Advanced -> R.drawable.ic_experience_advanced
 }
 private fun FoodPreference.label() = when (this) {
     FoodPreference.None -> "Sin restricciones"
@@ -608,6 +634,14 @@ private fun FoodPreference.description() = when (this) {
     FoodPreference.DairyFree -> "No consumo productos lácteos."
     FoodPreference.Other -> "Tengo otra preferencia alimenticia."
 }
+private fun FoodPreference.iconRes() = when (this) {
+    FoodPreference.None -> R.drawable.ic_food_none
+    FoodPreference.Vegetarian -> R.drawable.ic_food_vegetarian
+    FoodPreference.Vegan -> R.drawable.ic_food_vegan
+    FoodPreference.GlutenFree -> R.drawable.ic_food_gluten_free
+    FoodPreference.DairyFree -> R.drawable.ic_food_dairy_free
+    FoodPreference.Other -> R.drawable.ic_onboarding_other
+}
 private fun GenderOption.label() = when (this) {
     GenderOption.Male -> "Masculino"
     GenderOption.Female -> "Femenino"
@@ -618,6 +652,12 @@ private fun mealDescription(count: Int) = when (count) {
     3 -> "Desayuno, comida y cena."
     4 -> "Tres comidas y un snack."
     else -> "Tres comidas principales y dos snacks."
+}
+private fun Int.mealIconRes() = when (this) {
+    2 -> R.drawable.ic_meals_2
+    3 -> R.drawable.ic_meals_3
+    4 -> R.drawable.ic_meals_4
+    else -> R.drawable.ic_meals_5
 }
 private fun format(value: Number): String = NumberFormat.getIntegerInstance().format(value.toDouble())
 private fun signedPercent(value: Double): String = when {
