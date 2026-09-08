@@ -2,6 +2,7 @@ package com.kyvo.app.feature.food.data
 
 import com.kyvo.app.feature.food.domain.model.FoodDetail
 import com.kyvo.app.feature.food.domain.model.FoodSearchResult
+import com.kyvo.app.feature.food.domain.model.FoodType
 import com.kyvo.app.feature.food.domain.repository.FoodRepository
 
 /**
@@ -33,4 +34,9 @@ class CatalogFirstFoodRepository(
 
     override suspend fun getFood(id: String): FoodDetail? =
         catalog.getFood(id) ?: edgeGateway.getFood(id, "generic") ?: edgeGateway.getFood(id, "commercial")
+
+    override suspend fun getFavoriteFoods(): List<FoodSearchResult> = catalog.getFavoriteFoods()
+    override suspend fun isFavorite(foodId: String, type: FoodType): Boolean = catalog.isFavorite(foodId, type)
+    override suspend fun setFavorite(foodId: String, type: FoodType, favorite: Boolean) = catalog.setFavorite(foodId, type, favorite)
+    override suspend fun getFrequentFoods(): List<FoodSearchResult> = catalog.getFrequentFoods()
 }

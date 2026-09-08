@@ -15,6 +15,8 @@ import com.kyvo.app.feature.home.domain.repository.MealRepository
 import com.kyvo.app.feature.home.presentation.HomeRoute
 import com.kyvo.app.feature.food.domain.repository.FoodRepository
 import com.kyvo.app.feature.food.presentation.FoodDetailRoute
+import com.kyvo.app.feature.food.presentation.FoodFavoritesRoute
+import com.kyvo.app.feature.food.presentation.FoodFrequentRoute
 import com.kyvo.app.feature.food.presentation.FoodHubScreen
 import com.kyvo.app.feature.food.presentation.FoodPortionRoute
 import com.kyvo.app.feature.food.presentation.FoodResultsRoute
@@ -64,8 +66,20 @@ fun KyvoNavHost(
         composable(KyvoDestination.FoodHub.route) {
             FoodHubScreen(
                 onSearch = { navController.navigate(KyvoDestination.FoodSearch.route) },
+                onFrequent = { navController.navigate(KyvoDestination.FoodFrequent.route) },
+                onFavorites = { navController.navigate(KyvoDestination.FoodFavorites.route) },
                 onFuture = { title -> navController.navigate("food/placeholder/${Uri.encode(title)}") },
             )
+        }
+        composable(KyvoDestination.FoodFrequent.route) {
+            foodRepository?.let { repository ->
+                FoodFrequentRoute(repository, onBack = { navController.popBackStack() }, onSelect = { result -> navController.navigate("food/detail/${Uri.encode(result.id)}/${result.type.name}") }, onPortion = { result -> navController.navigate("food/portion/${Uri.encode(result.id)}/${result.type.name}") })
+            }
+        }
+        composable(KyvoDestination.FoodFavorites.route) {
+            foodRepository?.let { repository ->
+                FoodFavoritesRoute(repository, onBack = { navController.popBackStack() }, onSelect = { result -> navController.navigate("food/detail/${Uri.encode(result.id)}/${result.type.name}") }, onPortion = { result -> navController.navigate("food/portion/${Uri.encode(result.id)}/${result.type.name}") })
+            }
         }
         composable(KyvoDestination.FoodSearch.route) {
             foodRepository?.let { repository ->

@@ -31,6 +31,7 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Share
@@ -87,7 +88,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import kotlin.math.roundToInt
 
 @Composable
-fun FoodHubScreen(onSearch: () -> Unit, onFuture: (String) -> Unit, onBack: () -> Unit = {}) {
+fun FoodHubScreen(onSearch: () -> Unit, onFrequent: () -> Unit, onFavorites: () -> Unit, onFuture: (String) -> Unit, onBack: () -> Unit = {}) {
     Scaffold { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
@@ -109,8 +110,8 @@ fun FoodHubScreen(onSearch: () -> Unit, onFuture: (String) -> Unit, onBack: () -
             item { SectionLabel("ACCESOS RÁPIDOS") }
             item {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    QuickFoodAction("Frecuentes", Icons.Outlined.Search, Modifier.weight(1f)) { onFuture("Frecuentes") }
-                    QuickFoodAction("Favoritos", Icons.Outlined.FavoriteBorder, Modifier.weight(1f)) { onFuture("Favoritos") }
+                    QuickFoodAction("Frecuentes", Icons.Outlined.Search, Modifier.weight(1f), onFrequent)
+                    QuickFoodAction("Favoritos", Icons.Outlined.FavoriteBorder, Modifier.weight(1f), onFavorites)
                 }
             }
             item {
@@ -220,24 +221,26 @@ fun FoodResultsRoute(query: String, repository: FoodRepository, onBack: () -> Un
 @Composable
 fun FoodDetailRoute(foodId: String, type: String, repository: FoodRepository, onBack: () -> Unit, onPortion: (FoodDetail) -> Unit) {
     val vm: FoodDetailViewModel = viewModel(factory = FoodDetailViewModel.factory(repository, foodId, type))
+    val favoriteVm: FoodFavoriteViewModel = viewModel(factory = FoodFavoriteViewModel.factory(repository, foodId, type.toFoodType()))
     val state by vm.state.collectAsStateWithLifecycle()
+    val favoriteState by favoriteVm.state.collectAsStateWithLifecycle()
     when (val current = state) {
         FoodDetailUiState.Loading -> LoadingFood("Cargando alimento…")
         FoodDetailUiState.NotFound -> FoodStateMessage("Alimento no disponible", "Este alimento ya no está disponible en el catálogo.", "Volver", onBack)
         is FoodDetailUiState.Error -> FoodStateMessage("No pudimos cargar el alimento", current.message, "Reintentar", vm::retry)
-        is FoodDetailUiState.Content -> FoodDetailContent(current.food, onBack, { onPortion(current.food) })
+        is FoodDetailUiState.Content -> FoodDetailContent(current.food, favoriteState, onBack, { onPortion(current.food) }, favoriteVm::toggle)
     }
 }
 
 @Composable
-private fun FoodDetailContent(food: FoodDetail, onBack: () -> Unit, onPortion: () -> Unit) {
+private fun FoodDetailContent(food: FoodDetail, favoriteState: FoodFavoriteUiState, onBack: () -> Unit, onPortion: () -> Unit, onToggleFavorite: () -> Unit) {
     Scaffold(bottomBar = { KyvoPrimaryButton("Elegir porción", onPortion, Modifier.padding(20.dp)) }) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(bottom = 16.dp)) {
             item {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Volver") }
                     Text("Detalle del alimento", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                    IconButton(onClick = {}) { Icon(Icons.Outlined.FavoriteBorder, "Favorito") }
+                    IconButton(onClick = onToggleFavorite) { Icon(if (favoriteState.isFavorite) Icons.Outlined.Favorite else Icons.Outlined.FavoriteBorder, if (favoriteState.isFavorite) "Quitar de favoritos" else "Agregar a favoritos", tint = KyvoColors.PurplePrimary) }
                 }
             }
             item { FoodImage(food.imageUrl, food.imageKey, Modifier.fillMaxWidth().height(210.dp)) }
@@ -252,6 +255,7 @@ private fun FoodDetailContent(food: FoodDetail, onBack: () -> Unit, onPortion: (
                 }
             }
             item { NutrientCard("Por 100 g", food.nutrients.forGrams(100.0)) }
+            favoriteState.error?.let { error -> item { Text(error, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(horizontal = 20.dp)) } }
             item { ServingList(food.servings) }
         }
     }
@@ -393,7 +397,7 @@ private fun FoodResultRow(result: FoodSearchResult, onClick: () -> Unit) {
 }
 
 @Composable
-private fun FoodImage(imageUrl: String?, imageKey: String?, modifier: Modifier) {
+internal fun FoodImage(imageUrl: String?, imageKey: String?, modifier: Modifier) {
     Box(modifier.clip(RoundedCornerShape(16.dp)).background(KyvoColors.PurpleSoft), contentAlignment = Alignment.Center) {
         if (!imageUrl.isNullOrBlank()) AsyncImage(model = imageUrl, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
         else Icon(Icons.Outlined.Search, null, tint = KyvoColors.PurplePrimary, modifier = Modifier.size(30.dp))
@@ -401,7 +405,7 @@ private fun FoodImage(imageUrl: String?, imageKey: String?, modifier: Modifier) 
 }
 
 @Composable
-private fun FoodHeader(title: String, subtitle: String, onBack: () -> Unit, showBack: Boolean = true) {
+internal fun FoodHeader(title: String, subtitle: String, onBack: () -> Unit, showBack: Boolean = true) {
     Row(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         if (showBack) IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Volver") }
         Column(Modifier.weight(1f).padding(start = if (showBack) 0.dp else 8.dp)) { Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold); Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 3.dp)) }
@@ -415,9 +419,10 @@ private fun QuickFoodAction(label: String, icon: androidx.compose.ui.graphics.ve
 }
 
 @Composable private fun SectionLabel(text: String) { Text(text, color = KyvoColors.PurplePrimary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, letterSpacing = MaterialTheme.typography.labelMedium.letterSpacing) }
-@Composable private fun LoadingFood(text: String) { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Column(horizontalAlignment = Alignment.CenterHorizontally) { CircularProgressIndicator(); Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 12.dp)) } } }
-@Composable private fun FoodStateMessage(title: String, message: String, action: String, onAction: () -> Unit) { Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) { Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center); Text(message, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 8.dp)); KyvoPrimaryButton(action, onAction, Modifier.padding(top = 20.dp)) } }
+@Composable internal fun LoadingFood(text: String) { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Column(horizontalAlignment = Alignment.CenterHorizontally) { CircularProgressIndicator(); Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 12.dp)) } } }
+@Composable internal fun FoodStateMessage(title: String, message: String, action: String, onAction: () -> Unit) { Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) { Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center); Text(message, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 8.dp)); KyvoPrimaryButton(action, onAction, Modifier.padding(top = 20.dp)) } }
 @Composable fun FoodStatePlaceholder(title: String, onBack: () -> Unit) { FoodStateMessage(title, "Esta sección pertenece a un checkpoint posterior.", "Volver", onBack) }
 
 private fun Double.oneDecimal(): String = String.format(java.util.Locale.US, "%.1f", this)
 private fun Double.cleanAmount(): String = if (this % 1.0 == 0.0) toInt().toString() else oneDecimal()
+private fun String.toFoodType() = if (equals("Commercial", ignoreCase = true)) FoodType.Commercial else FoodType.Generic
