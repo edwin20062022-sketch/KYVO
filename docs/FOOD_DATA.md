@@ -6,6 +6,8 @@ Los aliases se normalizan sin acentos, mayúsculas ni espacios duplicados. Las i
 
 Cada `meal_item` guarda snapshots nutricionales al registrarse, por lo que cambios posteriores en proveedores no modifican el historial. Favoritos, comidas e items están protegidos por RLS con `auth.uid()`; no se utilizan `service_role` ni claves de proveedores en Android.
 
+Los favoritos se guardan en `user_food_favorites` por `(user_id, food_id, food_type)` y se actualizan con `upsert`/delete idempotente. Frecuentes no son una marca manual: `get_frequent_foods` agrupa referencias de `meal_items` pertenecientes al usuario y ordena por frecuencia y fecha de uso; Android aplica `score = usos * 10 + recencia`, con una bonificación de recencia máxima de un punto durante 30 días.
+
 La Edge Function `food-search` deberá consultar, normalizar y cachear las fuentes usando secretos server-side. Falta configurar `USDA_API_KEY` en el entorno de Supabase y revisar antes de producción términos, atribución y licencias vigentes de USDA, Open Food Facts y las imágenes propias de KYVO.
 # Food catalog architecture
 

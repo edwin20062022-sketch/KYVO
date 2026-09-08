@@ -13,7 +13,7 @@ com.kyvo.app
 │   ├── auth
 │   │   ├── presentation
 │   │   └── domain
-│   └── onboarding
+│   ├── onboarding
 │       ├── presentation
 │       │   └── components
 │       ├── domain
@@ -22,6 +22,14 @@ com.kyvo.app
 │       │   ├── calculator
 │       │   └── repository
 │       └── data
+│   ├── food
+│   │   ├── data
+│   │   ├── domain
+│   │   └── presentation
+│   └── home
+│       ├── data
+│       ├── domain
+│       └── presentation
 ├── domain
 └── data
 ```
@@ -34,7 +42,7 @@ El destino se deriva de sesión y onboarding: sin sesión abre Login; con sesió
 
 ## Home / Dashboard
 
-`HomeViewModel` combina el plan persistido por `OnboardingRepository` con las comidas del día expuestas por `MealRepository`. Compose sólo recibe `HomeUiState`; no conoce la procedencia de los alimentos ni recalcula el plan. En Fase 3 el adaptador local de comidas es deliberadamente temporal: USDA FoodData Central, Open Food Facts y la persistencia relacional se integrarán en la fase de Registro de Alimentos, sin cambiar los modelos de UI.
+`HomeViewModel` combina el plan persistido por `OnboardingRepository` con las comidas del día expuestas por `MealRepository`. Compose sólo recibe `HomeUiState`; no conoce la procedencia de los alimentos ni recalcula el plan. `MealRepository` persiste comidas e items en Supabase y conserva snapshots; Detalle de comida observa el mismo flujo para reflejar edición y eliminación sin refresh manual.
 
 ## Autenticación
 
@@ -43,8 +51,12 @@ El destino se deriva de sesión y onboarding: sin sesión abre Login; con sesió
 ## Persistencia
 
 - DataStore: configuración pequeña y preferencias.
-- Room: alimentos, comidas, platillos e historial.
+- Supabase Postgres: catálogo normalizado, favoritos por usuario, comidas e historial.
 - Estado temporal: `SavedStateHandle` o estado de ViewModel.
 - Información sensible: almacenamiento cifrado o credenciales administradas por el proveedor de autenticación.
 
-Fase 2 incorpora Preferences DataStore detrás de `OnboardingRepository`. Guarda únicamente el borrador, paso actual, respuestas necesarias, plan calculado y bandera de finalización. Room sigue reservado para datos relacionales futuros como alimentos e historial.
+Fase 2 incorpora Preferences DataStore detrás de `OnboardingRepository`. Guarda únicamente el borrador, paso actual, respuestas necesarias, plan calculado y bandera de finalización. Room queda reservado para una decisión futura; no es necesario para la FASE 4.
+
+## Registro de alimentos — FASE 4
+
+`FoodRepository` concentra catálogo, detalle, favoritos y frecuentes. Favoritos usan `user_food_favorites` con RLS; frecuentes usan la función SQL agregada `get_frequent_foods`, derivada de `meals` y `meal_items`. Detalle de comida consume `MealItem` como snapshot histórico y reutiliza el editor existente de Fase 3.

@@ -73,3 +73,9 @@ URL, publishable key y Web Client ID se leen de `local.properties` hacia `BuildC
 ## ADR-017 — Onboarding local aislado por usuario
 
 El borrador y la finalización del onboarding permanecen en Preferences DataStore, pero cada clave usa como namespace el `user.id` estable de Supabase. El repositorio solo se crea después de restaurar una sesión autenticada y al cerrar sesión deja de exponerse. Así, dos cuentas en el mismo dispositivo no comparten estado; una futura sincronización multidispositivo podrá mover la autoridad a un perfil remoto sin cambiar el contrato del repositorio.
+
+## ADR-018 — Favoritos, frecuentes y detalle histórico
+
+Los favoritos se almacenan por usuario y referencia de alimento en `user_food_favorites`; el constraint primario `(user_id, food_id, food_type)` hace idempotente el toggle. Frecuentes se derivan exclusivamente del historial real mediante `get_frequent_foods`, sin tabla manual ni gamificación. El ranking usa `usos * 10 + recencia`, donde recencia aporta como máximo un punto durante 30 días. Detalle de comida muestra los snapshots guardados en `meal_items` y reutiliza el editor de Fase 3.
+
+Con este checkpoint FASE 4 — Registro de alimentos queda cerrada; FASE 5 permanece fuera de alcance.
