@@ -28,7 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.rememberSaveable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -144,7 +144,7 @@ fun HomeScreen(state: HomeUiState, onEvent: (HomeEvent) -> Unit) = Surface(Modif
 
 @Composable fun MealEditorScreen(meal: Meal?, onBack: () -> Unit, onSave: (Meal) -> Unit, onDelete: (String) -> Unit) {
     if (meal == null) { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("La comida ya no está disponible") }; return }
-    var portionFactor by rememberSaveable(meal.id) { mutableFloatStateOf(1f) }
+    var portionFactor by remember(meal.id) { mutableFloatStateOf(1f) }
     val editedMeal = meal.scaled(portionFactor)
     LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item { Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { Text("‹", Modifier.size(48.dp).clickable(onClick = onBack).padding(10.dp), style = MaterialTheme.typography.headlineMedium); Text("Editar comida", Modifier.weight(1f), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold); Text("Guardar", Modifier.heightIn(min = 48.dp).clickable { onSave(editedMeal) }.padding(12.dp), color = KyvoColors.PurplePrimary, fontWeight = FontWeight.Bold) }; Text(meal.title, style = MaterialTheme.typography.titleLarge); Text("${meal.type.label} · ${meal.time.orEmpty()}", color = KyvoColors.PurplePrimary) }
