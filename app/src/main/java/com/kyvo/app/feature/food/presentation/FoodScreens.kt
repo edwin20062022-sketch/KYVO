@@ -88,7 +88,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import kotlin.math.roundToInt
 
 @Composable
-fun FoodHubScreen(onSearch: () -> Unit, onFrequent: () -> Unit, onFavorites: () -> Unit, onFuture: (String) -> Unit, onBack: () -> Unit = {}) {
+fun FoodHubScreen(onSearch: () -> Unit, onFrequent: () -> Unit, onFavorites: () -> Unit, onFuture: (String) -> Unit, onDishes: () -> Unit = { onFuture("Platillos guardados") }, onBack: () -> Unit = {}) {
     Scaffold { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
@@ -116,7 +116,7 @@ fun FoodHubScreen(onSearch: () -> Unit, onFrequent: () -> Unit, onFavorites: () 
             }
             item {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    QuickFoodAction("Platillos", Icons.Outlined.Info, Modifier.weight(1f)) { onFuture("Platillos guardados") }
+                    QuickFoodAction("Platillos", Icons.Outlined.Info, Modifier.weight(1f), onDishes)
                     QuickFoodAction("Meal Share", Icons.Outlined.Share, Modifier.weight(1f)) { onFuture("Meal Share") }
                 }
             }

@@ -22,6 +22,11 @@ import com.kyvo.app.feature.food.presentation.FoodPortionRoute
 import com.kyvo.app.feature.food.presentation.FoodResultsRoute
 import com.kyvo.app.feature.food.presentation.FoodSearchRoute
 import com.kyvo.app.feature.food.presentation.FoodStatePlaceholder
+import com.kyvo.app.feature.dishes.domain.repository.SavedDishRepository
+import com.kyvo.app.feature.dishes.presentation.AddSavedDishToDayRoute
+import com.kyvo.app.feature.dishes.presentation.SavedDishDetailRoute
+import com.kyvo.app.feature.dishes.presentation.SavedDishEditorRoute
+import com.kyvo.app.feature.dishes.presentation.SavedDishesRoute
 import com.kyvo.app.feature.onboarding.presentation.OnboardingRoute
 import kotlinx.coroutines.launch
 
@@ -32,6 +37,7 @@ fun KyvoNavHost(
     onboardingRepository: OnboardingRepository?,
     mealRepository: MealRepository?,
     foodRepository: FoodRepository?,
+    savedDishRepository: SavedDishRepository?,
     authState: AuthState,
     onboardingCompleted: Boolean,
 ) {
@@ -69,6 +75,7 @@ fun KyvoNavHost(
                 onFrequent = { navController.navigate(KyvoDestination.FoodFrequent.route) },
                 onFavorites = { navController.navigate(KyvoDestination.FoodFavorites.route) },
                 onFuture = { title -> navController.navigate("food/placeholder/${Uri.encode(title)}") },
+                onDishes = { navController.navigate(KyvoDestination.SavedDishes.route) },
             )
         }
         composable(KyvoDestination.FoodFrequent.route) {
@@ -108,6 +115,29 @@ fun KyvoNavHost(
         }
         composable(KyvoDestination.FoodPlaceholder.route) { entry ->
             FoodStatePlaceholder(Uri.decode(entry.arguments?.getString("name").orEmpty()), onBack = { navController.popBackStack() })
+        }
+        composable(KyvoDestination.SavedDishes.route) {
+            savedDishRepository?.let { repository ->
+                SavedDishesRoute(repository, onBack = { navController.popBackStack() }, onCreate = { navController.navigate("dishes/editor/new") }, onDetail = { id -> navController.navigate("dishes/detail/${Uri.encode(id)}") })
+            }
+        }
+        composable(KyvoDestination.SavedDishEditor.route) { entry ->
+            if (savedDishRepository != null && foodRepository != null) {
+                val id = Uri.decode(entry.arguments?.getString("id").orEmpty()).takeUnless { it == "new" }
+                SavedDishEditorRoute(id, savedDishRepository, foodRepository, onBack = { navController.popBackStack() }, onSaved = { savedId -> navController.navigate("dishes/detail/${Uri.encode(savedId)}") { popUpTo(KyvoDestination.SavedDishes.route) { inclusive = false } } })
+            }
+        }
+        composable(KyvoDestination.SavedDishDetail.route) { entry ->
+            savedDishRepository?.let { repository ->
+                val id = Uri.decode(entry.arguments?.getString("id").orEmpty())
+                SavedDishDetailRoute(id, repository, onBack = { navController.popBackStack() }, onEdit = { dishId -> navController.navigate("dishes/editor/${Uri.encode(dishId)}") }, onAddToDay = { dishId -> navController.navigate("dishes/add/${Uri.encode(dishId)}") })
+            }
+        }
+        composable(KyvoDestination.SavedDishAddToDay.route) { entry ->
+            if (savedDishRepository != null && mealRepository != null) {
+                val id = Uri.decode(entry.arguments?.getString("id").orEmpty())
+                AddSavedDishToDayRoute(id, savedDishRepository, mealRepository, onBack = { navController.popBackStack() }, onAdded = { navController.navigate(KyvoDestination.Home.route) { popUpTo(KyvoDestination.Home.route) { inclusive = false } } })
+            }
         }
     }
 }

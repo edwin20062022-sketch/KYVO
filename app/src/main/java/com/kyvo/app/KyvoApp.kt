@@ -21,6 +21,7 @@ import com.kyvo.app.data.auth.SupabaseAuthRepository
 import com.kyvo.app.data.auth.SupabaseClientFactory
 import com.kyvo.app.data.auth.SupabaseSdkAuthDataSource
 import com.kyvo.app.feature.home.data.SupabaseMealRepository
+import com.kyvo.app.feature.dishes.data.SupabaseSavedDishRepository
 import com.kyvo.app.feature.food.data.CatalogFirstFoodRepository
 import com.kyvo.app.feature.food.data.SupabaseFoodRepository
 import com.kyvo.app.feature.food.data.SupabaseFoodSearchEdgeGateway
@@ -80,6 +81,7 @@ fun KyvoApp(authIntent: Intent? = null) {
                 onboardingRepository = null,
                 mealRepository = null,
                 foodRepository = null,
+                savedDishRepository = null,
                 authState = state,
                 onboardingCompleted = false,
             )
@@ -88,6 +90,7 @@ fun KyvoApp(authIntent: Intent? = null) {
                     DataStoreOnboardingRepository(context, state.session.userId)
                 }
                 val mealRepository = remember(state.session.userId, authDependencies.client) { SupabaseMealRepository(requireNotNull(authDependencies.client)) }
+                val savedDishRepository = remember(state.session.userId, authDependencies.client) { SupabaseSavedDishRepository(requireNotNull(authDependencies.client)) }
                 val onboarding by onboardingRepository.observe()
                     .collectAsStateWithLifecycle(initialValue = null)
                 if (onboarding == null) {
@@ -99,6 +102,7 @@ fun KyvoApp(authIntent: Intent? = null) {
                         onboardingRepository = onboardingRepository,
                         mealRepository = mealRepository,
                         foodRepository = foodRepository,
+                        savedDishRepository = savedDishRepository,
                         authState = state,
                         onboardingCompleted = onboarding?.isCompleted == true,
                     )

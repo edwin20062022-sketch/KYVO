@@ -17,6 +17,10 @@ enum class KyvoDestination(val route: String) {
     FoodDetail("food/detail/{id}/{type}"),
     FoodPortion("food/portion/{id}/{type}"),
     FoodPlaceholder("food/placeholder/{name}"),
+    SavedDishes("dishes"),
+    SavedDishEditor("dishes/editor/{id}"),
+    SavedDishDetail("dishes/detail/{id}"),
+    SavedDishAddToDay("dishes/add/{id}"),
 }
 
 val mainDestinations = listOf(

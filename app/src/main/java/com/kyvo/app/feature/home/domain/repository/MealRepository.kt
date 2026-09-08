@@ -1,6 +1,7 @@
 package com.kyvo.app.feature.home.domain.repository
 
 import com.kyvo.app.feature.home.domain.model.Meal
+import com.kyvo.app.feature.home.domain.model.MealType
 import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 
@@ -10,4 +11,6 @@ interface MealRepository {
     suspend fun addMeal(date: LocalDate, meal: Meal)
     suspend fun updateMeal(meal: Meal)
     suspend fun deleteMeal(id: String)
+    suspend fun addSavedDishToDay(dishId: String, date: LocalDate, type: MealType, portions: Double): Meal =
+        throw UnsupportedOperationException("Saved dishes are not available in this repository.")
 }

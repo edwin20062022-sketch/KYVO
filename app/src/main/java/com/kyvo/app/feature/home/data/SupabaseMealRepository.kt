@@ -7,6 +7,7 @@ import com.kyvo.app.feature.food.domain.model.FoodType
 import com.kyvo.app.feature.home.domain.repository.MealRepository
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
 import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +17,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 /** Supabase adapter. RLS derives ownership from the authenticated session. */
 class SupabaseMealRepository(private val client: SupabaseClient) : MealRepository {
@@ -38,6 +41,14 @@ class SupabaseMealRepository(private val client: SupabaseClient) : MealRepositor
         cache.update { days -> days.mapValues { (_, values) -> values.map { if (it.id == meal.id) meal else it } } }
     }
     override suspend fun deleteMeal(id: String) { client.from("meals").delete { filter { eq("id", id) } }; cache.update { days -> days.mapValues { (_, values) -> values.filterNot { it.id == id } } } }
+    override suspend fun addSavedDishToDay(dishId: String, date: LocalDate, type: MealType, portions: Double): Meal {
+        val mealId = client.postgrest.rpc("add_saved_dish_to_day", buildJsonObject {
+            put("p_dish_id", dishId); put("p_date", date.toString()); put("p_meal_type", type.databaseValue); put("p_portions", portions)
+        }).decodeSingle<String>()
+        val meal = fetch(date).firstOrNull { it.id == mealId } ?: error("No pudimos recuperar la comida registrada.")
+        cache.update { it + (date to (it[date].orEmpty().filterNot { existing -> existing.id == meal.id } + meal)) }
+        return meal
+    }
     private suspend fun fetch(date: LocalDate): List<Meal> = client.from("meals").select { filter { eq("date", date.toString()) } }.decodeList<RemoteMeal>().map(RemoteMeal::toDomain)
     private suspend fun fetchAll(): List<Meal> = client.from("meals").select().decodeList<RemoteMeal>().map(RemoteMeal::toDomain)
 }
