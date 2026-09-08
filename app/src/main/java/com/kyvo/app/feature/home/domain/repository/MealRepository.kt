@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 interface MealRepository {
     fun observeMealsForDate(date: LocalDate): Flow<List<Meal>>
     fun observeMeal(id: String): Flow<Meal?>
+    suspend fun addMeal(date: LocalDate, meal: Meal)
     suspend fun updateMeal(meal: Meal)
     suspend fun deleteMeal(id: String)
 }

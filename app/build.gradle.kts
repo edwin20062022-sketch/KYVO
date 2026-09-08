@@ -91,6 +91,7 @@ dependencies {
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.googleid)
     implementation(libs.supabase.auth)
+    implementation(libs.supabase.postgrest)
     implementation(libs.ktor.client.okhttp)
 
     testImplementation(libs.junit4)
