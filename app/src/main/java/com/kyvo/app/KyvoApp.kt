@@ -21,6 +21,10 @@ import com.kyvo.app.data.auth.SupabaseAuthRepository
 import com.kyvo.app.data.auth.SupabaseClientFactory
 import com.kyvo.app.data.auth.SupabaseSdkAuthDataSource
 import com.kyvo.app.feature.home.data.SupabaseMealRepository
+import com.kyvo.app.feature.food.data.CatalogFirstFoodRepository
+import com.kyvo.app.feature.food.data.SupabaseFoodRepository
+import com.kyvo.app.feature.food.data.SupabaseFoodSearchEdgeGateway
+import com.kyvo.app.feature.food.domain.repository.FoodRepository
 import com.kyvo.app.domain.auth.AuthRepository
 import com.kyvo.app.domain.auth.AuthState
 import com.kyvo.app.feature.onboarding.data.DataStoreOnboardingRepository
@@ -57,6 +61,11 @@ fun KyvoApp(authIntent: Intent? = null) {
         }
     }
     val authRepository = authDependencies.repository
+    val foodRepository: FoodRepository? = remember(authDependencies.client) {
+        authDependencies.client?.let { client ->
+            CatalogFirstFoodRepository(SupabaseFoodRepository(client), SupabaseFoodSearchEdgeGateway(client))
+        }
+    }
     val authState by authRepository.observeSession().collectAsStateWithLifecycle(AuthState.Initializing)
     LaunchedEffect(authIntent, authDependencies.client) {
         if (authIntent != null) authDependencies.client?.handleDeeplinks(authIntent)
@@ -70,6 +79,7 @@ fun KyvoApp(authIntent: Intent? = null) {
                 authRepository = authRepository,
                 onboardingRepository = null,
                 mealRepository = null,
+                foodRepository = null,
                 authState = state,
                 onboardingCompleted = false,
             )
@@ -88,6 +98,7 @@ fun KyvoApp(authIntent: Intent? = null) {
                         authRepository = authRepository,
                         onboardingRepository = onboardingRepository,
                         mealRepository = mealRepository,
+                        foodRepository = foodRepository,
                         authState = state,
                         onboardingCompleted = onboarding?.isCompleted == true,
                     )

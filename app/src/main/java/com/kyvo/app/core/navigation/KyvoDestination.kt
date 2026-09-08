@@ -9,6 +9,12 @@ enum class KyvoDestination(val route: String) {
     MealShare("meal_share"),
     Progress("progress"),
     Profile("profile"),
+    FoodHub("food/hub"),
+    FoodSearch("food/search"),
+    FoodResults("food/results/{query}"),
+    FoodDetail("food/detail/{id}/{type}"),
+    FoodPortion("food/portion/{id}/{type}"),
+    FoodPlaceholder("food/placeholder/{name}"),
 }
 
 val mainDestinations = listOf(
@@ -18,4 +24,3 @@ val mainDestinations = listOf(
     KyvoDestination.Progress,
     KyvoDestination.Profile,
 )
-
