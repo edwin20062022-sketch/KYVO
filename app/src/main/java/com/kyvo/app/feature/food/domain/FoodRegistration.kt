@@ -34,7 +34,7 @@ object FoodRegistrationFactory {
             id = UUID.randomUUID().toString(), name = food.name, quantity = grams, unit = "g",
             calories = calories, protein = protein.roundToInt(), carbohydrates = carbohydrates.roundToInt(), fat = fat.roundToInt(),
             image = food.imageUrl ?: food.imageKey, fiber = nutrients.fiber, sugar = nutrients.sugar,
-            sodiumMg = nutrients.sodiumMg, grams = grams,
+            sodiumMg = nutrients.sodiumMg, grams = grams, foodId = food.id, foodType = food.type,
         )
         return Meal(
             id = UUID.randomUUID().toString(), type = mealType, title = food.name,
