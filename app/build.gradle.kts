@@ -92,6 +92,7 @@ dependencies {
     implementation(libs.googleid)
     implementation(libs.supabase.auth)
     implementation(libs.supabase.postgrest)
+    implementation(libs.supabase.functions)
     implementation(libs.ktor.client.okhttp)
 
     testImplementation(libs.junit4)
