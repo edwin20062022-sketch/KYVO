@@ -56,9 +56,10 @@ class SupabaseFoodSearchEdgeGateway(private val client: SupabaseClient) : FoodSe
         imageKey = null,
         nutrients = nutrients.model(),
         servingLabel = servings.firstOrNull()?.label ?: "100 g",
+        imageUrl = imageUrl,
     )
 
-    fun detail() = FoodDetail(id, type.toFoodType(), name, variant, null, nutrients.model(), servings.map { FoodServing(it.label, it.gramEquivalent, it.source) })
+    fun detail() = FoodDetail(id, type.toFoodType(), name, variant, null, nutrients.model(), servings.map { FoodServing(it.label, it.gramEquivalent, it.source) }, imageUrl)
 }
 @Serializable private data class EdgeNutrients(val caloriesPer100g: Double? = null, val proteinPer100g: Double? = null, val carbohydratesPer100g: Double? = null, val fatPer100g: Double? = null, val fiberPer100g: Double? = null, val sugarPer100g: Double? = null, val sodiumMgPer100g: Double? = null) { fun model() = FoodNutrients(caloriesPer100g, proteinPer100g, carbohydratesPer100g, fatPer100g, fiberPer100g, sugarPer100g, sodiumMgPer100g) }
 @Serializable private data class EdgeServing(val label: String, val gramEquivalent: Double, val source: String)

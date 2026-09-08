@@ -6,7 +6,7 @@ import kotlin.math.max
 
 data class DailyNutrition(val date: LocalDate, val calorieTarget: Int, val caloriesConsumed: Int, val caloriesRemaining: Int, val proteinTarget: Int, val proteinConsumed: Int, val carbohydrateTarget: Int, val carbohydrateConsumed: Int, val fatTarget: Int, val fatConsumed: Int, val meals: List<Meal>)
 data class Meal(val id: String, val type: MealType, val title: String, val time: String? = null, val items: List<MealItem>, val totalCalories: Int, val protein: Int, val carbohydrates: Int, val fat: Int)
-data class MealItem(val id: String, val name: String, val quantity: Double, val unit: String, val calories: Int, val protein: Int, val carbohydrates: Int, val fat: Int, val image: String? = null)
+data class MealItem(val id: String, val name: String, val quantity: Double, val unit: String, val calories: Int, val protein: Int, val carbohydrates: Int, val fat: Int, val image: String? = null, val fiber: Double? = null, val sugar: Double? = null, val sodiumMg: Double? = null, val grams: Double? = null)
 enum class MealType(val label: String) { Breakfast("Desayuno"), Lunch("Comida"), Dinner("Cena"), Snack("Snack") }
 
 fun NutritionPlan.toDailyNutrition(date: LocalDate, meals: List<Meal>): DailyNutrition {

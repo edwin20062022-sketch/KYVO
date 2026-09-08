@@ -16,9 +16,9 @@ internal data class CatalogGenericRow(val variantId: String, val canonicalId: St
 internal data class CatalogCommercialRow(val id: String, val name: String, val brand: String?, val imageUrl: String?, val nutrients: FoodNutrients, val servings: List<FoodServing>)
 
 internal fun CatalogGenericRow.searchResult() = FoodSearchResult(variantId, FoodType.Generic, name, variant, null, imageKey, nutrients, servings.firstOrNull()?.label)
-internal fun CatalogCommercialRow.searchResult() = FoodSearchResult(id, FoodType.Commercial, name, null, brand, imageUrl, nutrients, servings.firstOrNull()?.label)
+internal fun CatalogCommercialRow.searchResult() = FoodSearchResult(id, FoodType.Commercial, name, null, brand, null, nutrients, servings.firstOrNull()?.label, imageUrl)
 internal fun CatalogGenericRow.detail() = FoodDetail(variantId, FoodType.Generic, name, variant, imageKey, nutrients, servings)
-internal fun CatalogCommercialRow.detail() = FoodDetail(id, FoodType.Commercial, name, brand, imageUrl, nutrients, servings)
+internal fun CatalogCommercialRow.detail() = FoodDetail(id, FoodType.Commercial, name, brand, null, nutrients, servings, imageUrl)
 
 internal fun servingsFromJson(value: JsonElement?): List<FoodServing> = (value as? JsonArray).orEmpty().mapNotNull { item ->
     val objectValue = item as? JsonObject ?: return@mapNotNull null
