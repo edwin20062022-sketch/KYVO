@@ -9,6 +9,19 @@ import org.junit.Test
 
 class KyvoDestinationTest {
     @Test
+    fun `meal share context is carried through search results detail and portion`() {
+        val context = FoodSelectionContext.MEAL_SHARE
+        assertEquals("MEAL_SHARE", foodSearchRoute(context).substringAfter("selectionContext="))
+        assertTrue(KyvoDestination.FoodResults.route.contains("selectionContext={selectionContext}"))
+        assertTrue(KyvoDestination.FoodDetail.route.contains("selectionContext={selectionContext}"))
+        assertTrue(KyvoDestination.FoodPortion.route.contains("selectionContext={selectionContext}"))
+    }
+
+    @Test
+    fun `normal meal logging context remains distinct`() {
+        assertEquals("NORMAL_MEAL_LOGGING", foodSearchRoute(FoodSelectionContext.NORMAL_MEAL_LOGGING).substringAfter("selectionContext="))
+    }
+    @Test
     fun `all routes are unique and non blank`() {
         val routes = KyvoDestination.entries.map(KyvoDestination::route)
 

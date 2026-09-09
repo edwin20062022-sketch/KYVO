@@ -1,6 +1,7 @@
 package com.kyvo.app.core.navigation
 
 import android.net.Uri
+import android.os.Bundle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -127,7 +128,32 @@ fun KyvoNavHost(
                 val id = Uri.decode(entry.arguments?.getString("id").orEmpty())
                 val type = entry.arguments?.getString("type").orEmpty()
                 val context = foodSelectionContext(entry)
-                FoodPortionRoute(id, type, foodRepository, mealRepository, onBack = { navController.popBackStack() }, onRegistered = { navController.popBackStack(KyvoDestination.Home.route, inclusive = false) }, selectionContext = context)
+                FoodPortionRoute(
+                    id,
+                    type,
+                    foodRepository,
+                    mealRepository,
+                    onBack = { navController.popBackStack() },
+                    onRegistered = { navController.popBackStack(KyvoDestination.Home.route, inclusive = false) },
+                    selectionContext = context,
+                    onMealSharePortionConfirmed = { item ->
+                        val builderEntry = navController.getBackStackEntry(KyvoDestination.MealShareMealBuilder.route)
+                        builderEntry.savedStateHandle[MEAL_SHARE_PENDING_ITEM] = Bundle().apply {
+                            putString("id", item.id)
+                            putString("name", item.name)
+                            putDouble("quantity", item.quantity)
+                            putString("unit", item.unit)
+                            putInt("calories", item.calories)
+                            putInt("protein", item.protein)
+                            putInt("carbohydrates", item.carbohydrates)
+                            putInt("fat", item.fat)
+                            putDouble("grams", item.grams ?: item.quantity)
+                            putString("foodId", item.foodId)
+                            putString("foodType", item.foodType?.name)
+                        }
+                        navController.popBackStack(KyvoDestination.MealShareMealBuilder.route, inclusive = false)
+                    },
+                )
             }
         }
         composable(KyvoDestination.FoodPlaceholder.route) { entry ->
@@ -215,10 +241,12 @@ private fun foodSelectionContext(entry: androidx.navigation.NavBackStackEntry): 
     entry.arguments?.getString("selectionContext")?.let { value -> runCatching { FoodSelectionContext.valueOf(value) }.getOrNull() }
         ?: FoodSelectionContext.NORMAL_MEAL_LOGGING
 
-private fun foodSearchRoute(context: FoodSelectionContext) = "food/search?selectionContext=${context.name}"
-private fun foodResultsRoute(query: String, context: FoodSelectionContext) = "food/results/${Uri.encode(query)}?selectionContext=${context.name}"
-private fun foodDetailRoute(id: String, type: String, context: FoodSelectionContext) = "food/detail/${Uri.encode(id)}/${type}?selectionContext=${context.name}"
-private fun foodPortionRoute(id: String, type: String, context: FoodSelectionContext) = "food/portion/${Uri.encode(id)}/${type}?selectionContext=${context.name}"
+private const val MEAL_SHARE_PENDING_ITEM = "meal_share_pending_item"
+
+internal fun foodSearchRoute(context: FoodSelectionContext) = "food/search?selectionContext=${context.name}"
+internal fun foodResultsRoute(query: String, context: FoodSelectionContext) = "food/results/${Uri.encode(query)}?selectionContext=${context.name}"
+internal fun foodDetailRoute(id: String, type: String, context: FoodSelectionContext) = "food/detail/${Uri.encode(id)}/${type}?selectionContext=${context.name}"
+internal fun foodPortionRoute(id: String, type: String, context: FoodSelectionContext) = "food/portion/${Uri.encode(id)}/${type}?selectionContext=${context.name}"
 
 internal fun resolveStartDestination(
     authState: AuthState,
