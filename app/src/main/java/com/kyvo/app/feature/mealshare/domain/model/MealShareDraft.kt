@@ -5,9 +5,12 @@ import com.kyvo.app.feature.home.domain.model.MealType
 
 enum class MealShareTemplate { Minimal, Performance, Editorial }
 
+enum class MealSharePhotoSource { Camera, Gallery }
+
 /** Lightweight, local-only state. A photo is represented only by its content URI. */
 data class MealShareDraft(
     val photoUri: String? = null,
+    val photoSource: MealSharePhotoSource? = null,
     val mealType: MealType = MealType.Lunch,
     val title: String = "Mi comida",
     val items: List<MealItem> = emptyList(),

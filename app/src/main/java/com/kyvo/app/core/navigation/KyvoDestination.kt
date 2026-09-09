@@ -22,6 +22,7 @@ enum class KyvoDestination(val route: String) {
     SavedDishDetail("dishes/detail/{id}"),
     SavedDishAddToDay("dishes/add/{id}"),
     MealShareCamera("meal_share/camera"),
+    MealSharePhotoPicker("meal_share/photo_picker"),
     MealSharePhotoPreview("meal_share/photo_preview"),
 }
 
