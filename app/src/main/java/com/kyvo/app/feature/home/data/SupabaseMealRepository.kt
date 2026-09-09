@@ -30,9 +30,18 @@ class SupabaseMealRepository(private val client: SupabaseClient) : MealRepositor
     }
     override fun observeMeal(id: String): Flow<Meal?> = cache.map { days -> days.values.flatten().firstOrNull { it.id == id } }
     override suspend fun addMeal(date: LocalDate, meal: Meal) {
-        client.from("meals").insert(RemoteMealInsert(meal.id, date.toString(), meal.type.databaseValue, meal.title, meal.time))
-        client.from("meal_items").insert(meal.items.map { it.toInsert(meal.id) })
-        cache.update { it + (date to (it[date].orEmpty() + meal)) }
+        try {
+            client.from("meals").insert(RemoteMealInsert(meal.id, date.toString(), meal.type.databaseValue, meal.title, meal.time))
+            client.from("meal_items").insert(meal.items.map { it.toInsert(meal.id) })
+            cache.update { it + (date to (it[date].orEmpty() + meal)) }
+        } catch (failure: Exception) {
+            val existing = client.from("meals").select { filter { eq("id", meal.id) } }.decodeList<RemoteMeal>().singleOrNull()
+            if (existing == null) throw failure
+            updateMeal(meal)
+            cache.update { days ->
+                days + (date to (days[date].orEmpty().filterNot { it.id == meal.id } + meal))
+            }
+        }
     }
     override suspend fun updateMeal(meal: Meal) {
         client.from("meals").update(RemoteMealUpdate(meal.type.databaseValue, meal.title, meal.time)) { filter { eq("id", meal.id) } }

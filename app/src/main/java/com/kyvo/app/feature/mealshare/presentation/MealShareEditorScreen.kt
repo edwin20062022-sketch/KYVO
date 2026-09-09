@@ -54,6 +54,7 @@ import com.kyvo.app.feature.mealshare.domain.model.MealShareTemplate
 import com.kyvo.app.feature.mealshare.domain.model.MealShareTemplateSpecs
 import com.kyvo.app.feature.mealshare.domain.model.renderFingerprint
 import com.kyvo.app.feature.mealshare.domain.model.toOverlayData
+import java.io.File
 
 internal const val MEAL_SHARE_PREVIEW_ASPECT_RATIO = MealShareTemplateSpecs.aspectRatio
 
@@ -64,10 +65,20 @@ fun MealShareEditorScreen(
     renderState: MealShareRenderState,
     onRender: (MealShareDraft) -> Unit,
     onDraftChanged: (String) -> Unit,
+    onRendered: (com.kyvo.app.feature.mealshare.domain.render.MealShareRenderResult) -> Unit,
+    finalizationState: MealShareFinalizationState,
+    onConfirmFinalization: () -> Unit,
+    canFinalize: Boolean,
     onBack: () -> Unit,
 ) {
     val overlay = draft.toOverlayData()
+    val isPersisted = finalizationState is MealShareFinalizationState.Persisted
+    val isPersisting = finalizationState is MealShareFinalizationState.Persisting
+    val hasCurrentRender = !draft.renderedImagePath.isNullOrBlank() && draft.renderedFingerprint == draft.renderFingerprint()
     LaunchedEffect(draft.renderFingerprint()) { onDraftChanged(draft.renderFingerprint()) }
+    LaunchedEffect(renderState) {
+        if (renderState is MealShareRenderState.Success) onRendered(renderState.result)
+    }
     Column(Modifier.fillMaxSize()) {
         EditorHeader(onBack)
         Column(
@@ -82,15 +93,27 @@ fun MealShareEditorScreen(
                 photoUri = draft.photoUri,
                 selected = draft.template,
                 data = overlay,
+                enabled = !isPersisted,
                 onSelected = onTemplateSelected,
             )
             KyvoPrimaryButton(
                 text = if (renderState is MealShareRenderState.Success) "Regenerar imagen final" else "Generar imagen final",
                 onClick = { onRender(draft) },
-                enabled = draft.isReadyToRender && renderState !is MealShareRenderState.Rendering,
+                enabled = !isPersisted && draft.isReadyToRender && renderState !is MealShareRenderState.Rendering,
                 isLoading = renderState is MealShareRenderState.Rendering,
             )
             if (renderState is MealShareRenderState.Error) Text(renderState.message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            when (finalizationState) {
+                is MealShareFinalizationState.Persisted -> Text("Comida registrada. La compartirás en el siguiente paso.", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                is MealShareFinalizationState.Error -> Text(finalizationState.message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                else -> Unit
+            }
+            KyvoPrimaryButton(
+                text = if (isPersisting) "Registrando comida..." else if (finalizationState is MealShareFinalizationState.Error) "Reintentar registro" else "Registrar comida",
+                onClick = onConfirmFinalization,
+                enabled = canFinalize && hasCurrentRender && !isPersisting && !isPersisted,
+                isLoading = isPersisting,
+            )
             Text("La imagen se guarda temporalmente en este dispositivo. Compartir llegará en el siguiente paso.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(4.dp))
         }
@@ -99,14 +122,22 @@ fun MealShareEditorScreen(
 
 @Composable
 private fun RenderPreview(draft: MealShareDraft, overlay: MealShareOverlayData, renderState: MealShareRenderState) {
-    when (renderState) {
-        is MealShareRenderState.Success -> AsyncImage(
-            model = renderState.result.file,
+    val renderedFile = when (renderState) {
+        is MealShareRenderState.Success -> renderState.result.file
+        else -> draft.renderedImagePath
+            ?.takeIf { draft.renderedFingerprint == draft.renderFingerprint() }
+            ?.let(::File)
+            ?.takeIf { it.isFile && it.length() > 0L }
+    }
+    if (renderedFile != null) {
+        AsyncImage(
+            model = renderedFile,
             contentDescription = "Imagen Meal Share generada",
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxWidth().aspectRatio(MEAL_SHARE_PREVIEW_ASPECT_RATIO).clip(RoundedCornerShape(26.dp)),
         )
-        else -> MealSharePhotoOverlay(
+    } else {
+        MealSharePhotoOverlay(
             photoUri = draft.photoUri,
             template = draft.template,
             data = overlay,
@@ -136,6 +167,7 @@ private fun TemplateSelector(
     photoUri: String?,
     selected: MealShareTemplate,
     data: MealShareOverlayData,
+    enabled: Boolean,
     onSelected: (MealShareTemplate) -> Unit,
 ) {
     Column {
@@ -153,6 +185,7 @@ private fun TemplateSelector(
                     template = template,
                     data = data,
                     selected = template == selected,
+                    enabled = enabled,
                     onClick = { onSelected(template) },
                 )
             }
@@ -166,6 +199,7 @@ private fun TemplateOption(
     template: MealShareTemplate,
     data: MealShareOverlayData,
     selected: Boolean,
+    enabled: Boolean,
     onClick: () -> Unit,
 ) {
     val shape = RoundedCornerShape(16.dp)
@@ -174,7 +208,7 @@ private fun TemplateOption(
         modifier = Modifier
             .width(164.dp)
             .semantics { this.selected = selected }
-            .clickable(role = Role.RadioButton, onClick = onClick),
+            .clickable(enabled = enabled, role = Role.RadioButton, onClick = onClick),
     ) {
         MealSharePhotoOverlay(
             photoUri = photoUri,

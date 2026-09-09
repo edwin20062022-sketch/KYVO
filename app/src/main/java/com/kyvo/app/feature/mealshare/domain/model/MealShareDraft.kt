@@ -15,6 +15,8 @@ data class MealShareDraft(
     val title: String = "Mi comida",
     val items: List<MealItem> = emptyList(),
     val template: MealShareTemplate = MealShareTemplate.MINIMAL,
+    val renderedImagePath: String? = null,
+    val renderedFingerprint: String? = null,
 ) {
     val calories: Int get() = items.sumOf(MealItem::calories)
     val protein: Int get() = items.sumOf(MealItem::protein)

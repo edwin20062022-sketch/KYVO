@@ -232,12 +232,17 @@ fun KyvoNavHost(
             val context = LocalContext.current
             val renderer = remember(context.applicationContext) { AndroidMealShareImageRenderer(context.applicationContext) }
             val render: MealShareRenderViewModel = viewModel(mealShareEntry, factory = MealShareRenderViewModel.factory(renderer))
+            val currentDraft = draft.draft.collectAsState().value
             MealShareEditorScreen(
-                draft = draft.draft.collectAsState().value,
+                draft = currentDraft,
                 onTemplateSelected = draft::setTemplate,
                 renderState = render.state.collectAsState().value,
                 onRender = render::render,
                 onDraftChanged = render::invalidateIfStale,
+                onRendered = draft::setRenderedResult,
+                finalizationState = draft.finalization.collectAsState().value,
+                onConfirmFinalization = { mealRepository?.let(draft::confirmFinalMeal) },
+                canFinalize = mealRepository != null,
                 onBack = { navController.popBackStack() },
             )
         }
