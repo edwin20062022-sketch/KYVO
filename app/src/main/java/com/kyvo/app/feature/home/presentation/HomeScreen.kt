@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -44,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kyvo.app.R
@@ -63,7 +65,9 @@ import kotlin.math.roundToInt
 internal val MACRO_RING_DIAMETER = 84.dp
 internal val MACRO_RING_SPACING = 8.dp
 internal val MACRO_ICON_SIZE = 22.dp
-internal val MACRO_ICON_PERCENTAGE_SPACING = 2.dp
+internal val MACRO_LABEL_FONT_SIZE = 10.sp
+internal val DASHBOARD_MACRO_LABELS = listOf("Proteína", "Carbohidratos", "Grasas")
+internal const val MACRO_CIRCLE_SHOWS_PERCENTAGE = false
 
 @Composable
 fun HomeRoute(onboardingRepository: OnboardingRepository, mealRepository: MealRepository, onAddFood: () -> Unit = {}, onMealShare: () -> Unit = {}, viewModel: HomeViewModel = viewModel(factory = HomeViewModel.factory(onboardingRepository, mealRepository))) {
@@ -116,22 +120,28 @@ fun HomeScreen(state: HomeUiState, onAddFood: () -> Unit) = HomeScreen(state, on
 @Composable private fun MacroSummary(daily: DailyNutrition, onDetail: () -> Unit) = KyvoCard(Modifier.padding(horizontal = 20.dp)) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { Text("Macros", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f)); Text("Ver detalle ›", color = KyvoColors.PurplePrimary, modifier = Modifier.heightIn(min = 48.dp).clickable(onClick = onDetail).padding(top = 12.dp)) }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(MACRO_RING_SPACING)) {
-        Box(Modifier.weight(1f)) { MacroRing("Proteína", daily.proteinConsumed, daily.proteinTarget, R.drawable.ic_home_protein) }
-        Box(Modifier.weight(1f)) { MacroRing("Carbohidratos", daily.carbohydrateConsumed, daily.carbohydrateTarget, R.drawable.ic_home_carbohydrates) }
-        Box(Modifier.weight(1f)) { MacroRing("Grasas", daily.fatConsumed, daily.fatTarget, R.drawable.ic_home_fat) }
+        Box(Modifier.weight(1f)) { MacroRing(DASHBOARD_MACRO_LABELS[0], daily.proteinConsumed, daily.proteinTarget, R.drawable.ic_home_protein) }
+        Box(Modifier.weight(1f)) { MacroRing(DASHBOARD_MACRO_LABELS[1], daily.carbohydrateConsumed, daily.carbohydrateTarget, R.drawable.ic_home_carbohydrates) }
+        Box(Modifier.weight(1f)) { MacroRing(DASHBOARD_MACRO_LABELS[2], daily.fatConsumed, daily.fatTarget, R.drawable.ic_home_fat) }
     }
 }
 
 @Composable private fun MacroRing(name: String, consumed: Int, target: Int, @DrawableRes icon: Int) = Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-    Box(contentAlignment = Alignment.Center) {
-        ProgressRing(progressOf(consumed, target), "$name: $consumed de $target gramos", MACRO_RING_DIAMETER, KyvoColors.PurplePrimary, showPercentage = false)
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(MACRO_ICON_PERCENTAGE_SPACING)) {
-            androidx.compose.foundation.Image(painterResource(icon), null, Modifier.size(MACRO_ICON_SIZE), contentScale = ContentScale.Fit)
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        val labelFontSize = macroLabelFontSizeFor(maxWidth)
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(contentAlignment = Alignment.Center) {
+                ProgressRing(progressOf(consumed, target), "$name: $consumed de $target gramos", MACRO_RING_DIAMETER, KyvoColors.PurplePrimary, showPercentage = MACRO_CIRCLE_SHOWS_PERCENTAGE)
+                androidx.compose.foundation.Image(painterResource(icon), null, Modifier.size(MACRO_ICON_SIZE), contentScale = ContentScale.Fit)
+            }
+            Text(name, color = KyvoColors.PurplePrimary, textAlign = TextAlign.Center, maxLines = 1, softWrap = false, overflow = TextOverflow.Clip, fontSize = labelFontSize, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 8.dp))
             Text("${percent(progressOf(consumed, target))}%", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+            Text("$consumed / $target g", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, maxLines = 1)
         }
     }
-    Text("$consumed g", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold); Text(name, color = KyvoColors.PurplePrimary, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis); Text("$target g meta", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
 }
+
+internal fun macroLabelFontSizeFor(availableWidth: androidx.compose.ui.unit.Dp) = if (availableWidth < 80.dp) 9.sp else MACRO_LABEL_FONT_SIZE
 
 @Composable private fun MealsSection(meals: List<Meal>, onMeal: (Meal) -> Unit, onAddFood: () -> Unit, onMealShare: () -> Unit) = KyvoCard(Modifier.padding(horizontal = 20.dp)) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { Text("Comidas de hoy", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f)); Text("＋ Añadir comida", color = KyvoColors.PurplePrimary, modifier = Modifier.heightIn(min = 48.dp).clickable(onClick = onAddFood).padding(top = 12.dp)) }
