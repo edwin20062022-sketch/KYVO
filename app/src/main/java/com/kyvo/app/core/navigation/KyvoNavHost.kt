@@ -27,6 +27,8 @@ import com.kyvo.app.feature.dishes.presentation.AddSavedDishToDayRoute
 import com.kyvo.app.feature.dishes.presentation.SavedDishDetailRoute
 import com.kyvo.app.feature.dishes.presentation.SavedDishEditorRoute
 import com.kyvo.app.feature.dishes.presentation.SavedDishesRoute
+import com.kyvo.app.feature.mealshare.presentation.CameraPermissionGate
+import com.kyvo.app.feature.mealshare.presentation.CameraScreen
 import com.kyvo.app.feature.onboarding.presentation.OnboardingRoute
 import kotlinx.coroutines.launch
 
@@ -116,6 +118,8 @@ fun KyvoNavHost(
         composable(KyvoDestination.FoodPlaceholder.route) { entry ->
             FoodStatePlaceholder(Uri.decode(entry.arguments?.getString("name").orEmpty()), onBack = { navController.popBackStack() })
         }
+        composable(KyvoDestination.MealShare.route) { CameraPermissionGate(onGranted = { navController.navigate(KyvoDestination.MealShareCamera.route) }, onBack = { navController.popBackStack() }) }
+        composable(KyvoDestination.MealShareCamera.route) { CameraScreen(onBack = { navController.popBackStack() }) }
         composable(KyvoDestination.SavedDishes.route) {
             savedDishRepository?.let { repository ->
                 SavedDishesRoute(repository, onBack = { navController.popBackStack() }, onCreate = { navController.navigate("dishes/editor/new") }, onDetail = { id -> navController.navigate("dishes/detail/${Uri.encode(id)}") })
