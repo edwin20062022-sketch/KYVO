@@ -30,6 +30,15 @@ class MealShareDraftViewModelTest {
     }
 
     @Test
+    fun observingTheSamePendingItemTwiceKeepsOneItem() {
+        val viewModel = MealShareDraftViewModel(SavedStateHandle())
+        val pending = item("pending")
+        viewModel.addMealItemIfAbsent(pending)
+        viewModel.addMealItemIfAbsent(pending)
+        assertEquals(listOf("pending"), viewModel.draft.value.items.map(MealItem::id))
+    }
+
+    @Test
     fun removeMealItemRecalculatesTotals() {
         val viewModel = MealShareDraftViewModel(SavedStateHandle())
         viewModel.addMealItem(item("one"))

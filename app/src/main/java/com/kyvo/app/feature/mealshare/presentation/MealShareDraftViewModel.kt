@@ -49,6 +49,12 @@ class MealShareDraftViewModel(private val savedStateHandle: SavedStateHandle) : 
         updateItems(_draft.value.items + item)
     }
 
+    fun addMealItemIfAbsent(item: MealItem) {
+        if (_draft.value.items.none { it.id == item.id }) {
+            addMealItem(item)
+        }
+    }
+
     fun updateMealItem(item: MealItem) {
         updateItems(_draft.value.items.map { current -> if (current.id == item.id) item else current })
     }

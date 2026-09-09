@@ -28,6 +28,7 @@ import com.kyvo.app.feature.food.presentation.FoodPortionRoute
 import com.kyvo.app.feature.food.presentation.FoodResultsRoute
 import com.kyvo.app.feature.food.presentation.FoodSearchRoute
 import com.kyvo.app.feature.food.presentation.FoodStatePlaceholder
+import com.kyvo.app.feature.food.domain.model.FoodType
 import com.kyvo.app.feature.dishes.domain.repository.SavedDishRepository
 import com.kyvo.app.feature.dishes.presentation.AddSavedDishToDayRoute
 import com.kyvo.app.feature.dishes.presentation.SavedDishDetailRoute
@@ -147,6 +148,10 @@ fun KyvoNavHost(
                             putInt("protein", item.protein)
                             putInt("carbohydrates", item.carbohydrates)
                             putInt("fat", item.fat)
+                            item.image?.let { putString("image", it) }
+                            item.fiber?.let { putDouble("fiber", it) }
+                            item.sugar?.let { putDouble("sugar", it) }
+                            item.sodiumMg?.let { putDouble("sodiumMg", it) }
                             putDouble("grams", item.grams ?: item.quantity)
                             putString("foodId", item.foodId)
                             putString("foodType", item.foodType?.name)
@@ -195,6 +200,15 @@ fun KyvoNavHost(
         composable(KyvoDestination.MealShareMealBuilder.route) { entry ->
             val mealShareEntry = remember(navController, entry) { navController.getBackStackEntry(KyvoDestination.MealShare.route) }
             val draft: MealShareDraftViewModel = viewModel(mealShareEntry)
+            val pendingItem by entry.savedStateHandle
+                .getStateFlow<Bundle?>(MEAL_SHARE_PENDING_ITEM, null)
+                .collectAsState()
+            LaunchedEffect(pendingItem) {
+                pendingItem?.toMealItem()?.let(draft::addMealItemIfAbsent)
+                if (pendingItem != null) {
+                    entry.savedStateHandle[MEAL_SHARE_PENDING_ITEM] = null
+                }
+            }
             MealShareMealBuilderScreen(
                 draft = draft.draft.collectAsState().value,
                 onMealTypeSelected = draft::setMealType,
@@ -242,6 +256,33 @@ private fun foodSelectionContext(entry: androidx.navigation.NavBackStackEntry): 
         ?: FoodSelectionContext.NORMAL_MEAL_LOGGING
 
 private const val MEAL_SHARE_PENDING_ITEM = "meal_share_pending_item"
+
+private fun Bundle.toMealItem(): com.kyvo.app.feature.home.domain.model.MealItem? {
+    val id = getString("id") ?: return null
+    val name = getString("name") ?: return null
+    val unit = getString("unit") ?: return null
+    val quantity = getDouble("quantity", 0.0)
+    if (quantity <= 0.0) return null
+    return com.kyvo.app.feature.home.domain.model.MealItem(
+        id = id,
+        name = name,
+        quantity = quantity,
+        unit = unit,
+        calories = getInt("calories", 0),
+        protein = getInt("protein", 0),
+        carbohydrates = getInt("carbohydrates", 0),
+        fat = getInt("fat", 0),
+        image = getString("image"),
+        fiber = getNullableDouble("fiber"),
+        sugar = getNullableDouble("sugar"),
+        sodiumMg = getNullableDouble("sodiumMg"),
+        grams = getDouble("grams", quantity),
+        foodId = getString("foodId"),
+        foodType = getString("foodType")?.let { value -> runCatching { FoodType.valueOf(value) }.getOrNull() },
+    )
+}
+
+private fun Bundle.getNullableDouble(key: String): Double? = if (containsKey(key)) getDouble(key) else null
 
 internal fun foodSearchRoute(context: FoodSelectionContext) = "food/search?selectionContext=${context.name}"
 internal fun foodResultsRoute(query: String, context: FoodSelectionContext) = "food/results/${Uri.encode(query)}?selectionContext=${context.name}"
