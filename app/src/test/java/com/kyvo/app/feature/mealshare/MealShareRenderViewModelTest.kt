@@ -97,4 +97,4 @@ class MealShareRenderViewModelTest {
     }
 }
 
-private fun renderResult() = MealShareRenderResult(File("/cache/render.jpg"), 1080, 1029, "fingerprint")
+private fun renderResult() = MealShareRenderResult(File("/cache/render.jpg"), 1080, 931, "fingerprint")

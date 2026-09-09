@@ -9,6 +9,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -52,6 +54,8 @@ import com.kyvo.app.feature.mealshare.domain.model.MealShareTemplate
 import com.kyvo.app.feature.mealshare.domain.model.MealShareTemplateSpecs
 import com.kyvo.app.feature.mealshare.domain.model.renderFingerprint
 import com.kyvo.app.feature.mealshare.domain.model.toOverlayData
+
+internal const val MEAL_SHARE_PREVIEW_ASPECT_RATIO = MealShareTemplateSpecs.aspectRatio
 
 @Composable
 fun MealShareEditorScreen(
@@ -100,13 +104,13 @@ private fun RenderPreview(draft: MealShareDraft, overlay: MealShareOverlayData, 
             model = renderState.result.file,
             contentDescription = "Imagen Meal Share generada",
             contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxWidth().aspectRatio(MealShareTemplateSpecs.aspectRatio).clip(RoundedCornerShape(26.dp)),
+            modifier = Modifier.fillMaxWidth().aspectRatio(MEAL_SHARE_PREVIEW_ASPECT_RATIO).clip(RoundedCornerShape(26.dp)),
         )
         else -> MealSharePhotoOverlay(
             photoUri = draft.photoUri,
             template = draft.template,
             data = overlay,
-            modifier = Modifier.fillMaxWidth().aspectRatio(MealShareTemplateSpecs.aspectRatio),
+            modifier = Modifier.fillMaxWidth().aspectRatio(MEAL_SHARE_PREVIEW_ASPECT_RATIO),
         )
     }
 }
@@ -201,7 +205,8 @@ internal fun MealSharePhotoOverlay(
     compact: Boolean = false,
 ) {
     val shape = RoundedCornerShape(if (compact) 0.dp else 26.dp)
-    Box(modifier.clip(shape).background(MaterialTheme.colorScheme.surfaceVariant)) {
+    BoxWithConstraints(modifier.clip(shape).background(MaterialTheme.colorScheme.surfaceVariant)) {
+        val denseContent = compact || maxWidth < 520.dp
         if (photoUri.isNullOrBlank()) {
             Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant))
         } else {
@@ -213,22 +218,23 @@ internal fun MealSharePhotoOverlay(
             )
         }
         when (template) {
-            MealShareTemplate.MINIMAL -> MinimalOverlay(data, compact)
-            MealShareTemplate.PERFORMANCE -> PerformanceOverlay(data, compact)
-            MealShareTemplate.EDITORIAL -> EditorialOverlay(data, compact)
+            MealShareTemplate.MINIMAL -> MinimalOverlay(data, denseContent, MealShareTemplateSpecs.forTemplate(template), maxWidth, maxHeight)
+            MealShareTemplate.PERFORMANCE -> PerformanceOverlay(data, denseContent, MealShareTemplateSpecs.forTemplate(template), maxWidth, maxHeight)
+            MealShareTemplate.EDITORIAL -> EditorialOverlay(data, denseContent, MealShareTemplateSpecs.forTemplate(template), maxWidth, maxHeight)
         }
     }
 }
 
 @Composable
-private fun BoxScope.MinimalOverlay(data: MealShareOverlayData, compact: Boolean) {
+private fun BoxScope.MinimalOverlay(data: MealShareOverlayData, compact: Boolean, spec: com.kyvo.app.feature.mealshare.domain.model.MealShareTemplateSpec, width: androidx.compose.ui.unit.Dp, height: androidx.compose.ui.unit.Dp) {
     Surface(
         color = Color(0xD91A1A1F),
         shape = RoundedCornerShape(if (compact) 10.dp else 20.dp),
         modifier = Modifier
-            .align(Alignment.TopEnd)
-            .padding(if (compact) 8.dp else 16.dp)
-            .fillMaxWidth(if (compact) .74f else .62f),
+            .align(Alignment.TopStart)
+            .offset(x = width * spec.overlayLeftFraction, y = height * spec.overlayTopFraction)
+            .width(width * spec.overlayWidthFraction)
+            .height(height * spec.overlayHeightFraction),
     ) {
         Column(Modifier.padding(if (compact) 8.dp else 16.dp)) {
             KyvoLogo(compact)
@@ -241,11 +247,13 @@ private fun BoxScope.MinimalOverlay(data: MealShareOverlayData, compact: Boolean
 }
 
 @Composable
-private fun BoxScope.PerformanceOverlay(data: MealShareOverlayData, compact: Boolean) {
+private fun BoxScope.PerformanceOverlay(data: MealShareOverlayData, compact: Boolean, spec: com.kyvo.app.feature.mealshare.domain.model.MealShareTemplateSpec, width: androidx.compose.ui.unit.Dp, height: androidx.compose.ui.unit.Dp) {
     Column(
         modifier = Modifier
-            .align(Alignment.BottomCenter)
-            .fillMaxWidth()
+            .align(Alignment.TopStart)
+            .offset(x = width * spec.overlayLeftFraction, y = height * spec.overlayTopFraction)
+            .width(width * spec.overlayWidthFraction)
+            .height(height * spec.overlayHeightFraction)
             .background(Color(0xE80B0B10))
             .padding(if (compact) 8.dp else 18.dp),
     ) {
@@ -264,14 +272,15 @@ private fun BoxScope.PerformanceOverlay(data: MealShareOverlayData, compact: Boo
 }
 
 @Composable
-private fun BoxScope.EditorialOverlay(data: MealShareOverlayData, compact: Boolean) {
+private fun BoxScope.EditorialOverlay(data: MealShareOverlayData, compact: Boolean, spec: com.kyvo.app.feature.mealshare.domain.model.MealShareTemplateSpec, width: androidx.compose.ui.unit.Dp, height: androidx.compose.ui.unit.Dp) {
     Surface(
         color = Color(0xF7FFFFFF),
         shape = RoundedCornerShape(if (compact) 0.dp else 18.dp),
         modifier = Modifier
-            .align(Alignment.CenterStart)
-            .fillMaxWidth(if (compact) .64f else .58f)
-            .padding(if (compact) 0.dp else 14.dp),
+            .align(Alignment.TopStart)
+            .offset(x = width * spec.overlayLeftFraction, y = height * spec.overlayTopFraction)
+            .width(width * spec.overlayWidthFraction)
+            .height(height * spec.overlayHeightFraction),
     ) {
         Column(Modifier.padding(if (compact) 8.dp else 18.dp)) {
             KyvoLogo(compact)
@@ -305,16 +314,16 @@ private fun ImageMark(compact: Boolean) {
 
 @Composable
 private fun MacroLine(data: MealShareOverlayData, color: Color, compact: Boolean) {
-    Row(Modifier.fillMaxWidth().padding(top = if (compact) 4.dp else 10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-        MacroText(data.proteinLabel, color, compact)
-        MacroText(data.carbohydratesLabel, color, compact)
-        MacroText(data.fatLabel, color, compact)
+    Row(Modifier.fillMaxWidth().padding(top = if (compact) 4.dp else 10.dp)) {
+        MacroText(data.proteinLabel, color, compact, Modifier.weight(1f))
+        MacroText(data.carbohydratesLabel, color, compact, Modifier.weight(1f))
+        MacroText(data.fatLabel, color, compact, Modifier.weight(1f))
     }
 }
 
 @Composable
-private fun MacroText(value: String, color: Color, compact: Boolean) {
-    Text(value, color = color, fontWeight = FontWeight.SemiBold, style = if (compact) MaterialTheme.typography.labelSmall else MaterialTheme.typography.bodyMedium)
+private fun MacroText(value: String, color: Color, compact: Boolean, modifier: Modifier) {
+    Text(value, color = color, fontWeight = FontWeight.SemiBold, style = if (compact) MaterialTheme.typography.labelSmall else MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = modifier)
 }
 
 private fun MealShareTemplate.label() = when (this) {

@@ -49,6 +49,7 @@ class MealShareRenderViewModel(private val renderer: MealShareImageRenderer) : V
                     _state.value = if (latestDraftFingerprint == fingerprint) {
                         MealShareRenderState.Success(result)
                     } else {
+                        result.deleteOwnedRender()
                         MealShareRenderState.Idle
                     }
                 },
@@ -67,6 +68,7 @@ class MealShareRenderViewModel(private val renderer: MealShareImageRenderer) : V
         latestDraftFingerprint = fingerprint
         val current = _state.value
         if (current is MealShareRenderState.Success && current.result.fingerprint != fingerprint) {
+            current.result.deleteOwnedRender()
             _state.value = MealShareRenderState.Idle
         }
     }
@@ -77,4 +79,8 @@ class MealShareRenderViewModel(private val renderer: MealShareImageRenderer) : V
             override fun <T : ViewModel> create(modelClass: Class<T>): T = MealShareRenderViewModel(renderer) as T
         }
     }
+}
+
+private fun MealShareRenderResult.deleteOwnedRender() {
+    if (file.name.startsWith("meal_share_render_") && file.extension.equals("jpg", ignoreCase = true)) file.delete()
 }

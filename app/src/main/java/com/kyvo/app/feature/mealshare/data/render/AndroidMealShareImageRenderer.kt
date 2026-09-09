@@ -86,6 +86,14 @@ class AndroidMealShareImageRenderer(private val context: Context) : MealShareIma
                 ExifInterface.ORIENTATION_ROTATE_270 -> postRotate(270f)
                 ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> postScale(-1f, 1f)
                 ExifInterface.ORIENTATION_FLIP_VERTICAL -> postScale(1f, -1f)
+                ExifInterface.ORIENTATION_TRANSPOSE -> {
+                    postRotate(90f)
+                    postScale(-1f, 1f)
+                }
+                ExifInterface.ORIENTATION_TRANSVERSE -> {
+                    postRotate(270f)
+                    postScale(-1f, 1f)
+                }
             }
         }
         if (matrix.isIdentity) return bitmap
@@ -110,43 +118,46 @@ class AndroidMealShareImageRenderer(private val context: Context) : MealShareIma
 
     private fun Canvas.drawMinimal(data: MealShareOverlayData) {
         val spec = MealShareTemplateSpecs.forTemplate(MealShareTemplate.MINIMAL)
-        val margin = (width * spec.outerMarginFraction).toInt()
         val cardWidth = (width * spec.overlayWidthFraction).toInt()
         val cardHeight = (height * spec.overlayHeightFraction).toInt()
-        val left = width - margin - cardWidth
-        val top = margin
+        val left = (width * spec.overlayLeftFraction).toInt()
+        val top = (height * spec.overlayTopFraction).toInt()
         drawRoundRect(RectF(left.toFloat(), top.toFloat(), (left + cardWidth).toFloat(), (top + cardHeight).toFloat()), 32f, 32f, paint(Color.argb(217, 26, 26, 31)))
-        drawBranding(left + 32, top + 28, 164, 46)
-        drawTextFitted(data.title, left + 32f, top + 126f, cardWidth - 64f, 40f, Color.WHITE, Typeface.BOLD)
-        drawTextFitted(data.caloriesLabel, left + 32f, top + 190f, cardWidth - 64f, 62f, Color.WHITE, Typeface.BOLD)
-        drawMacroRow(data, left + 32f, top + cardHeight - 38f, cardWidth - 64f, Color.WHITE, 25f)
+        val inset = (cardWidth * .08f).toInt()
+        drawBranding(left + inset, top + (cardHeight * .08f).toInt(), (cardWidth * .5f).toInt(), (cardHeight * .15f).toInt())
+        drawTextFitted(data.title, (left + inset).toFloat(), top + cardHeight * .43f, cardWidth - inset * 2f, cardHeight * .13f, Color.WHITE, Typeface.BOLD)
+        drawTextFitted(data.caloriesLabel, (left + inset).toFloat(), top + cardHeight * .66f, cardWidth - inset * 2f, cardHeight * .20f, Color.WHITE, Typeface.BOLD)
+        drawMacroRow(data, (left + inset).toFloat(), top + cardHeight * .88f, cardWidth - inset * 2f, Color.WHITE, cardHeight * .09f)
     }
 
     private fun Canvas.drawPerformance(data: MealShareOverlayData) {
         val spec = MealShareTemplateSpecs.forTemplate(MealShareTemplate.PERFORMANCE)
+        val panelWidth = (width * spec.overlayWidthFraction).toInt()
         val panelHeight = (height * spec.overlayHeightFraction).toInt()
-        val top = height - panelHeight
-        drawRect(0f, top.toFloat(), width.toFloat(), height.toFloat(), paint(Color.argb(232, 11, 11, 16)))
-        drawTextFitted(data.title, 46f, top + 66f, width - 180f, 38f, Color.WHITE, Typeface.BOLD)
-        drawTextFitted(data.calories.toString(), 46f, top + 154f, width * .55f, 84f, PURPLE, Typeface.BOLD)
-        drawTextFitted("kcal", width * .48f, top + 150f, width * .17f, 30f, Color.WHITE, Typeface.NORMAL)
-        drawMacroRow(data, 46f, height - 42f, width - 190f, Color.WHITE, 28f)
-        drawMark(width - 138, top + 64, 88)
+        val left = (width * spec.overlayLeftFraction).toInt()
+        val top = (height * spec.overlayTopFraction).toInt()
+        drawRect(left.toFloat(), top.toFloat(), (left + panelWidth).toFloat(), (top + panelHeight).toFloat(), paint(Color.argb(232, 11, 11, 16)))
+        val inset = (panelWidth * .045f).toInt()
+        drawTextFitted(data.title, (left + inset).toFloat(), top + panelHeight * .24f, panelWidth * .70f, panelHeight * .14f, Color.WHITE, Typeface.BOLD)
+        drawTextFitted(data.calories.toString(), (left + inset).toFloat(), top + panelHeight * .60f, panelWidth * .48f, panelHeight * .32f, PURPLE, Typeface.BOLD)
+        drawTextFitted("kcal", left + panelWidth * .48f, top + panelHeight * .60f, panelWidth * .16f, panelHeight * .12f, Color.WHITE, Typeface.NORMAL)
+        drawMacroRow(data, (left + inset).toFloat(), top + panelHeight * .87f, panelWidth * .74f, Color.WHITE, panelHeight * .12f)
+        drawMark(left + panelWidth - (panelWidth * .14f).toInt(), top + (panelHeight * .20f).toInt(), (panelWidth * .10f).toInt())
     }
 
     private fun Canvas.drawEditorial(data: MealShareOverlayData) {
         val spec = MealShareTemplateSpecs.forTemplate(MealShareTemplate.EDITORIAL)
-        val margin = (width * spec.outerMarginFraction).toInt()
         val cardWidth = (width * spec.overlayWidthFraction).toInt()
         val cardHeight = (height * spec.overlayHeightFraction).toInt()
-        val left = margin
-        val top = (height - cardHeight) / 2
+        val left = (width * spec.overlayLeftFraction).toInt()
+        val top = (height * spec.overlayTopFraction).toInt()
         drawRoundRect(RectF(left.toFloat(), top.toFloat(), (left + cardWidth).toFloat(), (top + cardHeight).toFloat()), 30f, 30f, paint(Color.argb(247, 255, 255, 255)))
-        drawBranding(left + 34, top + 36, 174, 48)
-        drawTextFitted(data.title, left + 34f, top + 154f, cardWidth - 68f, 46f, INK, Typeface.BOLD)
-        drawTextFitted(data.caloriesLabel, left + 34f, top + 235f, cardWidth - 68f, 64f, INK, Typeface.BOLD)
-        drawMacroRow(data, left + 34f, top + 312f, cardWidth - 68f, INK, 25f)
-        drawTextFitted(data.mealTypeLabel.uppercase(), left + 34f, top + cardHeight - 42f, cardWidth - 68f, 20f, SLATE, Typeface.BOLD)
+        val inset = (cardWidth * .06f).toInt()
+        drawBranding(left + inset, top + (cardHeight * .06f).toInt(), (cardWidth * .55f).toInt(), (cardHeight * .10f).toInt())
+        drawTextFitted(data.title, (left + inset).toFloat(), top + cardHeight * .30f, cardWidth - inset * 2f, cardHeight * .08f, INK, Typeface.BOLD)
+        drawTextFitted(data.caloriesLabel, (left + inset).toFloat(), top + cardHeight * .43f, cardWidth - inset * 2f, cardHeight * .12f, INK, Typeface.BOLD)
+        drawMacroRow(data, (left + inset).toFloat(), top + cardHeight * .57f, cardWidth - inset * 2f, INK, cardHeight * .045f)
+        drawTextFitted(data.mealTypeLabel.uppercase(), (left + inset).toFloat(), top + cardHeight * .93f, cardWidth - inset * 2f, cardHeight * .035f, SLATE, Typeface.BOLD)
     }
 
     private fun Canvas.drawMacroRow(data: MealShareOverlayData, left: Float, baseline: Float, availableWidth: Float, color: Int, textSize: Float) {
@@ -196,11 +207,30 @@ class AndroidMealShareImageRenderer(private val context: Context) : MealShareIma
                 check(bitmap.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, stream)) { "No se pudo codificar la imagen Meal Share." }
             }
             check(partial.renameTo(output)) { "No se pudo finalizar la imagen Meal Share." }
+            verifyOutput(output, bitmap.width, bitmap.height)
+            cleanupSupersededOutputs(directory, output)
             Result.success(MealShareRenderResult(output, bitmap.width, bitmap.height, fingerprint))
         } catch (error: Exception) {
             partial.delete()
             output.delete()
             Result.failure(error)
+        }
+    }
+
+    private fun verifyOutput(file: File, expectedWidth: Int, expectedHeight: Int) {
+        check(file.extension.equals("jpg", ignoreCase = true) && file.length() > 0L) { "El archivo JPEG generado no es válido." }
+        file.inputStream().use { stream ->
+            check(stream.read() == 0xFF && stream.read() == 0xD8) { "El archivo generado no tiene cabecera JPEG." }
+        }
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(file.path, bounds)
+        check(bounds.outWidth == expectedWidth && bounds.outHeight == expectedHeight) { "La imagen Meal Share generada tiene dimensiones inesperadas." }
+    }
+
+    private fun cleanupSupersededOutputs(directory: File, keep: File) {
+        directory.listFiles()?.forEach { candidate ->
+            val isOwnedRender = candidate.name.startsWith("meal_share_render_") && (candidate.extension == "jpg" || candidate.extension == "partial")
+            if (isOwnedRender && candidate != keep) candidate.delete()
         }
     }
 

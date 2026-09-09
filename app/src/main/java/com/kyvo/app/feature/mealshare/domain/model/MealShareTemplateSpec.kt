@@ -5,20 +5,22 @@ import kotlin.math.roundToInt
 /** Shared visual contract for the Compose preview and the independent image renderer. */
 data class MealShareTemplateSpec(
     val aspectRatio: Float,
+    val overlayLeftFraction: Float,
+    val overlayTopFraction: Float,
     val overlayWidthFraction: Float,
     val overlayHeightFraction: Float,
-    val outerMarginFraction: Float,
 )
 
 object MealShareTemplateSpecs {
     const val exportWidth = 1080
-    const val aspectRatio = 1.05f
+    /** Measured from the Meal Share editor card in the approved KYVO mockup. */
+    const val aspectRatio = 1.16f
     val exportHeight: Int = (exportWidth / aspectRatio).roundToInt()
 
     fun forTemplate(template: MealShareTemplate): MealShareTemplateSpec = when (template) {
-        MealShareTemplate.MINIMAL -> MealShareTemplateSpec(aspectRatio, .62f, .34f, .04f)
-        MealShareTemplate.PERFORMANCE -> MealShareTemplateSpec(aspectRatio, 1f, .29f, 0f)
-        MealShareTemplate.EDITORIAL -> MealShareTemplateSpec(aspectRatio, .58f, .60f, .04f)
+        MealShareTemplate.MINIMAL -> MealShareTemplateSpec(aspectRatio, .68f, .03f, .30f, .32f)
+        MealShareTemplate.PERFORMANCE -> MealShareTemplateSpec(aspectRatio, 0f, .65f, 1f, .35f)
+        MealShareTemplate.EDITORIAL -> MealShareTemplateSpec(aspectRatio, 0f, 0f, .58f, 1f)
     }
 }
 
