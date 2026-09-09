@@ -37,17 +37,17 @@ class MealShareRenderLayoutTest {
         val portrait = centeredCropRect(2000, 4000, MealShareTemplateSpecs.aspectRatio)
         val landscape = centeredCropRect(4000, 2000, MealShareTemplateSpecs.aspectRatio)
         val square = centeredCropRect(2000, 2000, MealShareTemplateSpecs.aspectRatio)
-        val matching = centeredCropRect(2320, 2000, MealShareTemplateSpecs.aspectRatio)
+        val matching = centeredCropRect(1125, 2000, MealShareTemplateSpecs.aspectRatio)
 
         assertEquals(2000, portrait.width)
         assertTrue(portrait.height < 4000)
         assertEquals(2000, landscape.height)
         assertTrue(landscape.width < 4000)
-        assertEquals(2000, square.width)
-        assertTrue(square.height < 2000)
+        assertEquals(2000, square.height)
+        assertTrue(square.width < 2000)
         assertEquals(0, matching.left)
         assertEquals(0, matching.top)
-        assertEquals(2320, matching.width)
+        assertEquals(1125, matching.width)
         assertEquals(2000, matching.height)
     }
 
@@ -70,7 +70,7 @@ class MealShareRenderLayoutTest {
     fun renderResultUsesTheCanonicalOutputContract() {
         val result = MealShareRenderResult(File("/cache/meal_share/rendered/result.jpg"), MealShareTemplateSpecs.exportWidth, MealShareTemplateSpecs.exportHeight, "draft")
         assertEquals(1080, result.width)
-        assertEquals(931, result.height)
+        assertEquals(1920, result.height)
         assertTrue(result.file.extension.equals("jpg", ignoreCase = true))
     }
 }

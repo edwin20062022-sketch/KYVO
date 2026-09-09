@@ -1,9 +1,11 @@
 package com.kyvo.app.feature.mealshare
 
 import androidx.lifecycle.SavedStateHandle
+import com.kyvo.app.feature.mealshare.domain.model.ManualFoodInput
 import com.kyvo.app.feature.mealshare.domain.model.MealSharePhotoSource
 import com.kyvo.app.feature.mealshare.domain.model.MealShareTemplate
 import com.kyvo.app.feature.mealshare.domain.model.renderFingerprint
+import com.kyvo.app.feature.mealshare.domain.model.toMealItem
 import com.kyvo.app.feature.mealshare.presentation.MealShareDraftViewModel
 import com.kyvo.app.feature.mealshare.presentation.MealShareFinalizationState
 import com.kyvo.app.feature.mealshare.domain.render.MealShareRenderResult
@@ -153,6 +155,52 @@ class MealShareDraftViewModelTest {
         viewModel.removeMealItem("one")
         assertTrue(viewModel.draft.value.items.isEmpty())
         assertEquals(0, viewModel.draft.value.calories)
+    }
+
+    @Test
+    fun manualItemCanBeAddedEditedRemovedAndMixedWithCatalogItems() {
+        val viewModel = MealShareDraftViewModel(SavedStateHandle())
+        val manual = ManualFoodInput("Bowl casero", 10.0, 20.0, 5.0).toMealItem("manual")!!
+        viewModel.addMealItem(item("catalog", calories = 200))
+        viewModel.addMealItem(manual)
+
+        assertEquals(listOf("catalog", "manual"), viewModel.draft.value.items.map(MealItem::id))
+        assertEquals(365, viewModel.draft.value.calories)
+        assertEquals(15, viewModel.draft.value.protein)
+        assertEquals(60, viewModel.draft.value.carbohydrates)
+        assertEquals(7, viewModel.draft.value.fat)
+
+        val edited = ManualFoodInput("Bowl casero", 12.0, 20.0, 5.0).toMealItem("manual")!!
+        viewModel.updateMealItem(edited)
+        assertEquals(173, viewModel.draft.value.items.single { it.id == "manual" }.calories)
+
+        viewModel.removeMealItem("manual")
+        assertEquals(listOf("catalog"), viewModel.draft.value.items.map(MealItem::id))
+        assertEquals(200, viewModel.draft.value.calories)
+    }
+
+    @Test
+    fun manualItemUsesTheSameIdempotentFinalPersistencePath() = runTest(dispatcher) {
+        val repository = RecordingMealRepository()
+        val viewModel = MealShareDraftViewModel(SavedStateHandle())
+        val manual = ManualFoodInput("Ensalada de mamá", 10.0, 20.0, 5.0).toMealItem("manual-snapshot")!!
+        viewModel.setGalleryPhotoUri("content://picker/photo")
+        viewModel.addMealItem(manual)
+        viewModel.setRenderedResult(renderResultFor(viewModel.draft.value))
+
+        viewModel.confirmFinalMeal(repository)
+        advanceUntilIdle()
+        viewModel.confirmFinalMeal(repository)
+        advanceUntilIdle()
+
+        assertEquals(1, repository.added.size)
+        val persisted = repository.added.single().items.single()
+        assertEquals("manual-snapshot", persisted.id)
+        assertEquals("Ensalada de mamá", persisted.name)
+        assertEquals("porción", persisted.unit)
+        assertEquals(165, persisted.calories)
+        assertNull(persisted.foodId)
+        assertNull(persisted.fiber)
     }
     @Test
     fun gallerySelectionStoresContentUriAndSource() {
@@ -333,7 +381,7 @@ class MealShareDraftViewModelTest {
             writeBytes(byteArrayOf(1, 2, 3))
             deleteOnExit()
         }
-        return MealShareRenderResult(rendered, 1080, 931, draft.renderFingerprint())
+        return MealShareRenderResult(rendered, 1080, 1920, draft.renderFingerprint())
     }
 
     private class RecordingMealRepository(
