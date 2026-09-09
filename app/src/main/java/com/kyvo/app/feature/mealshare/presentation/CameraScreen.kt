@@ -2,6 +2,8 @@ package com.kyvo.app.feature.mealshare.presentation
 
 import android.annotation.SuppressLint
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -30,20 +32,27 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.compose.foundation.clickable
+import java.io.File
+import java.util.UUID
 
 @SuppressLint("UnsafeOptInUsageError")
 @Composable
-fun CameraScreen(onBack: () -> Unit) {
+fun CameraScreen(onBack: () -> Unit, onPhotoCaptured: (File) -> Unit = {}) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     var error by remember { mutableStateOf<String?>(null) }
     var ready by remember { mutableStateOf(false) }
+    var capturing by remember { mutableStateOf(false) }
+    var captureError by remember { mutableStateOf<String?>(null) }
     val previewView = remember { PreviewView(context).apply { scaleType = PreviewView.ScaleType.FILL_CENTER } }
+    val imageCapture = remember { ImageCapture.Builder().setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY).build() }
     LaunchedEffect(previewView, lifecycleOwner) {
         runCatching {
             val provider = ProcessCameraProvider.getInstance(context).get()
             provider.unbindAll()
-            provider.bindToLifecycle(lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, Preview.Builder().build().also { it.setSurfaceProvider(previewView.surfaceProvider) })
+            imageCapture.targetRotation = previewView.display?.rotation ?: android.view.Surface.ROTATION_0
+            provider.bindToLifecycle(lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, Preview.Builder().build().also { it.setSurfaceProvider(previewView.surfaceProvider) }, imageCapture)
             ready = true
         }.onFailure { error = it.message ?: "No pudimos iniciar la cámara." }
     }
@@ -51,7 +60,16 @@ fun CameraScreen(onBack: () -> Unit) {
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         AndroidView({ previewView }, Modifier.fillMaxSize())
         IconButton(onClick = onBack, modifier = Modifier.align(Alignment.TopStart).padding(20.dp)) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Cancelar", tint = Color.White) }
-        Text(if (error != null) error!! else if (ready) "Toma una foto de tu comida" else "Iniciando cámara…", color = Color.White, modifier = Modifier.align(Alignment.TopCenter).padding(top = 28.dp))
-        Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 38.dp).size(76.dp).background(Color.White.copy(alpha = .95f), androidx.compose.foundation.shape.CircleShape))
+        Text(captureError ?: if (error != null) error!! else if (ready) "Toma una foto de tu comida" else "Iniciando cámara…", color = Color.White, modifier = Modifier.align(Alignment.TopCenter).padding(top = 28.dp))
+        Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 38.dp).size(76.dp).background(if (capturing || !ready) Color.Gray else Color.White.copy(alpha = .95f), androidx.compose.foundation.shape.CircleShape).clickable(enabled = ready && !capturing) {
+            capturing = true
+            val directory = File(context.cacheDir, "meal_share").apply { mkdirs() }
+            val file = File(directory, "meal_share_${System.currentTimeMillis()}_${UUID.randomUUID()}.jpg")
+            val options = ImageCapture.OutputFileOptions.Builder(file).build()
+            imageCapture.takePicture(options, ContextCompat.getMainExecutor(context), object : ImageCapture.OnImageSavedCallback {
+                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) { capturing = false; onPhotoCaptured(file) }
+                override fun onError(exception: ImageCaptureException) { capturing = false; file.delete(); captureError = exception.message ?: "No pudimos guardar la fotografía." }
+            })
+        })
     }
 }
