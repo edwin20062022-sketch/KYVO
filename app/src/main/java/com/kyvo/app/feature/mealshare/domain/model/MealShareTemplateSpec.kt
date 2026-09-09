@@ -13,13 +13,13 @@ data class MealShareTemplateSpec(
 
 object MealShareTemplateSpecs {
     const val exportWidth = 1080
-    /** Measured from the Meal Share editor card in the approved KYVO mockup. */
-    const val aspectRatio = 1.16f
+    /** Vertical Instagram Story contract (9:16) shared by preview, crop and JPEG export. */
+    const val aspectRatio = 9f / 16f
     val exportHeight: Int = (exportWidth / aspectRatio).roundToInt()
 
     fun forTemplate(template: MealShareTemplate): MealShareTemplateSpec = when (template) {
-        MealShareTemplate.MINIMAL -> MealShareTemplateSpec(aspectRatio, .68f, .03f, .30f, .32f)
-        MealShareTemplate.PERFORMANCE -> MealShareTemplateSpec(aspectRatio, 0f, .65f, 1f, .35f)
+        MealShareTemplate.MINIMAL -> MealShareTemplateSpec(aspectRatio, .08f, .62f, .84f, .30f)
+        MealShareTemplate.PERFORMANCE -> MealShareTemplateSpec(aspectRatio, 0f, .68f, 1f, .32f)
         MealShareTemplate.EDITORIAL -> MealShareTemplateSpec(aspectRatio, 0f, 0f, .58f, 1f)
     }
 }

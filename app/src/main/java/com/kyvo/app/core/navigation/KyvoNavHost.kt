@@ -228,6 +228,8 @@ fun KyvoNavHost(
                 draft = draft.draft.collectAsState().value,
                 onMealTypeSelected = draft::setMealType,
                 onAddFood = { navController.navigate(foodSearchRoute(FoodSelectionContext.MEAL_SHARE)) },
+                onAddManualFood = draft::addMealItem,
+                onUpdateManualFood = draft::updateMealItem,
                 onUpdatePortion = draft::updateMealItemPortion,
                 onRemoveFood = draft::removeMealItem,
                 onContinue = { navController.navigate(KyvoDestination.MealShareEditor.route) },
