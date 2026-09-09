@@ -23,4 +23,11 @@ class HomeMacroLayoutTest {
         assertEquals(listOf("Proteína", "Carbohidratos", "Grasas"), DASHBOARD_MACRO_LABELS)
         assertEquals(false, MACRO_CIRCLE_SHOWS_PERCENTAGE)
     }
+
+    @Test
+    fun macroIndicatorsKeepSinglePercentagePerMacroAndFullLabels() {
+        assertEquals(listOf("Proteína", "Carbohidratos", "Grasas"), DASHBOARD_MACRO_LABELS)
+        assertEquals(84f, MACRO_RING_DIAMETER.value, 0f)
+        assertEquals(8f, MACRO_RING_SPACING.value, 0f)
+    }
 }

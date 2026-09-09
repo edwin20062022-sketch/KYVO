@@ -132,10 +132,27 @@ fun HomeScreen(state: HomeUiState, onAddFood: () -> Unit) = HomeScreen(state, on
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Box(contentAlignment = Alignment.Center) {
                 ProgressRing(progressOf(consumed, target), "$name: $consumed de $target gramos", MACRO_RING_DIAMETER, KyvoColors.PurplePrimary, showPercentage = MACRO_CIRCLE_SHOWS_PERCENTAGE)
-                androidx.compose.foundation.Image(painterResource(icon), null, Modifier.size(MACRO_ICON_SIZE), contentScale = ContentScale.Fit)
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier.size(MACRO_RING_DIAMETER)
+                ) {
+                    androidx.compose.foundation.Image(painterResource(icon), null, Modifier.size(MACRO_ICON_SIZE), contentScale = ContentScale.Fit)
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        "${percent(progressOf(consumed, target))}%",
+                        color = KyvoColors.PurplePrimary,
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleSmall,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = TextOverflow.Clip,
+                        modifier = Modifier
+                    )
+                }
             }
             Text(name, color = KyvoColors.PurplePrimary, textAlign = TextAlign.Center, maxLines = 1, softWrap = false, overflow = TextOverflow.Clip, fontSize = labelFontSize, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 8.dp))
-            Text("${percent(progressOf(consumed, target))}%", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Text("$consumed / $target g", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, maxLines = 1)
         }
     }
