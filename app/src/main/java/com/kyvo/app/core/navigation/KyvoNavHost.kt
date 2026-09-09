@@ -42,6 +42,9 @@ import com.kyvo.app.feature.mealshare.presentation.MealSharePhotoPreviewScreen
 import com.kyvo.app.feature.mealshare.presentation.MealShareSourceScreen
 import com.kyvo.app.feature.mealshare.presentation.MealShareMealBuilderScreen
 import com.kyvo.app.feature.mealshare.presentation.MealShareEditorScreen
+import com.kyvo.app.feature.mealshare.presentation.MealShareRenderViewModel
+import com.kyvo.app.feature.mealshare.data.render.AndroidMealShareImageRenderer
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kyvo.app.feature.onboarding.presentation.OnboardingRoute
 import kotlinx.coroutines.launch
@@ -226,9 +229,15 @@ fun KyvoNavHost(
         composable(KyvoDestination.MealShareEditor.route) { entry ->
             val mealShareEntry = remember(navController, entry) { navController.getBackStackEntry(KyvoDestination.MealShare.route) }
             val draft: MealShareDraftViewModel = viewModel(mealShareEntry)
+            val context = LocalContext.current
+            val renderer = remember(context.applicationContext) { AndroidMealShareImageRenderer(context.applicationContext) }
+            val render: MealShareRenderViewModel = viewModel(mealShareEntry, factory = MealShareRenderViewModel.factory(renderer))
             MealShareEditorScreen(
                 draft = draft.draft.collectAsState().value,
                 onTemplateSelected = draft::setTemplate,
+                renderState = render.state.collectAsState().value,
+                onRender = render::render,
+                onDraftChanged = render::invalidateIfStale,
                 onBack = { navController.popBackStack() },
             )
         }

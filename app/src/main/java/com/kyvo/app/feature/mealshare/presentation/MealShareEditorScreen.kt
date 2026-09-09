@@ -29,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,18 +45,25 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.kyvo.app.R
 import com.kyvo.app.core.designsystem.KyvoColors
+import com.kyvo.app.core.designsystem.component.KyvoPrimaryButton
 import com.kyvo.app.feature.mealshare.domain.model.MealShareDraft
 import com.kyvo.app.feature.mealshare.domain.model.MealShareOverlayData
 import com.kyvo.app.feature.mealshare.domain.model.MealShareTemplate
+import com.kyvo.app.feature.mealshare.domain.model.MealShareTemplateSpecs
+import com.kyvo.app.feature.mealshare.domain.model.renderFingerprint
 import com.kyvo.app.feature.mealshare.domain.model.toOverlayData
 
 @Composable
 fun MealShareEditorScreen(
     draft: MealShareDraft,
     onTemplateSelected: (MealShareTemplate) -> Unit,
+    renderState: MealShareRenderState,
+    onRender: (MealShareDraft) -> Unit,
+    onDraftChanged: (String) -> Unit,
     onBack: () -> Unit,
 ) {
     val overlay = draft.toOverlayData()
+    LaunchedEffect(draft.renderFingerprint()) { onDraftChanged(draft.renderFingerprint()) }
     Column(Modifier.fillMaxSize()) {
         EditorHeader(onBack)
         Column(
@@ -65,25 +73,41 @@ fun MealShareEditorScreen(
                 .padding(horizontal = 20.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
-            MealSharePhotoOverlay(
-                photoUri = draft.photoUri,
-                template = draft.template,
-                data = overlay,
-                modifier = Modifier.fillMaxWidth().aspectRatio(1.05f),
-            )
+            RenderPreview(draft, overlay, renderState)
             TemplateSelector(
                 photoUri = draft.photoUri,
                 selected = draft.template,
                 data = overlay,
                 onSelected = onTemplateSelected,
             )
-            Text(
-                "Tu publicación estará lista para compartir en el siguiente paso.",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodySmall,
+            KyvoPrimaryButton(
+                text = if (renderState is MealShareRenderState.Success) "Regenerar imagen final" else "Generar imagen final",
+                onClick = { onRender(draft) },
+                enabled = draft.isReadyToRender && renderState !is MealShareRenderState.Rendering,
+                isLoading = renderState is MealShareRenderState.Rendering,
             )
+            if (renderState is MealShareRenderState.Error) Text(renderState.message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            Text("La imagen se guarda temporalmente en este dispositivo. Compartir llegará en el siguiente paso.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(4.dp))
         }
+    }
+}
+
+@Composable
+private fun RenderPreview(draft: MealShareDraft, overlay: MealShareOverlayData, renderState: MealShareRenderState) {
+    when (renderState) {
+        is MealShareRenderState.Success -> AsyncImage(
+            model = renderState.result.file,
+            contentDescription = "Imagen Meal Share generada",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxWidth().aspectRatio(MealShareTemplateSpecs.aspectRatio).clip(RoundedCornerShape(26.dp)),
+        )
+        else -> MealSharePhotoOverlay(
+            photoUri = draft.photoUri,
+            template = draft.template,
+            data = overlay,
+            modifier = Modifier.fillMaxWidth().aspectRatio(MealShareTemplateSpecs.aspectRatio),
+        )
     }
 }
 
