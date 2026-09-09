@@ -1,5 +1,7 @@
 package com.kyvo.app.core.navigation
 
+enum class FoodSelectionContext { NORMAL_MEAL_LOGGING, MEAL_SHARE }
+
 enum class KyvoDestination(val route: String) {
     Foundation("foundation"),
     Login("login"),
@@ -10,12 +12,12 @@ enum class KyvoDestination(val route: String) {
     Progress("progress"),
     Profile("profile"),
     FoodHub("food/hub"),
-    FoodSearch("food/search"),
+    FoodSearch("food/search?selectionContext={selectionContext}"),
     FoodFrequent("food/frequent"),
     FoodFavorites("food/favorites"),
-    FoodResults("food/results/{query}"),
-    FoodDetail("food/detail/{id}/{type}"),
-    FoodPortion("food/portion/{id}/{type}"),
+    FoodResults("food/results/{query}?selectionContext={selectionContext}"),
+    FoodDetail("food/detail/{id}/{type}?selectionContext={selectionContext}"),
+    FoodPortion("food/portion/{id}/{type}?selectionContext={selectionContext}"),
     FoodPlaceholder("food/placeholder/{name}"),
     SavedDishes("dishes"),
     SavedDishEditor("dishes/editor/{id}"),

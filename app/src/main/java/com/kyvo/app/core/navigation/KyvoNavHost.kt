@@ -84,7 +84,7 @@ fun KyvoNavHost(
         }
         composable(KyvoDestination.FoodHub.route) {
             FoodHubScreen(
-                onSearch = { navController.navigate(KyvoDestination.FoodSearch.route) },
+                onSearch = { navController.navigate(foodSearchRoute(FoodSelectionContext.NORMAL_MEAL_LOGGING)) },
                 onFrequent = { navController.navigate(KyvoDestination.FoodFrequent.route) },
                 onFavorites = { navController.navigate(KyvoDestination.FoodFavorites.route) },
                 onFuture = { title -> navController.navigate("food/placeholder/${Uri.encode(title)}") },
@@ -93,37 +93,41 @@ fun KyvoNavHost(
         }
         composable(KyvoDestination.FoodFrequent.route) {
             foodRepository?.let { repository ->
-                FoodFrequentRoute(repository, onBack = { navController.popBackStack() }, onSelect = { result -> navController.navigate("food/detail/${Uri.encode(result.id)}/${result.type.name}") }, onPortion = { result -> navController.navigate("food/portion/${Uri.encode(result.id)}/${result.type.name}") })
+                FoodFrequentRoute(repository, onBack = { navController.popBackStack() }, onSelect = { result -> navController.navigate(foodDetailRoute(result.id, result.type.name, FoodSelectionContext.NORMAL_MEAL_LOGGING)) }, onPortion = { result -> navController.navigate(foodPortionRoute(result.id, result.type.name, FoodSelectionContext.NORMAL_MEAL_LOGGING)) })
             }
         }
         composable(KyvoDestination.FoodFavorites.route) {
             foodRepository?.let { repository ->
-                FoodFavoritesRoute(repository, onBack = { navController.popBackStack() }, onSelect = { result -> navController.navigate("food/detail/${Uri.encode(result.id)}/${result.type.name}") }, onPortion = { result -> navController.navigate("food/portion/${Uri.encode(result.id)}/${result.type.name}") })
+                FoodFavoritesRoute(repository, onBack = { navController.popBackStack() }, onSelect = { result -> navController.navigate(foodDetailRoute(result.id, result.type.name, FoodSelectionContext.NORMAL_MEAL_LOGGING)) }, onPortion = { result -> navController.navigate(foodPortionRoute(result.id, result.type.name, FoodSelectionContext.NORMAL_MEAL_LOGGING)) })
             }
         }
-        composable(KyvoDestination.FoodSearch.route) {
+        composable(KyvoDestination.FoodSearch.route) { entry ->
             foodRepository?.let { repository ->
-                FoodSearchRoute(repository, onBack = { navController.popBackStack() }, onResults = { query -> navController.navigate("food/results/${Uri.encode(query)}") })
+                val context = foodSelectionContext(entry)
+                FoodSearchRoute(repository, onBack = { navController.popBackStack() }, onResults = { query -> navController.navigate(foodResultsRoute(query, context)) })
             }
         }
         composable(KyvoDestination.FoodResults.route) { entry ->
             foodRepository?.let { repository ->
                 val query = Uri.decode(entry.arguments?.getString("query").orEmpty())
-                FoodResultsRoute(query, repository, onBack = { navController.popBackStack() }, onSelect = { result -> navController.navigate("food/detail/${Uri.encode(result.id)}/${result.type.name}") }, onFuture = {})
+                val context = foodSelectionContext(entry)
+                FoodResultsRoute(query, repository, onBack = { navController.popBackStack() }, onSelect = { result -> navController.navigate(foodDetailRoute(result.id, result.type.name, context)) }, onFuture = {})
             }
         }
         composable(KyvoDestination.FoodDetail.route) { entry ->
             if (foodRepository != null) {
                 val id = Uri.decode(entry.arguments?.getString("id").orEmpty())
                 val type = entry.arguments?.getString("type").orEmpty()
-                FoodDetailRoute(id, type, foodRepository, onBack = { navController.popBackStack() }, onPortion = { navController.navigate("food/portion/${Uri.encode(it.id)}/${it.type.name}") })
+                val context = foodSelectionContext(entry)
+                FoodDetailRoute(id, type, foodRepository, onBack = { navController.popBackStack() }, onPortion = { navController.navigate(foodPortionRoute(it.id, it.type.name, context)) })
             }
         }
         composable(KyvoDestination.FoodPortion.route) { entry ->
             if (foodRepository != null && mealRepository != null) {
                 val id = Uri.decode(entry.arguments?.getString("id").orEmpty())
                 val type = entry.arguments?.getString("type").orEmpty()
-                FoodPortionRoute(id, type, foodRepository, mealRepository, onBack = { navController.popBackStack() }, onRegistered = { navController.popBackStack(KyvoDestination.Home.route, inclusive = false) })
+                val context = foodSelectionContext(entry)
+                FoodPortionRoute(id, type, foodRepository, mealRepository, onBack = { navController.popBackStack() }, onRegistered = { navController.popBackStack(KyvoDestination.Home.route, inclusive = false) }, selectionContext = context)
             }
         }
         composable(KyvoDestination.FoodPlaceholder.route) { entry ->
@@ -168,7 +172,7 @@ fun KyvoNavHost(
             MealShareMealBuilderScreen(
                 draft = draft.draft.collectAsState().value,
                 onMealTypeSelected = draft::setMealType,
-                onAddFood = { navController.navigate(KyvoDestination.MealShareFoodSearchPlaceholder.route) },
+                onAddFood = { navController.navigate(foodSearchRoute(FoodSelectionContext.MEAL_SHARE)) },
                 onUpdatePortion = draft::updateMealItemPortion,
                 onRemoveFood = draft::removeMealItem,
                 onContinue = { navController.navigate(KyvoDestination.MealShareContinuePlaceholder.route) },
@@ -206,6 +210,15 @@ fun KyvoNavHost(
         }
     }
 }
+
+private fun foodSelectionContext(entry: androidx.navigation.NavBackStackEntry): FoodSelectionContext =
+    entry.arguments?.getString("selectionContext")?.let { value -> runCatching { FoodSelectionContext.valueOf(value) }.getOrNull() }
+        ?: FoodSelectionContext.NORMAL_MEAL_LOGGING
+
+private fun foodSearchRoute(context: FoodSelectionContext) = "food/search?selectionContext=${context.name}"
+private fun foodResultsRoute(query: String, context: FoodSelectionContext) = "food/results/${Uri.encode(query)}?selectionContext=${context.name}"
+private fun foodDetailRoute(id: String, type: String, context: FoodSelectionContext) = "food/detail/${Uri.encode(id)}/${type}?selectionContext=${context.name}"
+private fun foodPortionRoute(id: String, type: String, context: FoodSelectionContext) = "food/portion/${Uri.encode(id)}/${type}?selectionContext=${context.name}"
 
 internal fun resolveStartDestination(
     authState: AuthState,

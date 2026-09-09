@@ -81,6 +81,7 @@ import com.kyvo.app.feature.food.domain.model.NutritionAmount
 import com.kyvo.app.feature.food.domain.model.forGrams
 import com.kyvo.app.feature.food.domain.repository.FoodRepository
 import com.kyvo.app.feature.home.domain.model.MealType
+import com.kyvo.app.core.navigation.FoodSelectionContext
 import com.kyvo.app.feature.home.domain.repository.MealRepository
 import java.time.LocalDate
 import kotlinx.coroutines.launch
@@ -262,14 +263,18 @@ private fun FoodDetailContent(food: FoodDetail, favoriteState: FoodFavoriteUiSta
 }
 
 @Composable
-fun FoodPortionRoute(foodId: String, type: String, repository: FoodRepository, mealRepository: MealRepository, onBack: () -> Unit, onRegistered: () -> Unit) {
+fun FoodPortionRoute(foodId: String, type: String, repository: FoodRepository, mealRepository: MealRepository, onBack: () -> Unit, onRegistered: () -> Unit, selectionContext: FoodSelectionContext = FoodSelectionContext.NORMAL_MEAL_LOGGING) {
     val vm: FoodDetailViewModel = viewModel(factory = FoodDetailViewModel.factory(repository, foodId, type))
     val state by vm.state.collectAsStateWithLifecycle()
     when (val current = state) {
         FoodDetailUiState.Loading -> LoadingFood("Cargando alimento…")
         FoodDetailUiState.NotFound -> FoodStateMessage("Alimento no disponible", "No pudimos recuperar este alimento.", "Volver", onBack)
         is FoodDetailUiState.Error -> FoodStateMessage("No pudimos cargar el alimento", current.message, "Reintentar", vm::retry)
-        is FoodDetailUiState.Content -> FoodPortionContent(current.food, mealRepository, onBack, onRegistered)
+        is FoodDetailUiState.Content -> if (selectionContext == FoodSelectionContext.MEAL_SHARE) {
+            FoodStatePlaceholder("Selector de porción · siguiente checkpoint", onBack)
+        } else {
+            FoodPortionContent(current.food, mealRepository, onBack, onRegistered)
+        }
     }
 }
 
