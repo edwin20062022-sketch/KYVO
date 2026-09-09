@@ -60,20 +60,25 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.roundToInt
 
+internal val MACRO_RING_DIAMETER = 84.dp
+internal val MACRO_RING_SPACING = 8.dp
+internal val MACRO_ICON_SIZE = 22.dp
+internal val MACRO_ICON_PERCENTAGE_SPACING = 2.dp
+
 @Composable
-fun HomeRoute(onboardingRepository: OnboardingRepository, mealRepository: MealRepository, onAddFood: () -> Unit = {}, viewModel: HomeViewModel = viewModel(factory = HomeViewModel.factory(onboardingRepository, mealRepository))) {
+fun HomeRoute(onboardingRepository: OnboardingRepository, mealRepository: MealRepository, onAddFood: () -> Unit = {}, onMealShare: () -> Unit = {}, viewModel: HomeViewModel = viewModel(factory = HomeViewModel.factory(onboardingRepository, mealRepository))) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val destination by viewModel.destination.collectAsStateWithLifecycle()
     when (val screen = destination) {
-        HomeDestination.Dashboard -> HomeScreen(state, viewModel::onEvent, onAddFood)
-        HomeDestination.NutritionDetail -> when (val value = state) { is HomeUiState.Content -> NutritionDetailScreen(value.daily, onBack = { viewModel.onEvent(HomeEvent.BackToDashboard) }); else -> HomeScreen(value, viewModel::onEvent) }
+        HomeDestination.Dashboard -> HomeScreen(state, viewModel::onEvent, onAddFood, onMealShare)
+        HomeDestination.NutritionDetail -> when (val value = state) { is HomeUiState.Content -> NutritionDetailScreen(value.daily, onBack = { viewModel.onEvent(HomeEvent.BackToDashboard) }); else -> HomeScreen(value, viewModel::onEvent, onAddFood, onMealShare) }
         is HomeDestination.MealDetail -> MealDetailRoute(mealRepository, screen.mealId, onBack = { viewModel.onEvent(HomeEvent.BackToDashboard) }, onEdit = { viewModel.onEvent(HomeEvent.OpenMealEditor(it)) }, onDelete = { viewModel.onEvent(HomeEvent.DeleteMeal(it)) })
         is HomeDestination.EditMeal -> { val meal by viewModel.mealForEditing(screen.mealId).collectAsStateWithLifecycle(null); MealEditorScreen(meal, onBack = { viewModel.onEvent(HomeEvent.BackToDashboard) }, onSave = { viewModel.onEvent(HomeEvent.UpdateMeal(it)) }, onDelete = { viewModel.onEvent(HomeEvent.DeleteMeal(it)) }) }
     }
 }
 
 @Composable
-fun HomeScreen(state: HomeUiState, onEvent: (HomeEvent) -> Unit, onAddFood: () -> Unit = {}) = Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+fun HomeScreen(state: HomeUiState, onEvent: (HomeEvent) -> Unit, onAddFood: () -> Unit = {}, onMealShare: () -> Unit = {}) = Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
     when (state) {
         HomeUiState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
         is HomeUiState.Error -> ErrorHomeState(state.message, onRetry = { onEvent(HomeEvent.Retry) })
@@ -81,9 +86,9 @@ fun HomeScreen(state: HomeUiState, onEvent: (HomeEvent) -> Unit, onAddFood: () -
             item { DashboardHeader() }
             item { DailySummary(state.daily) }
             item { MacroSummary(state.daily, onDetail = { onEvent(HomeEvent.OpenNutritionDetail) }) }
-            item { MealsSection(state.daily.meals, onMeal = { onEvent(HomeEvent.OpenMeal(it.id)) }, onAddFood = onAddFood) }
+            item { MealsSection(state.daily.meals, onMeal = { onEvent(HomeEvent.OpenMeal(it.id)) }, onAddFood = onAddFood, onMealShare = onMealShare) }
             item { FocusCard() }
-            item { BottomNavigationShell() }
+            item { BottomNavigationShell(onMealShare) }
         }
     }
 }
@@ -110,7 +115,7 @@ fun HomeScreen(state: HomeUiState, onAddFood: () -> Unit) = HomeScreen(state, on
 
 @Composable private fun MacroSummary(daily: DailyNutrition, onDetail: () -> Unit) = KyvoCard(Modifier.padding(horizontal = 20.dp)) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { Text("Macros", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f)); Text("Ver detalle ›", color = KyvoColors.PurplePrimary, modifier = Modifier.heightIn(min = 48.dp).clickable(onClick = onDetail).padding(top = 12.dp)) }
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(MACRO_RING_SPACING)) {
         Box(Modifier.weight(1f)) { MacroRing("Proteína", daily.proteinConsumed, daily.proteinTarget, R.drawable.ic_home_protein) }
         Box(Modifier.weight(1f)) { MacroRing("Carbohidratos", daily.carbohydrateConsumed, daily.carbohydrateTarget, R.drawable.ic_home_carbohydrates) }
         Box(Modifier.weight(1f)) { MacroRing("Grasas", daily.fatConsumed, daily.fatTarget, R.drawable.ic_home_fat) }
@@ -118,19 +123,25 @@ fun HomeScreen(state: HomeUiState, onAddFood: () -> Unit) = HomeScreen(state, on
 }
 
 @Composable private fun MacroRing(name: String, consumed: Int, target: Int, @DrawableRes icon: Int) = Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-    Box(contentAlignment = Alignment.Center) { ProgressRing(progressOf(consumed, target), "$name: $consumed de $target gramos", 96.dp, KyvoColors.PurplePrimary); androidx.compose.foundation.Image(painterResource(icon), null, Modifier.size(30.dp), contentScale = ContentScale.Fit) }
+    Box(contentAlignment = Alignment.Center) {
+        ProgressRing(progressOf(consumed, target), "$name: $consumed de $target gramos", MACRO_RING_DIAMETER, KyvoColors.PurplePrimary, showPercentage = false)
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(MACRO_ICON_PERCENTAGE_SPACING)) {
+            androidx.compose.foundation.Image(painterResource(icon), null, Modifier.size(MACRO_ICON_SIZE), contentScale = ContentScale.Fit)
+            Text("${percent(progressOf(consumed, target))}%", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+        }
+    }
     Text("$consumed g", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold); Text(name, color = KyvoColors.PurplePrimary, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis); Text("$target g meta", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
 }
 
-@Composable private fun MealsSection(meals: List<Meal>, onMeal: (Meal) -> Unit, onAddFood: () -> Unit) = KyvoCard(Modifier.padding(horizontal = 20.dp)) {
+@Composable private fun MealsSection(meals: List<Meal>, onMeal: (Meal) -> Unit, onAddFood: () -> Unit, onMealShare: () -> Unit) = KyvoCard(Modifier.padding(horizontal = 20.dp)) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { Text("Comidas de hoy", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f)); Text("＋ Añadir comida", color = KyvoColors.PurplePrimary, modifier = Modifier.heightIn(min = 48.dp).clickable(onClick = onAddFood).padding(top = 12.dp)) }
-    if (meals.isEmpty()) EmptyMealsState(onAddFood) else meals.forEachIndexed { index, meal -> MealRow(meal, onClick = { onMeal(meal) }); if (index < meals.lastIndex) HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(.55f)) }
+    if (meals.isEmpty()) EmptyMealsState(onAddFood, onMealShare) else meals.forEachIndexed { index, meal -> MealRow(meal, onClick = { onMeal(meal) }); if (index < meals.lastIndex) HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(.55f)) }
 }
 
-@Composable private fun EmptyMealsState(onAddFood: () -> Unit) = Column(Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+@Composable private fun EmptyMealsState(onAddFood: () -> Unit, onMealShare: () -> Unit) = Column(Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
     androidx.compose.foundation.Image(painterResource(R.drawable.ic_home_empty_meals), null, Modifier.size(150.dp), contentScale = ContentScale.Fit)
     Text("Aún no registras comidas", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold); Text("Registra tu primera comida y empieza a avanzar hacia tus objetivos.", color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 6.dp))
-    Row(Modifier.fillMaxWidth().padding(top = 20.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) { HomeCta("Meal Share", Modifier.weight(1f), false); HomeCta("Añadir comida", Modifier.weight(1f), true, onAddFood) }
+    Row(Modifier.fillMaxWidth().padding(top = 20.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) { HomeCta("Meal Share", Modifier.weight(1f), false, onMealShare); HomeCta("Añadir comida", Modifier.weight(1f), true, onAddFood) }
 }
 
 @Composable private fun HomeCta(text: String, modifier: Modifier, filled: Boolean, onClick: () -> Unit = {}) = Box(modifier.heightIn(min = 56.dp).clip(RoundedCornerShape(14.dp)).clickable(onClick = onClick).then(if (filled) Modifier.background(KyvoBrushes.PrimaryAction) else Modifier.background(KyvoColors.PurpleSoft)).padding(12.dp), contentAlignment = Alignment.Center) { Text(text, color = if (filled) Color.White else KyvoColors.PurplePrimary, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center) }
@@ -138,7 +149,10 @@ fun HomeScreen(state: HomeUiState, onAddFood: () -> Unit) = HomeScreen(state, on
 @Composable private fun MealRow(meal: Meal, onClick: () -> Unit) = Row(Modifier.fillMaxWidth().heightIn(min = 78.dp).clickable(onClick = onClick).padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) { Box(Modifier.size(50.dp).clip(CircleShape).background(KyvoColors.PurpleSoft), contentAlignment = Alignment.Center) { Text(meal.type.label.take(1), color = KyvoColors.PurplePrimary, fontWeight = FontWeight.Bold) }; Column(Modifier.weight(1f).padding(start = 12.dp)) { Text(meal.type.label, fontWeight = FontWeight.Bold); Text(meal.title, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis); meal.time?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = KyvoColors.PurplePrimary) } }; Text("${meal.totalCalories} kcal  ›", fontWeight = FontWeight.SemiBold) }
 
 @Composable private fun FocusCard() = KyvoCard(Modifier.padding(horizontal = 20.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)) { Row(Modifier.fillMaxWidth().background(KyvoColors.PurpleSoft).padding(16.dp), verticalAlignment = Alignment.CenterVertically) { androidx.compose.foundation.Image(painterResource(R.drawable.ic_home_focus), null, Modifier.size(56.dp), contentScale = ContentScale.Fit); Column(Modifier.padding(start = 12.dp)) { Text("Tu enfoque de hoy", fontWeight = FontWeight.Bold); Text("Cada comida cuenta. Alimenta tu rendimiento.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall) } } }
-@Composable private fun BottomNavigationShell() = Row(Modifier.fillMaxWidth().padding(20.dp), horizontalArrangement = Arrangement.SpaceAround) { listOf("Inicio", "Comidas", "＋", "Progreso", "Perfil").forEach { Text(it, color = if (it == "Inicio") KyvoColors.PurplePrimary else MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = if (it == "Inicio") FontWeight.Bold else FontWeight.Normal) } }
+@Composable private fun BottomNavigationShell(onMealShare: () -> Unit) = Row(Modifier.fillMaxWidth().padding(20.dp), horizontalArrangement = Arrangement.SpaceAround) {
+    listOf("Inicio", "Comidas", "Progreso", "Perfil").forEach { Text(it, color = if (it == "Inicio") KyvoColors.PurplePrimary else MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = if (it == "Inicio") FontWeight.Bold else FontWeight.Normal) }
+    Text("＋", color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold, modifier = Modifier.heightIn(min = 48.dp).clickable(onClick = onMealShare).semantics { contentDescription = "Meal Share" })
+}
 
 @Composable fun NutritionDetailScreen(daily: DailyNutrition, onBack: () -> Unit) = LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) { item { Text("‹", Modifier.size(48.dp).clickable(onClick = onBack).padding(10.dp), style = MaterialTheme.typography.headlineMedium); Text("Detalle nutricional", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold); Text(daily.date.format(DateTimeFormatter.ofPattern("d 'de' MMMM", Locale("es", "MX"))), color = MaterialTheme.colorScheme.onSurfaceVariant) }; item { DetailCalories(daily) }; item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) { DetailMacro("Proteína", daily.proteinConsumed, daily.proteinTarget, Modifier.weight(1f)); DetailMacro("Carbohidratos", daily.carbohydrateConsumed, daily.carbohydrateTarget, Modifier.weight(1f)); DetailMacro("Grasas", daily.fatConsumed, daily.fatTarget, Modifier.weight(1f)) } }; item { MacroBreakdown(daily) } }
 @Composable private fun DetailCalories(d: DailyNutrition) = KyvoCard { Text("Calorías", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold); Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text("${d.caloriesConsumed} kcal", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold); Text("de ${d.calorieTarget} kcal", color = MaterialTheme.colorScheme.onSurfaceVariant); LinearProgress(progressOf(d.caloriesConsumed, d.calorieTarget), KyvoColors.PurplePrimary, KyvoColors.Outline, Modifier.padding(top = 14.dp)); Text("${d.caloriesRemaining} kcal restantes", color = KyvoColors.PurplePrimary, modifier = Modifier.padding(top = 8.dp)) }; ProgressRing(progressOf(d.caloriesConsumed, d.calorieTarget), "${percent(progressOf(d.caloriesConsumed,d.calorieTarget))}% de tu meta", 104.dp, KyvoColors.PurplePrimary) } }
@@ -162,7 +176,7 @@ fun HomeScreen(state: HomeUiState, onAddFood: () -> Unit) = HomeScreen(state, on
 private fun Meal.scaled(factor: Float) = copy(items = items.map { it.copy(quantity = it.quantity * factor, grams = it.grams?.times(factor), calories = (it.calories * factor).roundToInt(), protein = (it.protein * factor).roundToInt(), carbohydrates = (it.carbohydrates * factor).roundToInt(), fat = (it.fat * factor).roundToInt()) }, totalCalories = (totalCalories * factor).roundToInt(), protein = (protein * factor).roundToInt(), carbohydrates = (carbohydrates * factor).roundToInt(), fat = (fat * factor).roundToInt())
 @Composable private fun MealTotals(m: Meal) = KyvoCard { Text("Totales de la comida", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold); Text("${m.totalCalories} kcal", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold); Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { listOf("Proteína" to m.protein, "Carbohidratos" to m.carbohydrates, "Grasas" to m.fat).forEach { (n,v) -> Column { Text(n, color = KyvoColors.PurplePrimary); Text("$v g", fontWeight = FontWeight.Bold) } } } }
 @Composable private fun FoodItemRow(item: com.kyvo.app.feature.home.domain.model.MealItem) = Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) { Box(Modifier.size(44.dp).clip(CircleShape).background(KyvoColors.PurpleSoft), contentAlignment = Alignment.Center) { Text(item.name.take(1), color = KyvoColors.PurplePrimary) }; Column(Modifier.weight(1f).padding(start = 12.dp)) { Text(item.name, fontWeight = FontWeight.SemiBold); Text("${item.quantity} ${item.unit} · ${item.protein} g proteína · ${item.carbohydrates} g carbs", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall) }; Text("${item.calories} kcal") }
-@Composable private fun ProgressRing(progress: Float, description: String, size: androidx.compose.ui.unit.Dp, color: Color) = Box(Modifier.size(size).semantics { contentDescription = description }, contentAlignment = Alignment.Center) { Canvas(Modifier.fillMaxSize()) { drawArc(KyvoColors.Outline.copy(.65f), -90f, 360f, false, style = Stroke(10.dp.toPx(), cap = StrokeCap.Round)); drawArc(color, -90f, 360f * progress.coerceIn(0f,1f), false, style = Stroke(10.dp.toPx(), cap = StrokeCap.Round)) }; Text("${percent(progress)}%", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge) }
+@Composable private fun ProgressRing(progress: Float, description: String, size: androidx.compose.ui.unit.Dp, color: Color, showPercentage: Boolean = true) = Box(Modifier.size(size).semantics { contentDescription = description }, contentAlignment = Alignment.Center) { Canvas(Modifier.fillMaxSize()) { drawArc(KyvoColors.Outline.copy(.65f), -90f, 360f, false, style = Stroke(10.dp.toPx(), cap = StrokeCap.Round)); drawArc(color, -90f, 360f * progress.coerceIn(0f,1f), false, style = Stroke(10.dp.toPx(), cap = StrokeCap.Round)) }; if (showPercentage) Text("${percent(progress)}%", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge) }
 @Composable private fun LinearProgress(progress: Float, color: Color, track: Color, modifier: Modifier = Modifier) = Box(modifier.fillMaxWidth().height(8.dp).clip(CircleShape).background(track)) { Box(Modifier.fillMaxWidth(progress.coerceIn(0f, 1f)).height(8.dp).background(color)) }
 private fun percent(progress: Float) = (progress * 100).roundToInt()
 @Composable private fun ErrorHomeState(message: String, onRetry: () -> Unit) = Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) { Text(message, textAlign = TextAlign.Center); Spacer(Modifier.height(16.dp)); KyvoPrimaryButton("Reintentar", onRetry) }

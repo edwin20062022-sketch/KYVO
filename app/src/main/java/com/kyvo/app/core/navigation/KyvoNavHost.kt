@@ -91,7 +91,12 @@ fun KyvoNavHost(
         }
         composable(KyvoDestination.Home.route) {
             if (onboardingRepository != null && mealRepository != null) {
-                HomeRoute(onboardingRepository, mealRepository, onAddFood = { navController.navigate(KyvoDestination.FoodHub.route) })
+                HomeRoute(
+                    onboardingRepository,
+                    mealRepository,
+                    onAddFood = { navController.navigate(KyvoDestination.FoodHub.route) },
+                    onMealShare = { navController.navigate(KyvoDestination.MealShare.route) { launchSingleTop = true } },
+                )
             }
         }
         composable(KyvoDestination.FoodHub.route) {
