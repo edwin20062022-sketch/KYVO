@@ -5,6 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import com.kyvo.app.feature.mealshare.domain.model.MealShareDraft
 import com.kyvo.app.feature.mealshare.domain.model.MealSharePhotoSource
+import com.kyvo.app.feature.mealshare.domain.model.MealShareTemplate
 import com.kyvo.app.feature.food.domain.model.FoodType
 import com.kyvo.app.feature.home.domain.model.MealItem
 import com.kyvo.app.feature.home.domain.model.MealType
@@ -22,6 +23,9 @@ class MealShareDraftViewModel(private val savedStateHandle: SavedStateHandle) : 
             photoSource = (savedStateHandle[PHOTO_SOURCE] as String?)?.let { MealSharePhotoSource.valueOf(it) },
             mealType = (savedStateHandle[MEAL_TYPE] as String?)?.let { MealType.valueOf(it) } ?: MealType.Lunch,
             items = decodeItems(savedStateHandle[MEAL_ITEMS] as String?),
+            template = (savedStateHandle[TEMPLATE] as String?)?.let { value ->
+                runCatching { MealShareTemplate.valueOf(value) }.getOrNull()
+            } ?: MealShareTemplate.MINIMAL,
         ),
     )
     val draft: StateFlow<MealShareDraft> = _draft.asStateFlow()
@@ -43,6 +47,11 @@ class MealShareDraftViewModel(private val savedStateHandle: SavedStateHandle) : 
     fun setMealType(type: MealType) {
         savedStateHandle[MEAL_TYPE] = type.name
         _draft.value = _draft.value.copy(mealType = type)
+    }
+
+    fun setTemplate(template: MealShareTemplate) {
+        savedStateHandle[TEMPLATE] = template.name
+        _draft.value = _draft.value.copy(template = template)
     }
 
     fun addMealItem(item: MealItem) {
@@ -110,6 +119,7 @@ class MealShareDraftViewModel(private val savedStateHandle: SavedStateHandle) : 
         private const val PHOTO_SOURCE = "meal_share_photo_source"
         private const val MEAL_TYPE = "meal_share_meal_type"
         private const val MEAL_ITEMS = "meal_share_meal_items"
+        private const val TEMPLATE = "meal_share_template"
 
         private fun decodeItems(value: String?): List<MealItem> = value?.let {
             runCatching { Json.decodeFromString<List<MealItemSnapshot>>(it).map(MealItemSnapshot::toDomain) }.getOrDefault(emptyList())

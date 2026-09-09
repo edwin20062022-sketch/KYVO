@@ -28,7 +28,7 @@ enum class KyvoDestination(val route: String) {
     MealSharePhotoPreview("meal_share/photo_preview"),
     MealShareMealBuilder("meal_share/meal_builder"),
     MealShareFoodSearchPlaceholder("meal_share/add_food"),
-    MealShareContinuePlaceholder("meal_share/continue"),
+    MealShareEditor("meal_share/editor"),
 }
 
 val mainDestinations = listOf(

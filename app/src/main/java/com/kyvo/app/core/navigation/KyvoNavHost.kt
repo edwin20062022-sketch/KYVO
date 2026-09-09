@@ -41,6 +41,7 @@ import com.kyvo.app.feature.mealshare.presentation.MealSharePhotoPickerRoute
 import com.kyvo.app.feature.mealshare.presentation.MealSharePhotoPreviewScreen
 import com.kyvo.app.feature.mealshare.presentation.MealShareSourceScreen
 import com.kyvo.app.feature.mealshare.presentation.MealShareMealBuilderScreen
+import com.kyvo.app.feature.mealshare.presentation.MealShareEditorScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kyvo.app.feature.onboarding.presentation.OnboardingRoute
 import kotlinx.coroutines.launch
@@ -215,15 +216,21 @@ fun KyvoNavHost(
                 onAddFood = { navController.navigate(foodSearchRoute(FoodSelectionContext.MEAL_SHARE)) },
                 onUpdatePortion = draft::updateMealItemPortion,
                 onRemoveFood = draft::removeMealItem,
-                onContinue = { navController.navigate(KyvoDestination.MealShareContinuePlaceholder.route) },
+                onContinue = { navController.navigate(KyvoDestination.MealShareEditor.route) },
                 onBack = { navController.popBackStack() },
             )
         }
         composable(KyvoDestination.MealShareFoodSearchPlaceholder.route) {
             FoodStatePlaceholder("Búsqueda de alimentos · siguiente checkpoint", onBack = { navController.popBackStack() })
         }
-        composable(KyvoDestination.MealShareContinuePlaceholder.route) {
-            FoodStatePlaceholder("Preparar publicación · siguiente checkpoint", onBack = { navController.popBackStack() })
+        composable(KyvoDestination.MealShareEditor.route) { entry ->
+            val mealShareEntry = remember(navController, entry) { navController.getBackStackEntry(KyvoDestination.MealShare.route) }
+            val draft: MealShareDraftViewModel = viewModel(mealShareEntry)
+            MealShareEditorScreen(
+                draft = draft.draft.collectAsState().value,
+                onTemplateSelected = draft::setTemplate,
+                onBack = { navController.popBackStack() },
+            )
         }
         composable(KyvoDestination.SavedDishes.route) {
             savedDishRepository?.let { repository ->

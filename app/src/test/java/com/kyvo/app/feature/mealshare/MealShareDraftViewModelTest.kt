@@ -2,6 +2,7 @@ package com.kyvo.app.feature.mealshare
 
 import androidx.lifecycle.SavedStateHandle
 import com.kyvo.app.feature.mealshare.domain.model.MealSharePhotoSource
+import com.kyvo.app.feature.mealshare.domain.model.MealShareTemplate
 import com.kyvo.app.feature.mealshare.presentation.MealShareDraftViewModel
 import com.kyvo.app.feature.home.domain.model.MealItem
 import com.kyvo.app.feature.home.domain.model.MealType
@@ -18,6 +19,38 @@ class MealShareDraftViewModelTest {
         val viewModel = MealShareDraftViewModel(SavedStateHandle())
         viewModel.setMealType(MealType.Dinner)
         assertEquals(MealType.Dinner, viewModel.draft.value.mealType)
+    }
+
+    @Test
+    fun defaultTemplateIsMinimal() {
+        assertEquals(MealShareTemplate.MINIMAL, MealShareDraftViewModel(SavedStateHandle()).draft.value.template)
+    }
+
+    @Test
+    fun eachTemplateCanBeSelected() {
+        val viewModel = MealShareDraftViewModel(SavedStateHandle())
+        MealShareTemplate.entries.forEach { template ->
+            viewModel.setTemplate(template)
+            assertEquals(template, viewModel.draft.value.template)
+        }
+    }
+
+    @Test
+    fun selectedTemplateSurvivesRestorationWithoutChangingDraftData() {
+        val state = SavedStateHandle()
+        val viewModel = MealShareDraftViewModel(state)
+        viewModel.setGalleryPhotoUri("content://picker/photo")
+        viewModel.setMealType(MealType.Dinner)
+        viewModel.addMealItem(item("one"))
+        viewModel.setTemplate(MealShareTemplate.PERFORMANCE)
+        viewModel.setTemplate(MealShareTemplate.EDITORIAL)
+
+        val restored = MealShareDraftViewModel(state).draft.value
+        assertEquals(MealShareTemplate.EDITORIAL, restored.template)
+        assertEquals("content://picker/photo", restored.photoUri)
+        assertEquals(MealType.Dinner, restored.mealType)
+        assertEquals(listOf("one"), restored.items.map(MealItem::id))
+        assertEquals(200, restored.calories)
     }
 
     @Test
