@@ -2,6 +2,8 @@ package com.kyvo.app.core.navigation
 
 import android.net.Uri
 import android.os.Bundle
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -43,9 +45,13 @@ import com.kyvo.app.feature.mealshare.presentation.MealShareSourceScreen
 import com.kyvo.app.feature.mealshare.presentation.MealShareMealBuilderScreen
 import com.kyvo.app.feature.mealshare.presentation.MealShareEditorScreen
 import com.kyvo.app.feature.mealshare.presentation.MealShareRenderViewModel
+import com.kyvo.app.feature.mealshare.presentation.MealShareShareState
+import com.kyvo.app.feature.mealshare.presentation.buildMealShareIntent
 import com.kyvo.app.feature.mealshare.data.render.AndroidMealShareImageRenderer
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.core.content.FileProvider
+import java.io.File
 import com.kyvo.app.feature.onboarding.presentation.OnboardingRoute
 import kotlinx.coroutines.launch
 
@@ -233,6 +239,8 @@ fun KyvoNavHost(
             val renderer = remember(context.applicationContext) { AndroidMealShareImageRenderer(context.applicationContext) }
             val render: MealShareRenderViewModel = viewModel(mealShareEntry, factory = MealShareRenderViewModel.factory(renderer))
             val currentDraft = draft.draft.collectAsState().value
+            val finalization = draft.finalization.collectAsState().value
+            val shareLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { draft.onShareReturned() }
             MealShareEditorScreen(
                 draft = currentDraft,
                 onTemplateSelected = draft::setTemplate,
@@ -240,10 +248,24 @@ fun KyvoNavHost(
                 onRender = render::render,
                 onDraftChanged = render::invalidateIfStale,
                 onRendered = draft::setRenderedResult,
-                finalizationState = draft.finalization.collectAsState().value,
+                finalizationState = finalization,
                 onConfirmFinalization = { mealRepository?.let(draft::confirmFinalMeal) },
                 canFinalize = mealRepository != null,
-                onBack = { navController.popBackStack() },
+                shareState = draft.share.collectAsState().value,
+                onShare = {
+                    draft.prepareShare(File(context.cacheDir, "meal_share/rendered"))?.let { file ->
+                        runCatching {
+                            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+                            shareLauncher.launch(android.content.Intent.createChooser(buildMealShareIntent(uri), "Compartir Meal Share"))
+                        }.onFailure { error -> draft.onShareLaunchError(error.message ?: "No pudimos abrir el selector para compartir.") }
+                    }
+                },
+                onFinish = {
+                    draft.clearMealShareSession(context.cacheDir)
+                    render.clearSession()
+                    navController.popBackStack(KyvoDestination.Home.route, inclusive = false)
+                },
+                onBack = { if (finalization !is com.kyvo.app.feature.mealshare.presentation.MealShareFinalizationState.Persisted) navController.popBackStack() },
             )
         }
         composable(KyvoDestination.SavedDishes.route) {

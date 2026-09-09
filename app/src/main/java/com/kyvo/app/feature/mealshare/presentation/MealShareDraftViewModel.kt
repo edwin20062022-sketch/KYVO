@@ -18,6 +18,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
+import java.io.File
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,6 +47,8 @@ class MealShareDraftViewModel(private val savedStateHandle: SavedStateHandle) : 
         (savedStateHandle[PERSISTED_MEAL_ID] as String?)?.let(MealShareFinalizationState::Persisted) ?: MealShareFinalizationState.Ready,
     )
     val finalization: StateFlow<MealShareFinalizationState> = _finalization.asStateFlow()
+    private val _share = MutableStateFlow<MealShareShareState>(MealShareShareState.ReadyToShare)
+    val share: StateFlow<MealShareShareState> = _share.asStateFlow()
     fun setCapturedPhoto(file: java.io.File) {
         if (isPersisted()) return
         replaceOwnedCameraFileIfNeeded()
@@ -168,6 +171,44 @@ class MealShareDraftViewModel(private val savedStateHandle: SavedStateHandle) : 
         }
     }
 
+    fun prepareShare(renderedDirectory: File): File? {
+        if (_share.value is MealShareShareState.LaunchingShare) return null
+        if (_finalization.value !is MealShareFinalizationState.Persisted) {
+            _share.value = MealShareShareState.Error("Registra la comida antes de compartirla.")
+            return null
+        }
+        return _draft.value.shareableRender(renderedDirectory).fold(
+            onSuccess = { file ->
+                _share.value = MealShareShareState.LaunchingShare
+                file
+            },
+            onFailure = { error ->
+                _share.value = MealShareShareState.Error(error.message ?: "No pudimos preparar la imagen para compartir.")
+                null
+            },
+        )
+    }
+
+    fun onShareReturned() {
+        if (_share.value is MealShareShareState.LaunchingShare) _share.value = MealShareShareState.ReturnedFromShareSheet
+    }
+
+    fun onShareLaunchError(message: String) {
+        _share.value = MealShareShareState.Error(message)
+    }
+
+    fun clearMealShareSession(cacheDir: File, nowMillis: Long = System.currentTimeMillis()) {
+        val previous = _draft.value
+        if (previous.photoSource == MealSharePhotoSource.Camera) deleteOwnedCameraPhoto(previous.photoUri, cacheDir)
+        cleanupExpiredMealShareRenders(File(cacheDir, "meal_share/rendered"), nowMillis)
+        listOf(PHOTO_URI, PHOTO_SOURCE, MEAL_TYPE, MEAL_ITEMS, TEMPLATE, RENDERED_IMAGE_PATH, RENDERED_FINGERPRINT, PENDING_MEAL_ID, PERSISTED_MEAL_ID).forEach { key ->
+            savedStateHandle.remove<Any?>(key)
+        }
+        _draft.value = MealShareDraft()
+        _finalization.value = MealShareFinalizationState.Ready
+        _share.value = MealShareShareState.ReadyToShare
+    }
+
     private fun MealShareDraft.finalizationError(): String? = when {
         photoUri.isNullOrBlank() -> "Agrega una fotografía antes de registrar la comida."
         items.isEmpty() || items.any { it.quantity <= 0.0 || it.calories < 0 || it.protein < 0 || it.carbohydrates < 0 || it.fat < 0 } -> "Agrega alimentos con información nutricional válida."
@@ -196,6 +237,14 @@ class MealShareDraftViewModel(private val savedStateHandle: SavedStateHandle) : 
                 }
             }
         }
+    }
+
+    private fun deleteOwnedCameraPhoto(value: String?, cacheDir: File) {
+        val uri = value?.let(Uri::parse) ?: return
+        if (uri.scheme != "file") return
+        val root = File(cacheDir, "meal_share").canonicalFile
+        val file = uri.path?.let(::File)?.canonicalFile ?: return
+        if (file.parentFile == root && file.name.startsWith("meal_share_") && file.extension.equals("jpg", ignoreCase = true)) file.delete()
     }
 
     companion object {

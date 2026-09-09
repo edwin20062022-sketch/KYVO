@@ -73,6 +73,11 @@ class MealShareRenderViewModel(private val renderer: MealShareImageRenderer) : V
         }
     }
 
+    fun clearSession() {
+        _state.value = MealShareRenderState.Idle
+        latestDraftFingerprint = null
+    }
+
     companion object {
         fun factory(renderer: MealShareImageRenderer): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")

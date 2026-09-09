@@ -20,6 +20,7 @@ import com.kyvo.app.feature.mealshare.domain.model.MealShareTemplateSpecs
 import com.kyvo.app.feature.mealshare.domain.render.MealShareImageRenderer
 import com.kyvo.app.feature.mealshare.domain.render.MealShareRenderRequest
 import com.kyvo.app.feature.mealshare.domain.render.MealShareRenderResult
+import com.kyvo.app.feature.mealshare.presentation.MEAL_SHARE_RENDER_RETENTION_MILLIS
 import com.kyvo.app.feature.mealshare.domain.render.centeredCropRect
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -230,7 +231,7 @@ class AndroidMealShareImageRenderer(private val context: Context) : MealShareIma
     private fun cleanupSupersededOutputs(directory: File, keep: File) {
         directory.listFiles()?.forEach { candidate ->
             val isOwnedRender = candidate.name.startsWith("meal_share_render_") && (candidate.extension == "jpg" || candidate.extension == "partial")
-            if (isOwnedRender && candidate != keep) candidate.delete()
+            if (isOwnedRender && candidate != keep && (candidate.extension == "partial" || System.currentTimeMillis() - candidate.lastModified() > MEAL_SHARE_RENDER_RETENTION_MILLIS)) candidate.delete()
         }
     }
 

@@ -69,6 +69,9 @@ fun MealShareEditorScreen(
     finalizationState: MealShareFinalizationState,
     onConfirmFinalization: () -> Unit,
     canFinalize: Boolean,
+    shareState: MealShareShareState,
+    onShare: () -> Unit,
+    onFinish: () -> Unit,
     onBack: () -> Unit,
 ) {
     val overlay = draft.toOverlayData()
@@ -114,7 +117,25 @@ fun MealShareEditorScreen(
                 enabled = canFinalize && hasCurrentRender && !isPersisting && !isPersisted,
                 isLoading = isPersisting,
             )
-            Text("La imagen se guarda temporalmente en este dispositivo. Compartir llegará en el siguiente paso.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+            if (isPersisted) {
+                when (shareState) {
+                    MealShareShareState.ReturnedFromShareSheet -> Text("Puedes compartir nuevamente o finalizar. Tu comida ya fue registrada.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                    is MealShareShareState.Error -> Text(shareState.message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    else -> Unit
+                }
+                KyvoPrimaryButton(
+                    text = if (shareState is MealShareShareState.ReturnedFromShareSheet) "Compartir nuevamente" else "Compartir",
+                    onClick = onShare,
+                    enabled = shareState !is MealShareShareState.LaunchingShare,
+                    isLoading = shareState is MealShareShareState.LaunchingShare,
+                )
+                KyvoPrimaryButton(
+                    text = "Finalizar",
+                    onClick = onFinish,
+                    enabled = shareState !is MealShareShareState.LaunchingShare,
+                )
+            }
+            Text(if (isPersisted) "La imagen permanecerá disponible temporalmente para compartir." else "Genera la imagen final antes de registrar la comida.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(4.dp))
         }
     }
