@@ -38,6 +38,7 @@ import com.kyvo.app.feature.mealshare.presentation.MealShareDraftViewModel
 import com.kyvo.app.feature.mealshare.presentation.MealSharePhotoPickerRoute
 import com.kyvo.app.feature.mealshare.presentation.MealSharePhotoPreviewScreen
 import com.kyvo.app.feature.mealshare.presentation.MealShareSourceScreen
+import com.kyvo.app.feature.mealshare.presentation.MealShareMealBuilderScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kyvo.app.feature.onboarding.presentation.OnboardingRoute
 import kotlinx.coroutines.launch
@@ -155,11 +156,30 @@ fun KyvoNavHost(
             val draft: MealShareDraftViewModel = viewModel(mealShareEntry)
             MealSharePhotoPreviewScreen(
                 photoUri = draft.draft.collectAsState().value.photoUri,
-                onConfirm = { navController.popBackStack(KyvoDestination.MealShare.route, inclusive = false) },
+                onConfirm = { navController.navigate(KyvoDestination.MealShareMealBuilder.route) },
                 onRepeat = { navController.navigate(KyvoDestination.MealShareCamera.route) },
                 onChange = { navController.navigate(KyvoDestination.MealSharePhotoPicker.route) },
                 onBack = { navController.popBackStack() },
             )
+        }
+        composable(KyvoDestination.MealShareMealBuilder.route) { entry ->
+            val mealShareEntry = remember(navController, entry) { navController.getBackStackEntry(KyvoDestination.MealShare.route) }
+            val draft: MealShareDraftViewModel = viewModel(mealShareEntry)
+            MealShareMealBuilderScreen(
+                draft = draft.draft.collectAsState().value,
+                onMealTypeSelected = draft::setMealType,
+                onAddFood = { navController.navigate(KyvoDestination.MealShareFoodSearchPlaceholder.route) },
+                onUpdatePortion = draft::updateMealItemPortion,
+                onRemoveFood = draft::removeMealItem,
+                onContinue = { navController.navigate(KyvoDestination.MealShareContinuePlaceholder.route) },
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(KyvoDestination.MealShareFoodSearchPlaceholder.route) {
+            FoodStatePlaceholder("Búsqueda de alimentos · siguiente checkpoint", onBack = { navController.popBackStack() })
+        }
+        composable(KyvoDestination.MealShareContinuePlaceholder.route) {
+            FoodStatePlaceholder("Preparar publicación · siguiente checkpoint", onBack = { navController.popBackStack() })
         }
         composable(KyvoDestination.SavedDishes.route) {
             savedDishRepository?.let { repository ->
