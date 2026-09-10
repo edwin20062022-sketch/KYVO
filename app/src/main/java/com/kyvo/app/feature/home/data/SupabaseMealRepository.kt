@@ -28,6 +28,14 @@ class SupabaseMealRepository(private val client: SupabaseClient) : MealRepositor
         if (loadedDates.add(date)) cache.update { it + (date to fetch(date)) }
         emitAll(cache.map { it[date].orEmpty() })
     }
+    override fun observeMeals(startDate: LocalDate, endDate: LocalDate): Flow<Map<LocalDate, List<Meal>>> = flow {
+        val fetched = fetchRange(startDate, endDate)
+        cache.update { it + fetched }
+        emitAll(cache.map { values ->
+            generateSequence(startDate) { current -> current.plusDays(1).takeIf { it <= endDate } }
+                .associateWith { date -> values[date].orEmpty() }
+        })
+    }
     override fun observeMeal(id: String): Flow<Meal?> = cache.map { days -> days.values.flatten().firstOrNull { it.id == id } }
     override suspend fun addMeal(date: LocalDate, meal: Meal) {
         try {
@@ -59,6 +67,9 @@ class SupabaseMealRepository(private val client: SupabaseClient) : MealRepositor
         return meal
     }
     private suspend fun fetch(date: LocalDate): List<Meal> = client.from("meals").select { filter { eq("date", date.toString()) } }.decodeList<RemoteMeal>().map(RemoteMeal::toDomain)
+    private suspend fun fetchRange(startDate: LocalDate, endDate: LocalDate): Map<LocalDate, List<Meal>> = client.from("meals").select {
+        filter { gte("date", startDate.toString()); lte("date", endDate.toString()) }
+    }.decodeList<RemoteMeal>().groupBy { LocalDate.parse(it.date) }.mapValues { (_, meals) -> meals.map(RemoteMeal::toDomain) }
     private suspend fun fetchAll(): List<Meal> = client.from("meals").select().decodeList<RemoteMeal>().map(RemoteMeal::toDomain)
 }
 
