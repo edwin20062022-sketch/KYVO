@@ -34,6 +34,10 @@ import com.kyvo.app.feature.progress.presentation.NutritionMetricDetailRoute
 import com.kyvo.app.feature.progress.presentation.NutritionMetricDetailViewModel
 import com.kyvo.app.feature.progress.presentation.NutritionConsistencyRoute
 import com.kyvo.app.feature.progress.presentation.NutritionConsistencyViewModel
+import com.kyvo.app.feature.progress.presentation.NutritionHistoryRoute
+import com.kyvo.app.feature.progress.presentation.NutritionHistoryViewModel
+import com.kyvo.app.feature.progress.presentation.NutritionDayDetailRoute
+import com.kyvo.app.feature.progress.presentation.NutritionDayDetailViewModel
 import com.kyvo.app.feature.food.domain.repository.FoodRepository
 import com.kyvo.app.feature.food.presentation.FoodDetailRoute
 import com.kyvo.app.feature.food.presentation.FoodFavoritesRoute
@@ -65,6 +69,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.core.content.FileProvider
 import java.io.File
+import java.time.LocalDate
 import com.kyvo.app.feature.onboarding.presentation.OnboardingRoute
 import kotlinx.coroutines.launch
 
@@ -128,7 +133,7 @@ fun KyvoNavHost(
                     onCaloriesDetail = { navController.navigate(KyvoDestination.ProgressCalories.route) },
                     onProteinDetail = { navController.navigate(KyvoDestination.ProgressProtein.route) },
                     onConsistency = { navController.navigate(KyvoDestination.ProgressConsistency.route) },
-                    onHistory = { navController.navigate(KyvoDestination.ProgressHistory.route) },
+                    onHistory = { navController.navigate(KyvoDestination.ProgressHistory.route) { launchSingleTop = true } },
                 )
             }
         }
@@ -150,7 +155,23 @@ fun KyvoNavHost(
                 NutritionConsistencyRoute(consistencyViewModel, onBack = { navController.popBackStack(KyvoDestination.Progress.route, inclusive = false) })
             }
         }
-        composable(KyvoDestination.ProgressHistory.route) { ProgressPlaceholder("Historial de días", onBack = { navController.popBackStack() }) }
+        composable(KyvoDestination.ProgressHistory.route) {
+            if (onboardingRepository != null && mealRepository != null) {
+                val historyViewModel: NutritionHistoryViewModel = viewModel(factory = NutritionHistoryViewModel.factory(onboardingRepository, mealRepository))
+                NutritionHistoryRoute(historyViewModel, onBack = { navController.popBackStack(KyvoDestination.Progress.route, inclusive = false) }, onDayDetail = { date -> navController.navigate(dayDetailRoute(date)) { launchSingleTop = true } })
+            }
+        }
+        composable(KyvoDestination.ProgressDay.route) { entry ->
+            if (onboardingRepository != null && mealRepository != null) {
+                val date = runCatching { LocalDate.parse(entry.arguments?.getString("date").orEmpty()) }.getOrNull()
+                if (date == null) {
+                    ProgressPlaceholder("Fecha no válida", onBack = { navController.popBackStack(KyvoDestination.ProgressHistory.route, inclusive = false) })
+                } else {
+                    val dayViewModel: NutritionDayDetailViewModel = viewModel(factory = NutritionDayDetailViewModel.factory(onboardingRepository, mealRepository, date))
+                    NutritionDayDetailRoute(dayViewModel, onBack = { navController.popBackStack(KyvoDestination.ProgressHistory.route, inclusive = false) })
+                }
+            }
+        }
         composable(KyvoDestination.FoodHub.route) {
             FoodHubScreen(
                 onSearch = { navController.navigate(foodSearchRoute(FoodSelectionContext.NORMAL_MEAL_LOGGING)) },
@@ -387,6 +408,7 @@ private fun Bundle.toMealItem(): com.kyvo.app.feature.home.domain.model.MealItem
 private fun Bundle.getNullableDouble(key: String): Double? = if (containsKey(key)) getDouble(key) else null
 
 internal fun foodSearchRoute(context: FoodSelectionContext) = "food/search?selectionContext=${context.name}"
+internal fun dayDetailRoute(date: LocalDate) = "progress/day/$date"
 internal fun foodResultsRoute(query: String, context: FoodSelectionContext) = "food/results/${Uri.encode(query)}?selectionContext=${context.name}"
 internal fun foodDetailRoute(id: String, type: String, context: FoodSelectionContext) = "food/detail/${Uri.encode(id)}/${type}?selectionContext=${context.name}"
 internal fun foodPortionRoute(id: String, type: String, context: FoodSelectionContext) = "food/portion/${Uri.encode(id)}/${type}?selectionContext=${context.name}"

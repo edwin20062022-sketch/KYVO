@@ -14,6 +14,7 @@ enum class KyvoDestination(val route: String) {
     ProgressProtein("progress/protein"),
     ProgressConsistency("progress/consistency"),
     ProgressHistory("progress/history"),
+    ProgressDay("progress/day/{date}"),
     Profile("profile"),
     FoodHub("food/hub"),
     FoodSearch("food/search?selectionContext={selectionContext}"),
