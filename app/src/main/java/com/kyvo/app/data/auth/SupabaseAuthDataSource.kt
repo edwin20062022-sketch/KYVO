@@ -11,6 +11,8 @@ import io.github.jan.supabase.auth.providers.builtin.IDToken
 import io.github.jan.supabase.auth.status.SessionStatus
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonPrimitive
 
 interface SupabaseAuthDataSource {
     fun observeSession(): Flow<AuthState>
@@ -72,5 +74,9 @@ private fun io.github.jan.supabase.auth.user.UserSession.toDomain(): AuthSession
         userId = requireNotNull(user?.id) { "Authenticated Supabase session has no user id" },
         email = user?.email.orEmpty(),
         provider = resolvedProvider,
+        displayName = user?.userMetadata?.let { metadata ->
+            listOf("full_name", "name", "display_name")
+                .firstNotNullOfOrNull { key -> metadata[key]?.jsonPrimitive?.contentOrNull?.takeIf(String::isNotBlank) }
+        },
     )
 }

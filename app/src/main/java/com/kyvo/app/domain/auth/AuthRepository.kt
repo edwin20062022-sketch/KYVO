@@ -8,6 +8,7 @@ data class AuthSession(
     val userId: String,
     val email: String,
     val provider: AuthProvider,
+    val displayName: String? = null,
 )
 
 sealed interface AuthError {
