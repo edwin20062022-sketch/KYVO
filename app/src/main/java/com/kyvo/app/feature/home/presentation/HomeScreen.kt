@@ -70,19 +70,19 @@ internal val DASHBOARD_MACRO_LABELS = listOf("Proteína", "Carbohidratos", "Gras
 internal const val MACRO_CIRCLE_SHOWS_PERCENTAGE = false
 
 @Composable
-fun HomeRoute(onboardingRepository: OnboardingRepository, mealRepository: MealRepository, onAddFood: () -> Unit = {}, onMealShare: () -> Unit = {}, viewModel: HomeViewModel = viewModel(factory = HomeViewModel.factory(onboardingRepository, mealRepository))) {
+fun HomeRoute(onboardingRepository: OnboardingRepository, mealRepository: MealRepository, onAddFood: () -> Unit = {}, onMealShare: () -> Unit = {}, onProgress: () -> Unit = {}, viewModel: HomeViewModel = viewModel(factory = HomeViewModel.factory(onboardingRepository, mealRepository))) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val destination by viewModel.destination.collectAsStateWithLifecycle()
     when (val screen = destination) {
-        HomeDestination.Dashboard -> HomeScreen(state, viewModel::onEvent, onAddFood, onMealShare)
-        HomeDestination.NutritionDetail -> when (val value = state) { is HomeUiState.Content -> NutritionDetailScreen(value.daily, onBack = { viewModel.onEvent(HomeEvent.BackToDashboard) }); else -> HomeScreen(value, viewModel::onEvent, onAddFood, onMealShare) }
+        HomeDestination.Dashboard -> HomeScreen(state, viewModel::onEvent, onAddFood, onMealShare, onProgress)
+        HomeDestination.NutritionDetail -> when (val value = state) { is HomeUiState.Content -> NutritionDetailScreen(value.daily, onBack = { viewModel.onEvent(HomeEvent.BackToDashboard) }); else -> HomeScreen(value, viewModel::onEvent, onAddFood, onMealShare, onProgress) }
         is HomeDestination.MealDetail -> MealDetailRoute(mealRepository, screen.mealId, onBack = { viewModel.onEvent(HomeEvent.BackToDashboard) }, onEdit = { viewModel.onEvent(HomeEvent.OpenMealEditor(it)) }, onDelete = { viewModel.onEvent(HomeEvent.DeleteMeal(it)) })
         is HomeDestination.EditMeal -> { val meal by viewModel.mealForEditing(screen.mealId).collectAsStateWithLifecycle(null); MealEditorScreen(meal, onBack = { viewModel.onEvent(HomeEvent.BackToDashboard) }, onSave = { viewModel.onEvent(HomeEvent.UpdateMeal(it)) }, onDelete = { viewModel.onEvent(HomeEvent.DeleteMeal(it)) }) }
     }
 }
 
 @Composable
-fun HomeScreen(state: HomeUiState, onEvent: (HomeEvent) -> Unit, onAddFood: () -> Unit = {}, onMealShare: () -> Unit = {}) = Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+fun HomeScreen(state: HomeUiState, onEvent: (HomeEvent) -> Unit, onAddFood: () -> Unit = {}, onMealShare: () -> Unit = {}, onProgress: () -> Unit = {}) = Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
     when (state) {
         HomeUiState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
         is HomeUiState.Error -> ErrorHomeState(state.message, onRetry = { onEvent(HomeEvent.Retry) })
@@ -92,7 +92,7 @@ fun HomeScreen(state: HomeUiState, onEvent: (HomeEvent) -> Unit, onAddFood: () -
             item { MacroSummary(state.daily, onDetail = { onEvent(HomeEvent.OpenNutritionDetail) }) }
             item { MealsSection(state.daily.meals, onMeal = { onEvent(HomeEvent.OpenMeal(it.id)) }, onAddFood = onAddFood, onMealShare = onMealShare) }
             item { FocusCard() }
-            item { BottomNavigationShell(onMealShare) }
+            item { BottomNavigationShell(onMealShare, onProgress) }
         }
     }
 }
@@ -171,14 +171,36 @@ internal fun macroLabelFontSizeFor(availableWidth: androidx.compose.ui.unit.Dp) 
     Row(Modifier.fillMaxWidth().padding(top = 20.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) { HomeCta("Meal Share", Modifier.weight(1f), false, onMealShare); HomeCta("Añadir comida", Modifier.weight(1f), true, onAddFood) }
 }
 
-@Composable private fun HomeCta(text: String, modifier: Modifier, filled: Boolean, onClick: () -> Unit = {}) = Box(modifier.heightIn(min = 56.dp).clip(RoundedCornerShape(14.dp)).clickable(onClick = onClick).then(if (filled) Modifier.background(KyvoBrushes.PrimaryAction) else Modifier.background(KyvoColors.PurpleSoft)).padding(12.dp), contentAlignment = Alignment.Center) { Text(text, color = if (filled) Color.White else KyvoColors.PurplePrimary, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center) }
+@Composable private fun HomeCta(text: String, modifier: Modifier, filled: Boolean, onClick: () -> Unit = {}) = Box(
+    modifier
+        .heightIn(min = 56.dp)
+        .clip(RoundedCornerShape(14.dp))
+        .semantics { contentDescription = text }
+        .clickable(onClick = onClick)
+        .then(if (filled) Modifier.background(KyvoBrushes.PrimaryAction) else Modifier.background(KyvoColors.PurpleSoft))
+        .padding(12.dp),
+    contentAlignment = Alignment.Center,
+) { Text(text, color = if (filled) Color.White else KyvoColors.PurplePrimary, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center) }
 
 @Composable private fun MealRow(meal: Meal, onClick: () -> Unit) = Row(Modifier.fillMaxWidth().heightIn(min = 78.dp).clickable(onClick = onClick).padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) { Box(Modifier.size(50.dp).clip(CircleShape).background(KyvoColors.PurpleSoft), contentAlignment = Alignment.Center) { Text(meal.type.label.take(1), color = KyvoColors.PurplePrimary, fontWeight = FontWeight.Bold) }; Column(Modifier.weight(1f).padding(start = 12.dp)) { Text(meal.type.label, fontWeight = FontWeight.Bold); Text(meal.title, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis); meal.time?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = KyvoColors.PurplePrimary) } }; Text("${meal.totalCalories} kcal  ›", fontWeight = FontWeight.SemiBold) }
 
 @Composable private fun FocusCard() = KyvoCard(Modifier.padding(horizontal = 20.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)) { Row(Modifier.fillMaxWidth().background(KyvoColors.PurpleSoft).padding(16.dp), verticalAlignment = Alignment.CenterVertically) { androidx.compose.foundation.Image(painterResource(R.drawable.ic_home_focus), null, Modifier.size(56.dp), contentScale = ContentScale.Fit); Column(Modifier.padding(start = 12.dp)) { Text("Tu enfoque de hoy", fontWeight = FontWeight.Bold); Text("Cada comida cuenta. Alimenta tu rendimiento.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall) } } }
-@Composable private fun BottomNavigationShell(onMealShare: () -> Unit) = Row(Modifier.fillMaxWidth().padding(20.dp), horizontalArrangement = Arrangement.SpaceAround) {
-    listOf("Inicio", "Comidas", "Progreso", "Perfil").forEach { Text(it, color = if (it == "Inicio") KyvoColors.PurplePrimary else MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = if (it == "Inicio") FontWeight.Bold else FontWeight.Normal) }
-    Text("＋", color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold, modifier = Modifier.heightIn(min = 48.dp).clickable(onClick = onMealShare).semantics { contentDescription = "Meal Share" })
+@Composable private fun BottomNavigationShell(onMealShare: () -> Unit, onProgress: () -> Unit) = Row(Modifier.fillMaxWidth().padding(20.dp), horizontalArrangement = Arrangement.SpaceAround) {
+    Text("Inicio", color = KyvoColors.PurplePrimary, fontWeight = FontWeight.Bold)
+    Text("Comidas", color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Text("Progreso", color = KyvoColors.PurplePrimary, fontWeight = FontWeight.Bold, modifier = Modifier.heightIn(min = 48.dp).clickable(onClick = onProgress).semantics { contentDescription = "Progreso" })
+    Text("Perfil", color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Box(
+        modifier = Modifier
+            .size(48.dp)
+            .clip(CircleShape)
+            .background(KyvoColors.PurpleSoft)
+            .clickable(onClick = onMealShare)
+            .semantics { contentDescription = "Meal Share" },
+        contentAlignment = Alignment.Center,
+    ) {
+        Text("＋", color = KyvoColors.PurplePrimary, fontWeight = FontWeight.Bold)
+    }
 }
 
 @Composable fun NutritionDetailScreen(daily: DailyNutrition, onBack: () -> Unit) = LazyColumn(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) { item { Text("‹", Modifier.size(48.dp).clickable(onClick = onBack).padding(10.dp), style = MaterialTheme.typography.headlineMedium); Text("Detalle nutricional", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold); Text(daily.date.format(DateTimeFormatter.ofPattern("d 'de' MMMM", Locale("es", "MX"))), color = MaterialTheme.colorScheme.onSurfaceVariant) }; item { DetailCalories(daily) }; item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) { DetailMacro("Proteína", daily.proteinConsumed, daily.proteinTarget, Modifier.weight(1f)); DetailMacro("Carbohidratos", daily.carbohydrateConsumed, daily.carbohydrateTarget, Modifier.weight(1f)); DetailMacro("Grasas", daily.fatConsumed, daily.fatTarget, Modifier.weight(1f)) } }; item { MacroBreakdown(daily) } }

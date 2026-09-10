@@ -12,6 +12,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -21,6 +26,9 @@ import com.kyvo.app.feature.auth.presentation.LoginRoute
 import com.kyvo.app.feature.onboarding.domain.repository.OnboardingRepository
 import com.kyvo.app.feature.home.domain.repository.MealRepository
 import com.kyvo.app.feature.home.presentation.HomeRoute
+import com.kyvo.app.feature.progress.presentation.ProgressPlaceholder
+import com.kyvo.app.feature.progress.presentation.ProgressRoute
+import com.kyvo.app.feature.progress.presentation.ProgressViewModel
 import com.kyvo.app.feature.food.domain.repository.FoodRepository
 import com.kyvo.app.feature.food.presentation.FoodDetailRoute
 import com.kyvo.app.feature.food.presentation.FoodFavoritesRoute
@@ -76,7 +84,12 @@ fun KyvoNavHost(
             }
         }
     }
-    NavHost(navController = navController, startDestination = target.route) {
+    val normalContentModifier = if (target == KyvoDestination.Login || target == KyvoDestination.Onboarding) {
+        Modifier.fillMaxSize()
+    } else {
+        Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.statusBars)
+    }
+    NavHost(navController = navController, startDestination = target.route, modifier = normalContentModifier) {
         composable(KyvoDestination.Login.route) {
             LoginRoute(authRepository = authRepository)
         }
@@ -96,9 +109,28 @@ fun KyvoNavHost(
                     mealRepository,
                     onAddFood = { navController.navigate(KyvoDestination.FoodHub.route) },
                     onMealShare = { navController.navigate(KyvoDestination.MealShare.route) { launchSingleTop = true } },
+                    onProgress = { navController.navigate(KyvoDestination.Progress.route) { launchSingleTop = true } },
                 )
             }
         }
+        composable(KyvoDestination.Progress.route) {
+            if (onboardingRepository != null && mealRepository != null) {
+                val progressViewModel: ProgressViewModel = viewModel(factory = ProgressViewModel.factory(onboardingRepository, mealRepository))
+                ProgressRoute(
+                    progressViewModel,
+                    onHome = { navController.navigate(KyvoDestination.Home.route) { popUpTo(KyvoDestination.Home.route) } },
+                    onMealShare = { navController.navigate(KyvoDestination.MealShare.route) { launchSingleTop = true } },
+                    onCaloriesDetail = { navController.navigate(KyvoDestination.ProgressCalories.route) },
+                    onProteinDetail = { navController.navigate(KyvoDestination.ProgressProtein.route) },
+                    onConsistency = { navController.navigate(KyvoDestination.ProgressConsistency.route) },
+                    onHistory = { navController.navigate(KyvoDestination.ProgressHistory.route) },
+                )
+            }
+        }
+        composable(KyvoDestination.ProgressCalories.route) { ProgressPlaceholder("Detalle de calorías", onBack = { navController.popBackStack() }) }
+        composable(KyvoDestination.ProgressProtein.route) { ProgressPlaceholder("Detalle de proteína", onBack = { navController.popBackStack() }) }
+        composable(KyvoDestination.ProgressConsistency.route) { ProgressPlaceholder("Consistencia nutricional", onBack = { navController.popBackStack() }) }
+        composable(KyvoDestination.ProgressHistory.route) { ProgressPlaceholder("Historial de días", onBack = { navController.popBackStack() }) }
         composable(KyvoDestination.FoodHub.route) {
             FoodHubScreen(
                 onSearch = { navController.navigate(foodSearchRoute(FoodSelectionContext.NORMAL_MEAL_LOGGING)) },
