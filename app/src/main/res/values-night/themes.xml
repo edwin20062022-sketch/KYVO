@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <style name="Theme.Kyvo.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/kyvo_launch_system_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="postSplashScreenTheme">@style/Theme.Kyvo</item>
+    </style>
+
     <style name="Theme.Kyvo" parent="android:style/Theme.Material.NoActionBar">
         <item name="android:fontFamily">sans</item>
         <item name="android:windowActionModeOverlay">true</item>

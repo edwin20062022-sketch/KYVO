@@ -78,6 +78,7 @@ dependencies {
     androidTestImplementation(composeBom)
 
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.core.splashscreen)
     implementation("androidx.exifinterface:exifinterface:1.3.7")
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
