@@ -13,13 +13,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.kyvo.app.domain.auth.AuthRepository
 import com.kyvo.app.domain.auth.AuthState
 import com.kyvo.app.feature.auth.presentation.LoginRoute
@@ -86,6 +92,9 @@ fun KyvoNavHost(
 ) {
     val target = resolveStartDestination(authState, onboardingCompleted)
     val scope = rememberCoroutineScope()
+    val currentEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = currentEntry?.destination
+    val showBottomNavigation = shouldShowKyvoBottomNavigation(currentDestination?.route)
     LaunchedEffect(target) {
         if (navController.currentDestination?.route != target.route) {
             navController.navigate(target.route) {
@@ -99,7 +108,12 @@ fun KyvoNavHost(
     } else {
         Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.statusBars)
     }
-    NavHost(navController = navController, startDestination = target.route, modifier = normalContentModifier) {
+    Box(normalContentModifier) {
+    NavHost(
+        navController = navController,
+        startDestination = target.route,
+        modifier = Modifier.fillMaxSize().padding(bottom = if (showBottomNavigation) 132.dp else 0.dp),
+    ) {
         composable(KyvoDestination.Login.route) {
             LoginRoute(authRepository = authRepository)
         }
@@ -122,6 +136,15 @@ fun KyvoNavHost(
                     onProgress = { navController.navigate(KyvoDestination.Progress.route) { launchSingleTop = true } },
                 )
             }
+        }
+        composable(KyvoDestination.Meals.route) {
+            FoodHubScreen(
+                onSearch = { navController.navigate(foodSearchRoute(FoodSelectionContext.NORMAL_MEAL_LOGGING)) },
+                onFrequent = { navController.navigate(KyvoDestination.FoodFrequent.route) },
+                onFavorites = { navController.navigate(KyvoDestination.FoodFavorites.route) },
+                onFuture = { title -> navController.navigate("food/placeholder/${Uri.encode(title)}") },
+                onDishes = { navController.navigate(KyvoDestination.SavedDishes.route) },
+            )
         }
         composable(KyvoDestination.Progress.route) {
             if (onboardingRepository != null && mealRepository != null) {
@@ -171,6 +194,9 @@ fun KyvoNavHost(
                     NutritionDayDetailRoute(dayViewModel, onBack = { navController.popBackStack(KyvoDestination.ProgressHistory.route, inclusive = false) })
                 }
             }
+        }
+        composable(KyvoDestination.Profile.route) {
+            TopLevelPlaceholder("Perfil", "Tu perfil de atleta estará disponible en la siguiente fase.")
         }
         composable(KyvoDestination.FoodHub.route) {
             FoodHubScreen(
@@ -371,6 +397,31 @@ fun KyvoNavHost(
                 AddSavedDishToDayRoute(id, savedDishRepository, mealRepository, onBack = { navController.popBackStack() }, onAdded = { navController.navigate(KyvoDestination.Home.route) { popUpTo(KyvoDestination.Home.route) { inclusive = false } } })
             }
         }
+    }
+    if (showBottomNavigation) {
+        Box(Modifier.align(Alignment.BottomCenter)) {
+            KyvoBottomNavigation(
+                selected = kyvoBottomDestinationFor(currentDestination),
+                onDestinationSelected = { destination ->
+                    navController.navigate(destination.route) {
+                        if (destination != KyvoBottomDestination.MealShare) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            restoreState = true
+                        }
+                        launchSingleTop = true
+                    }
+                },
+            )
+        }
+    }
+    }
+}
+
+@Composable
+private fun TopLevelPlaceholder(title: String, message: String) = Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    androidx.compose.foundation.layout.Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
+        androidx.compose.material3.Text(title, style = androidx.compose.material3.MaterialTheme.typography.headlineSmall, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+        androidx.compose.material3.Text(message, color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
     }
 }
 

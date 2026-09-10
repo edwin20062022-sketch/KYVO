@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -75,9 +74,8 @@ fun ProgressScreen(
     val completion = listOf(latest.caloriesProgress, latest.proteinProgress, latest.carbohydratesProgress, latest.fatProgress)
         .mapNotNull { it.ratio }.average().takeIf { !it.isNaN() } ?: 0.0
 
-    androidx.compose.foundation.layout.Column(Modifier.fillMaxSize()) {
     LazyColumn(
-        modifier = Modifier.weight(1f).padding(horizontal = 20.dp),
+        modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(top = 24.dp, bottom = 28.dp),
     ) {
@@ -107,8 +105,6 @@ fun ProgressScreen(
                 FutureCard("Consistencia nutricional", "Analiza tu cumplimiento en el tiempo.", Modifier.weight(1f), onConsistency)
             }
         }
-    }
-        ProgressBottomBar(onHome, onMeals, onMealShare)
     }
 }
 
@@ -204,25 +200,11 @@ private fun ProgressEmptyState(onHome: () -> Unit, onMeals: () -> Unit, onMealSh
             }
         }
     }
-    ProgressBottomBar(onHome, onMeals, onMealShare)
 }
 
 @Composable private fun ProgressErrorState(message: String, retry: () -> Unit) = Column(Modifier.fillMaxSize().padding(28.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
     Text(message, color = KyvoColors.Slate, textAlign = TextAlign.Center)
     KyvoPrimaryButton("Reintentar", retry, Modifier.padding(top = 20.dp))
-}
-
-@Composable
-private fun ProgressBottomBar(onHome: () -> Unit, onMeals: () -> Unit, onMealShare: () -> Unit) = Row(
-    Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 20.dp, vertical = 10.dp),
-    horizontalArrangement = Arrangement.SpaceAround,
-    verticalAlignment = Alignment.CenterVertically,
-) {
-    Text("Inicio", color = KyvoColors.Slate, modifier = Modifier.clickable(onClick = onHome).padding(12.dp))
-    Text("Comidas", color = KyvoColors.Slate, modifier = Modifier.clickable(onClick = onMeals).padding(12.dp))
-    Text("＋", color = KyvoColors.PurplePrimary, style = MaterialTheme.typography.headlineMedium, modifier = Modifier.clickable(onClick = onMealShare).padding(8.dp))
-    Text("Progreso", color = KyvoColors.PurplePrimary, fontWeight = FontWeight.Bold, modifier = Modifier.padding(12.dp))
-    Text("Perfil", color = KyvoColors.Slate, modifier = Modifier.padding(12.dp))
 }
 
 @Composable
