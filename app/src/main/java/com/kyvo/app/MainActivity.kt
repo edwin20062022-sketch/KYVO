@@ -14,8 +14,21 @@ class MainActivity : ComponentActivity() {
     private var authIntent by mutableStateOf<Intent?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+        splashScreen.setOnExitAnimationListener { splashScreenView ->
+            splashScreenView.iconView.animate()
+                .alpha(0f)
+                .scaleX(1.04f)
+                .scaleY(1.04f)
+                .setDuration(SPLASH_EXIT_DURATION_MS)
+                .start()
+            splashScreenView.view.animate()
+                .alpha(0f)
+                .setDuration(SPLASH_EXIT_DURATION_MS)
+                .withEndAction { splashScreenView.remove() }
+                .start()
+        }
         authIntent = intent
         enableEdgeToEdge()
         setContent { KyvoApp(authIntent = authIntent) }
@@ -25,5 +38,9 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         authIntent = intent
+    }
+
+    private companion object {
+        const val SPLASH_EXIT_DURATION_MS = 240L
     }
 }

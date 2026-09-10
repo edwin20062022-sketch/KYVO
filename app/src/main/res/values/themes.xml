@@ -2,7 +2,7 @@
 <resources>
     <style name="Theme.Kyvo.Starting" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/kyvo_launch_system_background</item>
-        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/kyvo_splash_icon</item>
         <item name="postSplashScreenTheme">@style/Theme.Kyvo</item>
     </style>
 
