@@ -95,8 +95,8 @@ fun ProgressScreen(
         }
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                NutrientCard("Carbohidratos", "${latest.carbohydratesConsumed} g", "de ${latest.carbohydratesTarget} g", latest.carbohydratesProgress.percentage, Modifier.weight(1f), onCaloriesDetail)
-                NutrientCard("Grasas", "${latest.fatConsumed} g", "de ${latest.fatTarget} g", latest.fatProgress.percentage, Modifier.weight(1f), onCaloriesDetail)
+                NutrientCard("Carbohidratos", "${latest.carbohydratesConsumed} g", "de ${latest.carbohydratesTarget} g", latest.carbohydratesProgress.percentage, Modifier.weight(1f), null)
+                NutrientCard("Grasas", "${latest.fatConsumed} g", "de ${latest.fatTarget} g", latest.fatProgress.percentage, Modifier.weight(1f), null)
             }
         }
         item { TrendCard("Tendencia de calorías", "Promedio diario: $averageCalories kcal") { BarTrend(recentDays) } }
@@ -137,7 +137,7 @@ private fun CompletionCard(completion: Double, days: List<DailyNutritionSummary>
 }
 
 @Composable
-private fun NutrientCard(name: String, value: String, target: String, percentage: Int?, modifier: Modifier, onClick: () -> Unit) = KyvoCard(modifier.clickable(onClick = onClick), androidx.compose.foundation.layout.PaddingValues(16.dp)) {
+private fun NutrientCard(name: String, value: String, target: String, percentage: Int?, modifier: Modifier, onClick: (() -> Unit)?) = KyvoCard(if (onClick == null) modifier else modifier.clickable(onClick = onClick), androidx.compose.foundation.layout.PaddingValues(16.dp)) {
     Text(name, color = KyvoColors.PurpleDeep, fontWeight = FontWeight.SemiBold)
     Text(value, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 10.dp))
     Text(target, color = KyvoColors.Slate, style = MaterialTheme.typography.bodySmall)

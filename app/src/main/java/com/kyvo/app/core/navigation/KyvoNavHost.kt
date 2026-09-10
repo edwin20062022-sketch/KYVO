@@ -29,6 +29,9 @@ import com.kyvo.app.feature.home.presentation.HomeRoute
 import com.kyvo.app.feature.progress.presentation.ProgressPlaceholder
 import com.kyvo.app.feature.progress.presentation.ProgressRoute
 import com.kyvo.app.feature.progress.presentation.ProgressViewModel
+import com.kyvo.app.feature.progress.domain.NutritionMetric
+import com.kyvo.app.feature.progress.presentation.NutritionMetricDetailRoute
+import com.kyvo.app.feature.progress.presentation.NutritionMetricDetailViewModel
 import com.kyvo.app.feature.food.domain.repository.FoodRepository
 import com.kyvo.app.feature.food.presentation.FoodDetailRoute
 import com.kyvo.app.feature.food.presentation.FoodFavoritesRoute
@@ -127,8 +130,18 @@ fun KyvoNavHost(
                 )
             }
         }
-        composable(KyvoDestination.ProgressCalories.route) { ProgressPlaceholder("Detalle de calorías", onBack = { navController.popBackStack() }) }
-        composable(KyvoDestination.ProgressProtein.route) { ProgressPlaceholder("Detalle de proteína", onBack = { navController.popBackStack() }) }
+        composable(KyvoDestination.ProgressCalories.route) {
+            if (onboardingRepository != null && mealRepository != null) {
+                val detailViewModel: NutritionMetricDetailViewModel = viewModel(factory = NutritionMetricDetailViewModel.factory(onboardingRepository, mealRepository, NutritionMetric.CALORIES))
+                NutritionMetricDetailRoute(detailViewModel, onBack = { navController.popBackStack(KyvoDestination.Progress.route, inclusive = false) })
+            }
+        }
+        composable(KyvoDestination.ProgressProtein.route) {
+            if (onboardingRepository != null && mealRepository != null) {
+                val detailViewModel: NutritionMetricDetailViewModel = viewModel(factory = NutritionMetricDetailViewModel.factory(onboardingRepository, mealRepository, NutritionMetric.PROTEIN))
+                NutritionMetricDetailRoute(detailViewModel, onBack = { navController.popBackStack(KyvoDestination.Progress.route, inclusive = false) })
+            }
+        }
         composable(KyvoDestination.ProgressConsistency.route) { ProgressPlaceholder("Consistencia nutricional", onBack = { navController.popBackStack() }) }
         composable(KyvoDestination.ProgressHistory.route) { ProgressPlaceholder("Historial de días", onBack = { navController.popBackStack() }) }
         composable(KyvoDestination.FoodHub.route) {
