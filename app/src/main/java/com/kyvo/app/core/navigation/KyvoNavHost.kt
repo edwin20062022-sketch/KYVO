@@ -77,6 +77,7 @@ import androidx.core.content.FileProvider
 import java.io.File
 import java.time.LocalDate
 import com.kyvo.app.feature.onboarding.presentation.OnboardingRoute
+import com.kyvo.app.feature.profile.presentation.AthleteProfileRoute
 import kotlinx.coroutines.launch
 
 @Composable
@@ -196,7 +197,30 @@ fun KyvoNavHost(
             }
         }
         composable(KyvoDestination.Profile.route) {
-            TopLevelPlaceholder("Perfil", "Tu perfil de atleta estará disponible en la siguiente fase.")
+            if (authState is AuthState.SignedIn && onboardingRepository != null) {
+                AthleteProfileRoute(
+                    session = authState.session,
+                    repository = onboardingRepository,
+                    onEditProfile = { navController.navigate(KyvoDestination.ProfileEdit.route) },
+                    onNutritionPlan = { navController.navigate(KyvoDestination.ProfileNutritionPlan.route) },
+                    onUpdateGoal = { navController.navigate(KyvoDestination.ProfileUpdateGoal.route) },
+                    onRecalculateGoals = { navController.navigate(KyvoDestination.ProfileRecalculateGoals.route) },
+                )
+            } else {
+                TopLevelPlaceholder("Perfil", "Completa tu sesión para ver tu perfil de atleta.")
+            }
+        }
+        composable(KyvoDestination.ProfileEdit.route) {
+            TopLevelPlaceholder("Editar perfil", "Esta pantalla estará disponible en el siguiente checkpoint.") { navController.popBackStack() }
+        }
+        composable(KyvoDestination.ProfileNutritionPlan.route) {
+            TopLevelPlaceholder("Mi plan nutricional", "Esta pantalla estará disponible en el siguiente checkpoint.") { navController.popBackStack() }
+        }
+        composable(KyvoDestination.ProfileUpdateGoal.route) {
+            TopLevelPlaceholder("Actualizar objetivo", "Esta pantalla estará disponible en el siguiente checkpoint.") { navController.popBackStack() }
+        }
+        composable(KyvoDestination.ProfileRecalculateGoals.route) {
+            TopLevelPlaceholder("Recalcular metas", "Esta pantalla estará disponible en el siguiente checkpoint.") { navController.popBackStack() }
         }
         composable(KyvoDestination.FoodHub.route) {
             FoodHubScreen(
@@ -418,10 +442,13 @@ fun KyvoNavHost(
 }
 
 @Composable
-private fun TopLevelPlaceholder(title: String, message: String) = Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+private fun TopLevelPlaceholder(title: String, message: String, onBack: (() -> Unit)? = null) = Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
     androidx.compose.foundation.layout.Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
         androidx.compose.material3.Text(title, style = androidx.compose.material3.MaterialTheme.typography.headlineSmall, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
         androidx.compose.material3.Text(message, color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+        onBack?.let { callback ->
+            androidx.compose.material3.TextButton(onClick = callback, modifier = Modifier.padding(top = 12.dp)) { androidx.compose.material3.Text("Volver") }
+        }
     }
 }
 
