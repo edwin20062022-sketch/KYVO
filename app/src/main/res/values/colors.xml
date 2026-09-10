@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="kyvo_launch_system_background">#FBFAFE</color>
+    <color name="kyvo_splash_background">#FFFFFF</color>
 </resources>

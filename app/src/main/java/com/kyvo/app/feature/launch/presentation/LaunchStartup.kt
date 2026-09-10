@@ -10,8 +10,3 @@ internal fun isLaunchDestinationReady(
     AuthState.SignedOut -> true
     is AuthState.SignedIn -> onboardingLoaded
 }
-
-internal fun shouldShowLaunchCover(
-    destinationReady: Boolean,
-    minimumLaunchDurationElapsed: Boolean,
-): Boolean = !destinationReady || !minimumLaunchDurationElapsed

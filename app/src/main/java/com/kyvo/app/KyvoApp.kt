@@ -5,17 +5,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.kyvo.app.core.designsystem.KyvoTheme
 import com.kyvo.app.core.navigation.KyvoNavHost
-import com.kyvo.app.feature.launch.presentation.KyvoLaunchScreen
 import com.kyvo.app.feature.launch.presentation.isLaunchDestinationReady
-import com.kyvo.app.feature.launch.presentation.shouldShowLaunchCover
 import com.kyvo.app.data.auth.ConfigurationRequiredAuthRepository
 import com.kyvo.app.data.auth.CredentialManagerGoogleGateway
 import com.kyvo.app.data.auth.SupabaseAuthRepository
@@ -32,18 +30,16 @@ import com.kyvo.app.domain.auth.AuthState
 import com.kyvo.app.feature.onboarding.data.DataStoreOnboardingRepository
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.handleDeeplinks
-import android.os.SystemClock
-import kotlinx.coroutines.delay
-
-private const val LAUNCH_COVER_MINIMUM_DURATION_MS = 700L
-
 private data class AuthDependencies(
     val repository: AuthRepository,
     val client: SupabaseClient? = null,
 )
 
 @Composable
-fun KyvoApp(authIntent: Intent? = null) {
+fun KyvoApp(
+    authIntent: Intent? = null,
+    onStartupReady: () -> Unit = {},
+) {
     val context = LocalContext.current
     val authDependencies = remember(context) {
         if (BuildConfig.SUPABASE_URL.isBlank() || BuildConfig.SUPABASE_PUBLISHABLE_KEY.isBlank()) {
@@ -78,35 +74,20 @@ fun KyvoApp(authIntent: Intent? = null) {
     }
     KyvoTheme {
         val navController = rememberNavController()
-        val launchStartedAtMillis = rememberSaveable { SystemClock.elapsedRealtime() }
-        var minimumLaunchDurationElapsed by rememberSaveable { mutableStateOf(false) }
-        LaunchedEffect(launchStartedAtMillis) {
-            val remainingDuration = (LAUNCH_COVER_MINIMUM_DURATION_MS -
-                (SystemClock.elapsedRealtime() - launchStartedAtMillis)).coerceAtLeast(0L)
-            delay(remainingDuration)
-            minimumLaunchDurationElapsed = true
-        }
         when (val state = authState) {
-            AuthState.Initializing -> KyvoLaunchScreen()
+            AuthState.Initializing -> Box(Modifier.fillMaxSize())
             AuthState.SignedOut -> {
-                if (shouldShowLaunchCover(
-                        destinationReady = isLaunchDestinationReady(state, onboardingLoaded = false),
-                        minimumLaunchDurationElapsed = minimumLaunchDurationElapsed,
-                    )
-                ) {
-                    KyvoLaunchScreen()
-                } else {
-                    KyvoNavHost(
-                        navController = navController,
-                        authRepository = authRepository,
-                        onboardingRepository = null,
-                        mealRepository = null,
-                        foodRepository = null,
-                        savedDishRepository = null,
-                        authState = state,
-                        onboardingCompleted = false,
-                    )
-                }
+                LaunchedEffect(Unit) { onStartupReady() }
+                KyvoNavHost(
+                    navController = navController,
+                    authRepository = authRepository,
+                    onboardingRepository = null,
+                    mealRepository = null,
+                    foodRepository = null,
+                    savedDishRepository = null,
+                    authState = state,
+                    onboardingCompleted = false,
+                )
             }
             is AuthState.SignedIn -> {
                 val onboardingRepository = remember(context, state.session.userId) {
@@ -116,16 +97,8 @@ fun KyvoApp(authIntent: Intent? = null) {
                 val savedDishRepository = remember(state.session.userId, authDependencies.client) { SupabaseSavedDishRepository(requireNotNull(authDependencies.client)) }
                 val onboarding by onboardingRepository.observe()
                     .collectAsStateWithLifecycle(initialValue = null)
-                if (shouldShowLaunchCover(
-                        destinationReady = isLaunchDestinationReady(
-                            state,
-                            onboardingLoaded = onboarding != null,
-                        ),
-                        minimumLaunchDurationElapsed = minimumLaunchDurationElapsed,
-                    )
-                ) {
-                    KyvoLaunchScreen()
-                } else {
+                if (isLaunchDestinationReady(state, onboardingLoaded = onboarding != null)) {
+                    LaunchedEffect(state.session.userId) { onStartupReady() }
                     KyvoNavHost(
                         navController = navController,
                         authRepository = authRepository,
@@ -136,7 +109,7 @@ fun KyvoApp(authIntent: Intent? = null) {
                         authState = state,
                         onboardingCompleted = onboarding?.isCompleted == true,
                     )
-                }
+                } else Box(Modifier.fillMaxSize())
             }
         }
     }
