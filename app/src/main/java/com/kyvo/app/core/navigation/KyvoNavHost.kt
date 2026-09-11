@@ -105,6 +105,11 @@ import com.kyvo.app.feature.settings.presentation.PermissionsRoute
 import com.kyvo.app.feature.settings.presentation.PrivacyScreen
 import com.kyvo.app.feature.settings.presentation.openKyvoAppSettings
 import com.kyvo.app.feature.settings.data.AppSettingsRepository
+import com.kyvo.app.feature.settings.presentation.MealSharePreferencesRoute
+import com.kyvo.app.feature.settings.presentation.HelpScreen
+import com.kyvo.app.feature.settings.presentation.AboutScreen
+import com.kyvo.app.feature.settings.presentation.LegalScreen
+import com.kyvo.app.feature.settings.presentation.LegalPendingScreen
 import kotlinx.coroutines.launch
 
 @Composable
@@ -330,14 +335,31 @@ fun KyvoNavHost(
                 onDeleteData = { navController.navigate(KyvoDestination.SettingsDeleteAccount.route) },
             )
         }
+        composable(KyvoDestination.SettingsMealShare.route) {
+            MealSharePreferencesRoute(appSettingsRepository, onBack = { navController.popBackStack() })
+        }
+        composable(KyvoDestination.SettingsHelp.route) {
+            HelpScreen(onBack = { navController.popBackStack() })
+        }
+        composable(KyvoDestination.SettingsAbout.route) {
+            AboutScreen(onBack = { navController.popBackStack() })
+        }
+        composable(KyvoDestination.SettingsLegal.route) {
+            LegalScreen(
+                onBack = { navController.popBackStack() },
+                onPrivacy = { navController.navigate(KyvoDestination.SettingsPrivacy.route) },
+                onTerms = { navController.navigate(KyvoDestination.SettingsTerms.route) },
+                onNutritionNotice = { navController.navigate(KyvoDestination.SettingsNutritionNotice.route) },
+                onLicenses = { navController.navigate(KyvoDestination.SettingsLicenses.route) },
+            )
+        }
+        composable(KyvoDestination.SettingsTerms.route) { LegalPendingScreen("Términos y condiciones", onBack = { navController.popBackStack() }) }
+        composable(KyvoDestination.SettingsNutritionNotice.route) { LegalPendingScreen("Aviso sobre información nutricional", onBack = { navController.popBackStack() }) }
+        composable(KyvoDestination.SettingsLicenses.route) { LegalPendingScreen("Licencias de terceros", onBack = { navController.popBackStack() }) }
         listOf(
             KyvoDestination.SettingsNutritionGoals to "Objetivos nutricionales",
             KyvoDestination.SettingsFoodPreferences to "Preferencias alimenticias",
-            KyvoDestination.SettingsMealShare to "Preferencias de Meal Share",
             KyvoDestination.SettingsDeleteAccount to "Eliminar cuenta",
-            KyvoDestination.SettingsHelp to "Ayuda y soporte",
-            KyvoDestination.SettingsAbout to "Acerca de KYVO",
-            KyvoDestination.SettingsLegal to "Legal",
         ).forEach { (destination, title) ->
             composable(destination.route) { SettingsPlaceholderScreen(title, onBack = { navController.popBackStack() }) }
         }

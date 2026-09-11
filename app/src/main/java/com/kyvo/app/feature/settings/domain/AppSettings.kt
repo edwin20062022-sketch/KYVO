@@ -1,5 +1,7 @@
 package com.kyvo.app.feature.settings.domain
 
+import com.kyvo.app.feature.mealshare.domain.model.MealShareTemplate
+
 enum class WeightUnit(val label: String) { KILOGRAMS("kg"), POUNDS("lb") }
 enum class HeightUnit(val label: String) { CENTIMETERS("cm"), FEET_INCHES("ft / in") }
 enum class FoodUnit(val label: String) { GRAMS("gramos"), OUNCES("onzas") }
@@ -31,6 +33,17 @@ data class AppSettings(
     val reduceBrightnessInDarkMode: Boolean = true,
     val highContrast: Boolean = false,
     val notifications: NotificationPreferences = NotificationPreferences(),
+    val mealShare: MealSharePreferences = MealSharePreferences(),
+)
+
+data class MealSharePreferences(
+    val defaultTemplate: MealShareTemplate = MealShareTemplate.MINIMAL,
+    val showCalories: Boolean = true,
+    val showProtein: Boolean = true,
+    val showCarbohydrates: Boolean = true,
+    val showFat: Boolean = true,
+    val autoSave: Boolean = true,
+    val suggestInstagram: Boolean = true,
 )
 
 fun AppearanceMode.resolveDarkTheme(systemDark: Boolean): Boolean = when (this) {

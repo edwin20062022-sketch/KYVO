@@ -10,6 +10,7 @@ import com.kyvo.app.feature.settings.domain.FoodUnit
 import com.kyvo.app.feature.settings.domain.HeightUnit
 import com.kyvo.app.feature.settings.domain.TemperatureUnit
 import com.kyvo.app.feature.settings.domain.WeightUnit
+import com.kyvo.app.feature.mealshare.domain.model.MealShareTemplate
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -34,6 +35,13 @@ class AppSettingsViewModel(private val repository: AppSettingsRepository) : View
     fun setNewFeaturesNotifications(enabled: Boolean) = viewModelScope.launch { repository.setNewFeaturesNotifications(enabled) }
     fun setTipsAndContentNotifications(enabled: Boolean) = viewModelScope.launch { repository.setTipsAndContentNotifications(enabled) }
     fun setAccountNoticesNotifications(enabled: Boolean) = viewModelScope.launch { repository.setAccountNoticesNotifications(enabled) }
+    fun setMealShareTemplate(template: MealShareTemplate) = viewModelScope.launch { repository.setMealShareTemplate(template) }
+    fun setMealShareShowCalories(enabled: Boolean) = viewModelScope.launch { repository.setMealShareShowCalories(enabled) }
+    fun setMealShareShowProtein(enabled: Boolean) = viewModelScope.launch { repository.setMealShareShowProtein(enabled) }
+    fun setMealShareShowCarbohydrates(enabled: Boolean) = viewModelScope.launch { repository.setMealShareShowCarbohydrates(enabled) }
+    fun setMealShareShowFat(enabled: Boolean) = viewModelScope.launch { repository.setMealShareShowFat(enabled) }
+    fun setMealShareAutoSave(enabled: Boolean) = viewModelScope.launch { repository.setMealShareAutoSave(enabled) }
+    fun setMealShareSuggestInstagram(enabled: Boolean) = viewModelScope.launch { repository.setMealShareSuggestInstagram(enabled) }
 
     companion object {
         fun factory(repository: AppSettingsRepository): ViewModelProvider.Factory = object : ViewModelProvider.Factory {

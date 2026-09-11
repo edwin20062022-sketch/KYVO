@@ -14,6 +14,7 @@ import com.kyvo.app.feature.settings.domain.HeightUnit
 import com.kyvo.app.feature.settings.domain.TemperatureUnit
 import com.kyvo.app.feature.settings.domain.UnitPreferences
 import com.kyvo.app.feature.settings.domain.WeightUnit
+import com.kyvo.app.feature.mealshare.domain.model.MealShareTemplate
 import java.io.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -39,6 +40,13 @@ interface AppSettingsRepository {
     suspend fun setNewFeaturesNotifications(enabled: Boolean)
     suspend fun setTipsAndContentNotifications(enabled: Boolean)
     suspend fun setAccountNoticesNotifications(enabled: Boolean)
+    suspend fun setMealShareTemplate(template: MealShareTemplate)
+    suspend fun setMealShareShowCalories(enabled: Boolean)
+    suspend fun setMealShareShowProtein(enabled: Boolean)
+    suspend fun setMealShareShowCarbohydrates(enabled: Boolean)
+    suspend fun setMealShareShowFat(enabled: Boolean)
+    suspend fun setMealShareAutoSave(enabled: Boolean)
+    suspend fun setMealShareSuggestInstagram(enabled: Boolean)
 }
 
 class DataStoreAppSettingsRepository(context: Context) : AppSettingsRepository {
@@ -64,6 +72,13 @@ class DataStoreAppSettingsRepository(context: Context) : AppSettingsRepository {
     override suspend fun setNewFeaturesNotifications(enabled: Boolean) = edit { it[Keys.NewFeatures] = enabled }
     override suspend fun setTipsAndContentNotifications(enabled: Boolean) = edit { it[Keys.TipsAndContent] = enabled }
     override suspend fun setAccountNoticesNotifications(enabled: Boolean) = edit { it[Keys.AccountNotices] = enabled }
+    override suspend fun setMealShareTemplate(template: MealShareTemplate) = edit { it[Keys.MealShareTemplate] = template.name }
+    override suspend fun setMealShareShowCalories(enabled: Boolean) = edit { it[Keys.MealShareCalories] = enabled }
+    override suspend fun setMealShareShowProtein(enabled: Boolean) = edit { it[Keys.MealShareProtein] = enabled }
+    override suspend fun setMealShareShowCarbohydrates(enabled: Boolean) = edit { it[Keys.MealShareCarbs] = enabled }
+    override suspend fun setMealShareShowFat(enabled: Boolean) = edit { it[Keys.MealShareFat] = enabled }
+    override suspend fun setMealShareAutoSave(enabled: Boolean) = edit { it[Keys.MealShareAutoSave] = enabled }
+    override suspend fun setMealShareSuggestInstagram(enabled: Boolean) = edit { it[Keys.MealShareInstagram] = enabled }
 
     private suspend fun edit(block: (MutableMap<Preferences.Key<*>, Any>) -> Unit) {
         dataStore.edit { preferences ->
@@ -97,6 +112,15 @@ class DataStoreAppSettingsRepository(context: Context) : AppSettingsRepository {
             tipsAndContent = preferences[Keys.TipsAndContent] ?: true,
             accountNotices = preferences[Keys.AccountNotices] ?: true,
         ),
+        mealShare = com.kyvo.app.feature.settings.domain.MealSharePreferences(
+            defaultTemplate = preferences[Keys.MealShareTemplate].enumOr(MealShareTemplate.MINIMAL),
+            showCalories = preferences[Keys.MealShareCalories] ?: true,
+            showProtein = preferences[Keys.MealShareProtein] ?: true,
+            showCarbohydrates = preferences[Keys.MealShareCarbs] ?: true,
+            showFat = preferences[Keys.MealShareFat] ?: true,
+            autoSave = preferences[Keys.MealShareAutoSave] ?: true,
+            suggestInstagram = preferences[Keys.MealShareInstagram] ?: true,
+        ),
     )
 
     private object Keys {
@@ -116,6 +140,13 @@ class DataStoreAppSettingsRepository(context: Context) : AppSettingsRepository {
         val NewFeatures = booleanPreferencesKey("notification_new_features")
         val TipsAndContent = booleanPreferencesKey("notification_tips_content")
         val AccountNotices = booleanPreferencesKey("notification_account_notices")
+        val MealShareTemplate = stringPreferencesKey("meal_share_template")
+        val MealShareCalories = booleanPreferencesKey("meal_share_show_calories")
+        val MealShareProtein = booleanPreferencesKey("meal_share_show_protein")
+        val MealShareCarbs = booleanPreferencesKey("meal_share_show_carbohydrates")
+        val MealShareFat = booleanPreferencesKey("meal_share_show_fat")
+        val MealShareAutoSave = booleanPreferencesKey("meal_share_auto_save")
+        val MealShareInstagram = booleanPreferencesKey("meal_share_suggest_instagram")
     }
 }
 
