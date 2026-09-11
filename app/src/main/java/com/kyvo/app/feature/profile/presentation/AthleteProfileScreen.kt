@@ -68,11 +68,12 @@ fun AthleteProfileRoute(
     onNutritionPlan: () -> Unit,
     onUpdateGoal: () -> Unit,
     onRecalculateGoals: () -> Unit,
+    onPersonalPreferences: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: AthleteProfileViewModel = viewModel(factory = AthleteProfileViewModel.factory(session, repository)),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    AthleteProfileScreen(state, viewModel::retry, onEditProfile, onNutritionPlan, onUpdateGoal, onRecalculateGoals, modifier)
+    AthleteProfileScreen(state, viewModel::retry, onEditProfile, onNutritionPlan, onUpdateGoal, onRecalculateGoals, onPersonalPreferences, modifier)
 }
 
 @Composable
@@ -83,14 +84,15 @@ fun AthleteProfileScreen(
     onNutritionPlan: () -> Unit = {},
     onUpdateGoal: () -> Unit = {},
     onRecalculateGoals: () -> Unit = {},
+    onPersonalPreferences: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier.fillMaxSize().semantics { contentDescription = "Perfil de atleta" }, color = MaterialTheme.colorScheme.background) {
         when (state) {
             AthleteProfileUiState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
             is AthleteProfileUiState.Error -> ProfileError(state.message, onRetry)
-            is AthleteProfileUiState.Content -> ProfileContent(state.profile, false, onEditProfile, onNutritionPlan, onUpdateGoal, onRecalculateGoals)
-            is AthleteProfileUiState.Incomplete -> ProfileContent(state.profile, true, onEditProfile, onNutritionPlan, onUpdateGoal, onRecalculateGoals)
+            is AthleteProfileUiState.Content -> ProfileContent(state.profile, false, onEditProfile, onNutritionPlan, onUpdateGoal, onRecalculateGoals, onPersonalPreferences)
+            is AthleteProfileUiState.Incomplete -> ProfileContent(state.profile, true, onEditProfile, onNutritionPlan, onUpdateGoal, onRecalculateGoals, onPersonalPreferences)
         }
     }
 }
@@ -111,6 +113,7 @@ private fun ProfileContent(
     onNutritionPlan: () -> Unit,
     onUpdateGoal: () -> Unit,
     onRecalculateGoals: () -> Unit,
+    onPersonalPreferences: () -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize().semantics { contentDescription = PROFILE_SCREEN_TAG },
@@ -120,7 +123,7 @@ private fun ProfileContent(
         item {
             Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
                 KyvoBrandLockup(horizontal = true, markSize = 32.dp)
-                IconButton(onClick = {}, Modifier.size(48.dp).semantics { contentDescription = "Ajustes" }) { Icon(Icons.Outlined.Info, null) }
+                IconButton(onClick = onPersonalPreferences, Modifier.size(48.dp).semantics { contentDescription = "Datos personales y preferencias" }) { Icon(Icons.Outlined.Info, null) }
             }
         }
         item { Identity(profile, onEditProfile) }
