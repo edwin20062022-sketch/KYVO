@@ -79,6 +79,8 @@ import java.time.LocalDate
 import com.kyvo.app.feature.onboarding.presentation.OnboardingRoute
 import com.kyvo.app.feature.profile.presentation.AthleteProfileRoute
 import com.kyvo.app.feature.profile.presentation.EditAthleteProfileRoute
+import com.kyvo.app.feature.profile.presentation.NutritionCalculationRoute
+import com.kyvo.app.feature.profile.presentation.NutritionPlanRoute
 import kotlinx.coroutines.launch
 
 @Composable
@@ -223,7 +225,19 @@ fun KyvoNavHost(
             }
         }
         composable(KyvoDestination.ProfileNutritionPlan.route) {
-            TopLevelPlaceholder("Mi plan nutricional", "Esta pantalla estará disponible en el siguiente checkpoint.") { navController.popBackStack() }
+            onboardingRepository?.let { repository ->
+                NutritionPlanRoute(
+                    repository = repository,
+                    onBack = { navController.popBackStack() },
+                    onHowCalculated = { navController.navigate(KyvoDestination.ProfileCalculation.route) },
+                    onRecalculate = { navController.navigate(KyvoDestination.ProfileRecalculateGoals.route) },
+                )
+            }
+        }
+        composable(KyvoDestination.ProfileCalculation.route) {
+            onboardingRepository?.let { repository ->
+                NutritionCalculationRoute(repository = repository, onBack = { navController.popBackStack() })
+            }
         }
         composable(KyvoDestination.ProfileUpdateGoal.route) {
             TopLevelPlaceholder("Actualizar objetivo", "Esta pantalla estará disponible en el siguiente checkpoint.") { navController.popBackStack() }
