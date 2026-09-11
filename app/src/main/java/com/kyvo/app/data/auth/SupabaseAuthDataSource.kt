@@ -12,6 +12,8 @@ import io.github.jan.supabase.auth.status.SessionStatus
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonPrimitive
 
 interface SupabaseAuthDataSource {
@@ -20,6 +22,7 @@ interface SupabaseAuthDataSource {
     suspend fun signUpWithEmail(email: String, password: String): AuthSession?
     suspend fun signInWithEmail(email: String, password: String): AuthSession
     suspend fun signInWithGoogle(idToken: String, rawNonce: String): AuthSession
+    suspend fun updateProfileMetadata(displayName: String, username: String?): AuthSession
     suspend fun signOut()
 }
 
@@ -59,6 +62,16 @@ class SupabaseSdkAuthDataSource(private val client: SupabaseClient) : SupabaseAu
         return requireNotNull(currentSession()) { "Supabase returned no session after Google sign-in" }
     }
 
+    override suspend fun updateProfileMetadata(displayName: String, username: String?): AuthSession {
+        client.auth.updateUser {
+            data = buildJsonObject {
+                put("full_name", JsonPrimitive(displayName))
+                put("username", JsonPrimitive(username.orEmpty()))
+            }
+        }
+        return requireNotNull(currentSession()) { "Supabase returned no session after profile update" }
+    }
+
     override suspend fun signOut() {
         client.auth.signOut()
     }
@@ -78,5 +91,6 @@ private fun io.github.jan.supabase.auth.user.UserSession.toDomain(): AuthSession
             listOf("full_name", "name", "display_name")
                 .firstNotNullOfOrNull { key -> metadata[key]?.jsonPrimitive?.contentOrNull?.takeIf(String::isNotBlank) }
         },
+        username = user?.userMetadata?.get("username")?.jsonPrimitive?.contentOrNull?.takeIf(String::isNotBlank),
     )
 }

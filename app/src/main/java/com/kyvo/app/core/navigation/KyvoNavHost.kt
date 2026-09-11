@@ -78,6 +78,7 @@ import java.io.File
 import java.time.LocalDate
 import com.kyvo.app.feature.onboarding.presentation.OnboardingRoute
 import com.kyvo.app.feature.profile.presentation.AthleteProfileRoute
+import com.kyvo.app.feature.profile.presentation.EditAthleteProfileRoute
 import kotlinx.coroutines.launch
 
 @Composable
@@ -211,7 +212,15 @@ fun KyvoNavHost(
             }
         }
         composable(KyvoDestination.ProfileEdit.route) {
-            TopLevelPlaceholder("Editar perfil", "Esta pantalla estará disponible en el siguiente checkpoint.") { navController.popBackStack() }
+            if (authState is AuthState.SignedIn) {
+                EditAthleteProfileRoute(
+                    session = authState.session,
+                    authRepository = authRepository,
+                    onBack = { navController.popBackStack() },
+                )
+            } else {
+                TopLevelPlaceholder("Editar perfil", "Completa tu sesión para editar tu perfil.") { navController.popBackStack() }
+            }
         }
         composable(KyvoDestination.ProfileNutritionPlan.route) {
             TopLevelPlaceholder("Mi plan nutricional", "Esta pantalla estará disponible en el siguiente checkpoint.") { navController.popBackStack() }

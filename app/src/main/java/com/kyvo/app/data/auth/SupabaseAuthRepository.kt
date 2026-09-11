@@ -43,6 +43,9 @@ class SupabaseAuthRepository(
         }
     }
 
+    override suspend fun updateProfileMetadata(displayName: String, username: String?): AuthResult =
+        runAuthRequest { AuthResult.Success(dataSource.updateProfileMetadata(displayName, username)) }
+
     override suspend fun signOut() {
         dataSource.signOut()
         runCatching { googleCredentials.clearCredentialState() }

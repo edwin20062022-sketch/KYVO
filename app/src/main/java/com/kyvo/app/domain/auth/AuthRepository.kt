@@ -9,6 +9,7 @@ data class AuthSession(
     val email: String,
     val provider: AuthProvider,
     val displayName: String? = null,
+    val username: String? = null,
 )
 
 sealed interface AuthError {
@@ -37,5 +38,7 @@ interface AuthRepository {
     suspend fun signUpWithEmail(email: String, password: CharArray): AuthResult
     suspend fun signInWithEmail(email: String, password: CharArray): AuthResult
     suspend fun signInWithGoogle(): AuthResult
+    suspend fun updateProfileMetadata(displayName: String, username: String?): AuthResult =
+        AuthResult.Failure(AuthError.Unknown)
     suspend fun signOut()
 }
