@@ -67,6 +67,46 @@ class PersonalPreferencesViewModelTest {
         assertTrue(draft.isCompleted)
     }
 
+    @Test
+    fun nineBChangesUpdateOnlyDraftAndPreserveCurrentAndPlan() = runTest(mainDispatcherRule.testDispatcher) {
+        val saved = sample()
+        val repository = FakeRepository(saved)
+        val viewModel = PersonalPreferencesViewModel(repository)
+        advanceUntilIdle()
+
+        viewModel.updateExperience(ExperienceLevel.Advanced)
+        viewModel.updateFoodPreference(FoodPreference.Vegan)
+        viewModel.updateMealsPerDay(6)
+        val editing = viewModel.state.value as PersonalPreferencesUiState.Editing
+
+        assertEquals(ExperienceLevel.Advanced, editing.draft.experience)
+        assertEquals(FoodPreference.Vegan, editing.draft.foodPreference)
+        assertEquals(6, editing.draft.mealsPerDay)
+        assertEquals(saved, editing.current)
+        assertEquals(saved.plan, editing.draft.plan)
+        assertEquals(0, repository.writeCount)
+    }
+
+    @Test
+    fun nineBChangesPreservePersonalAndActivityDraftFields() = runTest(mainDispatcherRule.testDispatcher) {
+        val repository = FakeRepository(sample())
+        val viewModel = PersonalPreferencesViewModel(repository)
+        advanceUntilIdle()
+        viewModel.updateAge(31)
+        viewModel.updateTrainingDays(6)
+        viewModel.updateExperience(ExperienceLevel.Beginner)
+        viewModel.updateFoodPreference(FoodPreference.GlutenFree)
+        viewModel.updateMealsPerDay(3)
+
+        val draft = (viewModel.state.value as PersonalPreferencesUiState.Editing).draft
+        assertEquals(31, draft.ageYears)
+        assertEquals(6, draft.trainingDaysPerWeek)
+        assertEquals(ExperienceLevel.Beginner, draft.experience)
+        assertEquals(FoodPreference.GlutenFree, draft.foodPreference)
+        assertEquals(3, draft.mealsPerDay)
+        assertEquals(0, repository.writeCount)
+    }
+
     private fun sample() = SavedOnboarding(
         gender = GenderOption.Male, ageYears = 28, heightCm = 180.0, weightKg = 75.0,
         trainingDaysPerWeek = 5, trainingType = TrainingType.Hypertrophy, workActivity = WorkActivity.Sedentary,

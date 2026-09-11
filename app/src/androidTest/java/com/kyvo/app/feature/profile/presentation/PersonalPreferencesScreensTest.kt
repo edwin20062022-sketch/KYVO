@@ -1,6 +1,7 @@
 package com.kyvo.app.feature.profile.presentation
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -38,6 +39,38 @@ class PersonalPreferencesScreensTest {
         composeRule.onNodeWithText("Hipertrofia").assertIsDisplayed()
         composeRule.onNodeWithText("Oficina").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Guardar actividad y entrenamiento").assertIsDisplayed()
+    }
+
+    @Test
+    fun experienceScreenShowsCurrentSelectionAndContinue() {
+        composeRule.setContent { KyvoTheme { ExperienceScreen(PersonalPreferencesUiState.Editing(sample(), sample())) } }
+        composeRule.onNodeWithText("Nivel de experiencia").assertIsDisplayed()
+        composeRule.onNodeWithText("Intermedio").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Guardar experiencia y continuar").assertIsDisplayed()
+    }
+
+    @Test
+    fun dietaryScreenShowsCurrentSelectionAndOptions() {
+        composeRule.setContent { KyvoTheme { FoodPreferencesScreen(PersonalPreferencesUiState.Editing(sample(), sample())) } }
+        composeRule.onNodeWithText("Preferencias alimenticias").assertIsDisplayed()
+        composeRule.onNodeWithText("Sin restricciones").assertIsDisplayed()
+        composeRule.onNodeWithText("Vegano").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Guardar preferencias alimenticias").assertIsDisplayed()
+    }
+
+    @Test
+    fun dietaryScreenBlocksContinueWithoutPreference() {
+        composeRule.setContent { KyvoTheme { FoodPreferencesScreen(PersonalPreferencesUiState.Editing(sample(), sample().copy(foodPreference = null))) } }
+        composeRule.onNodeWithContentDescription("Guardar preferencias alimenticias").assertIsNotEnabled()
+    }
+
+    @Test
+    fun mealOrganizationScreenShowsCurrentSelectionAndPreview() {
+        composeRule.setContent { KyvoTheme { MealOrganizationScreen(PersonalPreferencesUiState.Editing(sample(), sample())) } }
+        composeRule.onNodeWithText("Organización de comidas").assertIsDisplayed()
+        composeRule.onNodeWithText("4").assertIsDisplayed()
+        composeRule.onNodeWithText("Desayuno").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Guardar organización de comidas").assertIsDisplayed()
     }
 
     private fun sample() = SavedOnboarding(
