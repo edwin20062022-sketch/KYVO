@@ -196,7 +196,7 @@ private fun SearchGuidance() {
 }
 
 @Composable
-fun FoodResultsRoute(query: String, repository: FoodRepository, onBack: () -> Unit, onSelect: (FoodSearchResult) -> Unit, onFuture: () -> Unit = {}) {
+fun FoodResultsRoute(query: String, repository: FoodRepository, onBack: () -> Unit, onSelect: (FoodSearchResult) -> Unit, onFuture: () -> Unit = {}, onCreateDish: () -> Unit = {}) {
     val vm: FoodSearchViewModel = viewModel(factory = FoodSearchViewModel.factory(repository, query))
     val state by vm.state.collectAsStateWithLifecycle()
     Column(Modifier.fillMaxSize()) {
@@ -204,7 +204,7 @@ fun FoodResultsRoute(query: String, repository: FoodRepository, onBack: () -> Un
         when (val current = state) {
             FoodSearchUiState.Idle -> LoadingFood("Preparando búsqueda…")
             FoodSearchUiState.Loading -> LoadingFood("Buscando alimentos…")
-            is FoodSearchUiState.Empty -> FoodStateMessage("No encontramos alimentos", "Prueba con otro nombre o marca.", "Volver a buscar", onBack)
+            is FoodSearchUiState.Empty -> SearchEmptyState(current.query, onBack, onCreateDish)
             is FoodSearchUiState.Error -> FoodStateMessage("No pudimos cargar resultados", current.message, "Reintentar", vm::retry)
             is FoodSearchUiState.Results -> {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -217,6 +217,17 @@ fun FoodResultsRoute(query: String, repository: FoodRepository, onBack: () -> Un
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SearchEmptyState(query: String, onBack: () -> Unit, onCreateDish: () -> Unit) {
+    Column(Modifier.fillMaxSize().padding(horizontal = 20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Text("No encontramos ese alimento", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 28.dp))
+        Text("Intenta con otra palabra o revisa la ortografía. También puedes crear un platillo personalizado con los ingredientes.", color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 8.dp))
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(top = 18.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf("Pan", "Pan integral", "Pan de caja", "Pan blanco", "Pan tostado", "Pan artesanal").forEach { AssistChip(onClick = onBack, label = { Text(it) }) } }
+        KyvoCard(Modifier.fillMaxWidth().padding(top = 18.dp).clickable(onClick = onCreateDish)) { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Outlined.Info, null, tint = KyvoColors.PurplePrimary, modifier = Modifier.size(32.dp)); Column(Modifier.padding(start = 14.dp)) { Text("Crear un platillo", fontWeight = FontWeight.Bold); Text("Agrega tus propios ingredientes", color = MaterialTheme.colorScheme.onSurfaceVariant) } } }
+        KyvoPrimaryButton("Volver a buscar", onBack, Modifier.padding(top = 18.dp))
     }
 }
 

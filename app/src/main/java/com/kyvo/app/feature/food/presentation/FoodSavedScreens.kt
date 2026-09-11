@@ -50,25 +50,25 @@ import com.kyvo.app.feature.food.domain.model.FoodSearchResult
 import com.kyvo.app.feature.food.domain.repository.FoodRepository
 
 @Composable
-fun FoodFrequentRoute(repository: FoodRepository, onBack: () -> Unit, onSelect: (FoodSearchResult) -> Unit, onPortion: (FoodSearchResult) -> Unit) {
+fun FoodFrequentRoute(repository: FoodRepository, onBack: () -> Unit, onSelect: (FoodSearchResult) -> Unit, onPortion: (FoodSearchResult) -> Unit, onSearch: () -> Unit = onBack) {
     val vm: FrequentFoodsViewModel = viewModel(factory = FrequentFoodsViewModel.factory(repository))
-    SavedFoodsRouteContent("Frecuentes", "Tus alimentos más usados para registrarlos en 1–2 taps.", vm.state.collectAsStateWithLifecycle().value, onBack, vm::retry, onSelect, onPortion, showFavorite = false, onRemoveFavorite = {})
+    SavedFoodsRouteContent("Frecuentes", "Tus alimentos más usados para registrarlos en 1–2 taps.", vm.state.collectAsStateWithLifecycle().value, onBack, onSearch, vm::retry, onSelect, onPortion, showFavorite = false, onRemoveFavorite = {})
 }
 
 @Composable
-fun FoodFavoritesRoute(repository: FoodRepository, onBack: () -> Unit, onSelect: (FoodSearchResult) -> Unit, onPortion: (FoodSearchResult) -> Unit) {
+fun FoodFavoritesRoute(repository: FoodRepository, onBack: () -> Unit, onSelect: (FoodSearchResult) -> Unit, onPortion: (FoodSearchResult) -> Unit, onSearch: () -> Unit = onBack) {
     val vm: FavoriteFoodsViewModel = viewModel(factory = FavoriteFoodsViewModel.factory(repository))
     val state by vm.state.collectAsStateWithLifecycle()
-    SavedFoodsRouteContent("Favoritos", "Tus alimentos guardados para registrarlos más rápido.", state, onBack, vm::retry, onSelect, onPortion, showFavorite = true, onRemoveFavorite = vm::remove)
+    SavedFoodsRouteContent("Favoritos", "Tus alimentos guardados para registrarlos más rápido.", state, onBack, onSearch, vm::retry, onSelect, onPortion, showFavorite = true, onRemoveFavorite = vm::remove)
 }
 
 @Composable
-private fun SavedFoodsRouteContent(title: String, subtitle: String, state: SavedFoodsUiState, onBack: () -> Unit, onRetry: () -> Unit, onSelect: (FoodSearchResult) -> Unit, onPortion: (FoodSearchResult) -> Unit, showFavorite: Boolean, onRemoveFavorite: (FoodSearchResult) -> Unit) {
+private fun SavedFoodsRouteContent(title: String, subtitle: String, state: SavedFoodsUiState, onBack: () -> Unit, onSearch: () -> Unit, onRetry: () -> Unit, onSelect: (FoodSearchResult) -> Unit, onPortion: (FoodSearchResult) -> Unit, showFavorite: Boolean, onRemoveFavorite: (FoodSearchResult) -> Unit) {
     Column(Modifier.fillMaxSize()) {
         FoodHeader(title, subtitle, onBack)
         when (state) {
             SavedFoodsUiState.Loading -> LoadingFood("Cargando alimentos…")
-            SavedFoodsUiState.Empty -> SavedEmptyState(title, onBack)
+            SavedFoodsUiState.Empty -> SavedEmptyState(title, onSearch)
             is SavedFoodsUiState.Error -> FoodStateMessage("No pudimos cargar $title", state.message, "Reintentar", onRetry)
             is SavedFoodsUiState.Content -> {
                 state.message?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)) }
@@ -105,5 +105,5 @@ private fun SavedFoodRow(food: FoodSearchResult, onSelect: () -> Unit, onPortion
 }
 
 @Composable private fun SavedHintCard() { Surface(color = KyvoColors.PurpleSoft, shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) { Text("Registra una comida para que tus alimentos más usados aparezcan aquí.", color = KyvoColors.PurpleDeep, modifier = Modifier.padding(16.dp)) } }
-@Composable private fun SavedEmptyState(title: String, onBack: () -> Unit) { Column(Modifier.fillMaxSize().padding(28.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) { Icon(if (title == "Favoritos") Icons.Outlined.FavoriteBorder else Icons.Outlined.Search, null, tint = KyvoColors.PurplePrimary, modifier = Modifier.size(54.dp)); Text(if (title == "Favoritos") "Aún no tienes favoritos" else "Aún no tienes frecuentes", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 16.dp)); Text(if (title == "Favoritos") "Marca alimentos desde su detalle para encontrarlos aquí." else "Tus alimentos aparecerán aquí a partir de tu historial real.", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 7.dp)); KyvoPrimaryButton("Explorar alimentos", onBack, Modifier.padding(top = 20.dp)) } }
+@Composable private fun SavedEmptyState(title: String, onSearch: () -> Unit) { val favorite = title == "Favoritos"; Column(Modifier.fillMaxSize().padding(28.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) { Icon(if (favorite) Icons.Outlined.FavoriteBorder else Icons.Outlined.Search, null, tint = KyvoColors.PurplePrimary, modifier = Modifier.size(54.dp)); Text(if (favorite) "Aún no tienes favoritos" else "Aún no tienes alimentos frecuentes", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 16.dp)); Text(if (favorite) "Guarda los alimentos que utilizas con frecuencia para registrarlos más rápido y hacer tu día más sencillo." else "Registra alimentos de forma constante y tus más usados aparecerán aquí para acceder a ellos en 1–2 taps.", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 7.dp)); KyvoPrimaryButton("Buscar alimentos", onSearch, Modifier.padding(top = 20.dp)) } }
 private fun Double.oneDecimal(): String = String.format(java.util.Locale.US, "%.1f", this)

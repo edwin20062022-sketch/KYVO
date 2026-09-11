@@ -523,12 +523,12 @@ fun KyvoNavHost(
         }
         composable(KyvoDestination.FoodFrequent.route) {
             foodRepository?.let { repository ->
-                FoodFrequentRoute(repository, onBack = { navController.popBackStack() }, onSelect = { result -> navController.navigate(foodDetailRoute(result.id, result.type.name, FoodSelectionContext.NORMAL_MEAL_LOGGING)) }, onPortion = { result -> navController.navigate(foodPortionRoute(result.id, result.type.name, FoodSelectionContext.NORMAL_MEAL_LOGGING)) })
+                FoodFrequentRoute(repository, onBack = { navController.popBackStack() }, onSearch = { navController.navigate(foodSearchRoute(FoodSelectionContext.NORMAL_MEAL_LOGGING)) }, onSelect = { result -> navController.navigate(foodDetailRoute(result.id, result.type.name, FoodSelectionContext.NORMAL_MEAL_LOGGING)) }, onPortion = { result -> navController.navigate(foodPortionRoute(result.id, result.type.name, FoodSelectionContext.NORMAL_MEAL_LOGGING)) })
             }
         }
         composable(KyvoDestination.FoodFavorites.route) {
             foodRepository?.let { repository ->
-                FoodFavoritesRoute(repository, onBack = { navController.popBackStack() }, onSelect = { result -> navController.navigate(foodDetailRoute(result.id, result.type.name, FoodSelectionContext.NORMAL_MEAL_LOGGING)) }, onPortion = { result -> navController.navigate(foodPortionRoute(result.id, result.type.name, FoodSelectionContext.NORMAL_MEAL_LOGGING)) })
+                FoodFavoritesRoute(repository, onBack = { navController.popBackStack() }, onSearch = { navController.navigate(foodSearchRoute(FoodSelectionContext.NORMAL_MEAL_LOGGING)) }, onSelect = { result -> navController.navigate(foodDetailRoute(result.id, result.type.name, FoodSelectionContext.NORMAL_MEAL_LOGGING)) }, onPortion = { result -> navController.navigate(foodPortionRoute(result.id, result.type.name, FoodSelectionContext.NORMAL_MEAL_LOGGING)) })
             }
         }
         composable(KyvoDestination.FoodSearch.route) { entry ->
@@ -541,7 +541,7 @@ fun KyvoNavHost(
             foodRepository?.let { repository ->
                 val query = Uri.decode(entry.arguments?.getString("query").orEmpty())
                 val context = foodSelectionContext(entry)
-                FoodResultsRoute(query, repository, onBack = { navController.popBackStack() }, onSelect = { result -> navController.navigate(foodDetailRoute(result.id, result.type.name, context)) }, onFuture = {})
+                FoodResultsRoute(query, repository, onBack = { navController.popBackStack() }, onSelect = { result -> navController.navigate(foodDetailRoute(result.id, result.type.name, context)) }, onFuture = {}, onCreateDish = { navController.navigate("dishes/editor/new") })
             }
         }
         composable(KyvoDestination.FoodDetail.route) { entry ->
