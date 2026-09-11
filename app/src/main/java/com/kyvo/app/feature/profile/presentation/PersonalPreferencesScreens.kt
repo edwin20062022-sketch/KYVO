@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.Image
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.CheckCircle
@@ -39,6 +40,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -52,6 +55,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kyvo.app.core.designsystem.KyvoColors
 import com.kyvo.app.core.designsystem.component.KyvoPrimaryButton
 import com.kyvo.app.core.designsystem.component.KyvoTextField
+import com.kyvo.app.R
+import com.kyvo.app.feature.onboarding.domain.model.ExperienceLevel
+import com.kyvo.app.feature.onboarding.domain.model.FoodPreference
 import com.kyvo.app.feature.onboarding.domain.model.GenderOption
 import com.kyvo.app.feature.onboarding.domain.model.SavedOnboarding
 import com.kyvo.app.feature.onboarding.domain.model.TrainingType
@@ -153,6 +159,150 @@ fun ActivityTrainingScreen(state: PersonalPreferencesUiState, onDays: (Int) -> U
 }
 
 @Composable
+fun ExperienceRoute(viewModel: PersonalPreferencesViewModel, onBack: () -> Unit, onContinue: () -> Unit) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    ExperienceScreen(state, viewModel::updateExperience, onContinue, onBack)
+}
+
+@Composable
+fun ExperienceScreen(state: PersonalPreferencesUiState, onExperience: (ExperienceLevel) -> Unit = {}, onContinue: () -> Unit = {}, onBack: () -> Unit = {}) {
+    val editing = state as? PersonalPreferencesUiState.Editing
+    if (editing == null) { PreferencesLoading("experience_screen"); return }
+    PreferencesScaffold("experience_screen", "Nivel de experiencia", "Nos ayuda a personalizar tu experiencia, recomendaciones y contenido según tu trayectoria en el gimnasio.", onBack) {
+        ExperienceLevel.entries.forEach { level ->
+            item {
+                ExperienceCard(level, editing.draft.experience == level, { onExperience(level) })
+            }
+        }
+        item { InfoNotice("Tu experiencia importa. Adaptaremos el lenguaje, las recomendaciones y la información para que sean más útiles en tu etapa actual.") }
+        item { KyvoPrimaryButton("Guardar y continuar", onContinue, Modifier.padding(horizontal = 16.dp).semantics { contentDescription = "Guardar experiencia y continuar" }) }
+    }
+}
+
+@Composable
+private fun ExperienceCard(level: ExperienceLevel, selected: Boolean, onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).semantics {
+            role = Role.RadioButton
+            this.selected = selected
+            contentDescription = "${level.label()}, ${if (selected) "seleccionado" else "no seleccionado"}"
+        },
+        colors = CardDefaults.cardColors(containerColor = if (selected) KyvoColors.PurpleSoft else MaterialTheme.colorScheme.surface),
+        border = if (selected) BorderStroke(1.dp, KyvoColors.PurplePrimary) else null,
+    ) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Image(painterResource(level.profileIconRes()), level.label(), Modifier.size(88.dp), contentScale = ContentScale.Fit)
+            Column(Modifier.weight(1f).padding(start = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(level.label(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(level.description(), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(level.benefit(), color = KyvoColors.PurplePrimary, style = MaterialTheme.typography.bodyMedium)
+            }
+            Icon(Icons.Outlined.CheckCircle, null, tint = if (selected) KyvoColors.PurplePrimary else MaterialTheme.colorScheme.outline)
+        }
+    }
+}
+
+@Composable
+fun FoodPreferencesRoute(viewModel: PersonalPreferencesViewModel, onBack: () -> Unit, onContinue: () -> Unit) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    FoodPreferencesScreen(state, viewModel::updateFoodPreference, onContinue, onBack)
+}
+
+@Composable
+fun FoodPreferencesScreen(state: PersonalPreferencesUiState, onPreference: (FoodPreference) -> Unit = {}, onContinue: () -> Unit = {}, onBack: () -> Unit = {}) {
+    val editing = state as? PersonalPreferencesUiState.Editing
+    if (editing == null) { PreferencesLoading("food_preferences_screen"); return }
+    PreferencesScaffold("food_preferences_screen", "Preferencias alimenticias", "Selecciona la opción que mejor representa tu alimentación.", onBack) {
+        item { InfoNotice("Estas preferencias nos ayudan a mostrarte alimentos más relevantes y adaptados a tus necesidades.") }
+        item { SectionTitle("Preferencia alimenticia", "Selecciona una opción") }
+        FoodPreference.entries.forEach { preference ->
+            item {
+                FoodPreferenceCard(preference, editing.draft.foodPreference == preference, { onPreference(preference) })
+            }
+        }
+        item {
+            KyvoPrimaryButton(
+                "Guardar cambios",
+                onContinue,
+                Modifier.padding(horizontal = 16.dp).semantics { contentDescription = "Guardar preferencias alimenticias" },
+                enabled = editing.draft.foodPreference != null,
+            )
+        }
+    }
+}
+
+@Composable
+private fun FoodPreferenceCard(preference: FoodPreference, selected: Boolean, onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).semantics {
+            role = Role.RadioButton
+            this.selected = selected
+            contentDescription = "${preference.label()}, ${if (selected) "seleccionada" else "no seleccionada"}"
+        },
+        colors = CardDefaults.cardColors(containerColor = if (selected) KyvoColors.PurpleSoft else MaterialTheme.colorScheme.surface),
+        border = if (selected) BorderStroke(1.dp, KyvoColors.PurplePrimary) else null,
+    ) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Image(painterResource(preference.profileIconRes()), preference.label(), Modifier.size(48.dp), contentScale = ContentScale.Fit)
+            Column(Modifier.weight(1f).padding(start = 16.dp)) {
+                Text(preference.label(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(preference.description(), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Icon(Icons.Outlined.CheckCircle, null, tint = if (selected) KyvoColors.PurplePrimary else MaterialTheme.colorScheme.outline)
+        }
+    }
+}
+
+@Composable
+fun MealOrganizationRoute(viewModel: PersonalPreferencesViewModel, onBack: () -> Unit, onContinue: () -> Unit) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    MealOrganizationScreen(state, viewModel::updateMealsPerDay, onContinue, onBack)
+}
+
+@Composable
+fun MealOrganizationScreen(state: PersonalPreferencesUiState, onMeals: (Int?) -> Unit = {}, onContinue: () -> Unit = {}, onBack: () -> Unit = {}) {
+    val editing = state as? PersonalPreferencesUiState.Editing
+    var customSelected by remember(editing?.draft?.mealsPerDay) { mutableStateOf(editing?.draft?.mealsPerDay !in 3..6) }
+    var customText by remember(editing?.draft?.mealsPerDay) { mutableStateOf(editing?.draft?.mealsPerDay?.toString().orEmpty()) }
+    if (editing == null) { PreferencesLoading("meal_organization_screen"); return }
+    PreferencesScaffold("meal_organization_screen", "Organización de comidas", "Elige cuántas comidas sueles hacer al día. Esto ayuda a personalizar la distribución de tus alimentos.", onBack) {
+        item { SectionTitle("Número de comidas al día", "Selecciona una opción") }
+        item {
+            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                (3..6).forEach { count ->
+                    SelectChip("$count", !customSelected && editing.draft.mealsPerDay == count, { customSelected = false; onMeals(count) }, Modifier.weight(1f))
+                }
+            }
+        }
+        item {
+            MealCountCard("Personalizado", customSelected, { customSelected = true }, Modifier.padding(horizontal = 16.dp))
+        }
+        if (customSelected) {
+            item { KyvoTextField(customText, { value -> customText = value; onMeals(value.toIntOrNull()) }, "Número de comidas", Modifier.padding(horizontal = 16.dp).fillMaxWidth(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)) }
+        }
+        item { SectionTitle("Vista previa de tu día", "Esta es una sugerencia de distribución. Puedes ajustar los nombres u horarios más adelante.") }
+        item { MealPreview(editing.draft.mealsPerDay ?: 0) }
+        item { InfoNotice("El número de comidas solo organiza tu día. Tus calorías y macros totales se mantienen igual.") }
+        item { KyvoPrimaryButton("Guardar cambios", onContinue, Modifier.padding(horizontal = 16.dp).semantics { contentDescription = "Guardar organización de comidas" }, enabled = editing.draft.mealsPerDay in 1..8) }
+    }
+}
+
+@Composable
+private fun MealCountCard(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Card(onClick = onClick, modifier.fillMaxWidth().semantics { role = Role.RadioButton; this.selected = selected; contentDescription = "$label, ${if (selected) "seleccionado" else "no seleccionado"}" }, colors = CardDefaults.cardColors(containerColor = if (selected) KyvoColors.PurpleSoft else MaterialTheme.colorScheme.surface), border = if (selected) BorderStroke(1.dp, KyvoColors.PurplePrimary) else null) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) { Text(label, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold); Icon(Icons.Outlined.CheckCircle, null, tint = if (selected) KyvoColors.PurplePrimary else MaterialTheme.colorScheme.outline) }
+    }
+}
+
+@Composable
+private fun MealPreview(meals: Int) {
+    val labels = when (meals) { 3 -> listOf("Desayuno", "Comida", "Cena"); 4 -> listOf("Desayuno", "Comida", "Snack", "Cena"); 5 -> listOf("Desayuno", "Snack 1", "Comida", "Snack 2", "Cena"); 6 -> listOf("Desayuno", "Snack 1", "Comida", "Snack 2", "Cena", "Snack 3"); else -> emptyList() }
+    Card(Modifier.padding(horizontal = 16.dp).fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) { Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) { labels.forEach { label -> Surface(Modifier.weight(1f), RoundedCornerShape(12.dp), color = KyvoColors.PurpleSoft) { Text(label, Modifier.padding(10.dp), textAlign = TextAlign.Center, style = MaterialTheme.typography.labelMedium) } } } }
+}
+
+@Composable
 private fun SectionTitle(title: String, subtitle: String) { Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) { Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold); Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant) } }
 
 @Composable
@@ -183,3 +333,8 @@ private fun TrainingType?.label() = when (this) { TrainingType.Strength -> "Fuer
 private fun WorkActivity?.label() = when (this) { WorkActivity.Sedentary -> "Oficina"; WorkActivity.Active -> "Activo"; WorkActivity.Physical -> "Trabajo físico"; null -> "Sin definir" }
 private fun com.kyvo.app.feature.onboarding.domain.model.ExperienceLevel.label() = when (this) { com.kyvo.app.feature.onboarding.domain.model.ExperienceLevel.Beginner -> "Principiante"; com.kyvo.app.feature.onboarding.domain.model.ExperienceLevel.Intermediate -> "Intermedio"; com.kyvo.app.feature.onboarding.domain.model.ExperienceLevel.Advanced -> "Avanzado" }
 private fun com.kyvo.app.feature.onboarding.domain.model.FoodPreference.label() = when (this) { com.kyvo.app.feature.onboarding.domain.model.FoodPreference.None -> "Sin restricciones"; com.kyvo.app.feature.onboarding.domain.model.FoodPreference.Vegetarian -> "Vegetariano"; com.kyvo.app.feature.onboarding.domain.model.FoodPreference.Vegan -> "Vegano"; com.kyvo.app.feature.onboarding.domain.model.FoodPreference.GlutenFree -> "Sin gluten"; com.kyvo.app.feature.onboarding.domain.model.FoodPreference.DairyFree -> "Sin lácteos"; com.kyvo.app.feature.onboarding.domain.model.FoodPreference.Other -> "Otra preferencia" }
+private fun ExperienceLevel.description() = when (this) { ExperienceLevel.Beginner -> "Estoy comenzando mi camino en el gimnasio."; ExperienceLevel.Intermediate -> "Tengo experiencia y entreno de forma constante."; ExperienceLevel.Advanced -> "Tengo varios años de experiencia y un entrenamiento estructurado." }
+private fun ExperienceLevel.benefit() = when (this) { ExperienceLevel.Beginner -> "Aprende lo esencial · Recomendaciones paso a paso"; ExperienceLevel.Intermediate -> "Recomendaciones más avanzadas · Mayor variedad"; ExperienceLevel.Advanced -> "Sugerencias de alto rendimiento · Mayor control" }
+private fun ExperienceLevel.profileIconRes() = when (this) { ExperienceLevel.Beginner -> R.drawable.ic_experience_beginner; ExperienceLevel.Intermediate -> R.drawable.ic_experience_intermediate; ExperienceLevel.Advanced -> R.drawable.ic_experience_advanced }
+private fun FoodPreference.description() = when (this) { FoodPreference.None -> "Como de todo"; FoodPreference.Vegetarian -> "Sin carne"; FoodPreference.Vegan -> "Sin productos de origen animal"; FoodPreference.GlutenFree -> "Evito alimentos con gluten"; FoodPreference.DairyFree -> "Sin productos lácteos"; FoodPreference.Other -> "Otra preferencia alimenticia" }
+private fun FoodPreference.profileIconRes() = when (this) { FoodPreference.None -> R.drawable.ic_food_none; FoodPreference.Vegetarian -> R.drawable.ic_food_vegetarian; FoodPreference.Vegan -> R.drawable.ic_food_vegan; FoodPreference.GlutenFree -> R.drawable.ic_food_gluten_free; FoodPreference.DairyFree -> R.drawable.ic_food_dairy_free; FoodPreference.Other -> R.drawable.ic_onboarding_other }

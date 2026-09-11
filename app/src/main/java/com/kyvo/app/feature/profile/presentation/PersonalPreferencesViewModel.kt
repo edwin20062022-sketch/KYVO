@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.kyvo.app.feature.onboarding.domain.model.GenderOption
+import com.kyvo.app.feature.onboarding.domain.model.ExperienceLevel
+import com.kyvo.app.feature.onboarding.domain.model.FoodPreference
 import com.kyvo.app.feature.onboarding.domain.model.SavedOnboarding
 import com.kyvo.app.feature.onboarding.domain.model.TrainingType
 import com.kyvo.app.feature.onboarding.domain.model.WorkActivity
@@ -40,6 +42,9 @@ class PersonalPreferencesViewModel(private val repository: OnboardingRepository)
     fun updateTrainingDays(value: Int) = updateDraft { copy(trainingDaysPerWeek = value.coerceIn(1, 7)) }
     fun updateTrainingType(value: TrainingType) = updateDraft { copy(trainingType = value) }
     fun updateWorkActivity(value: WorkActivity) = updateDraft { copy(workActivity = value) }
+    fun updateExperience(value: ExperienceLevel) = updateDraft { copy(experience = value) }
+    fun updateFoodPreference(value: FoodPreference) = updateDraft { copy(foodPreference = value) }
+    fun updateMealsPerDay(value: Int?) = updateDraft { copy(mealsPerDay = value?.coerceIn(1, 8)) }
 
     fun retry() {
         _state.value = PersonalPreferencesUiState.Loading
