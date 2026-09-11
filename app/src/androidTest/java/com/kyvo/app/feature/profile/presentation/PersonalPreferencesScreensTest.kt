@@ -73,6 +73,31 @@ class PersonalPreferencesScreensTest {
         composeRule.onNodeWithContentDescription("Guardar organización de comidas").assertIsDisplayed()
     }
 
+    @Test
+    fun reviewScreenShowsChangedFieldsAndPlanPreview() {
+        val current = sample()
+        val draft = current.copy(weightKg = 68.0, trainingDaysPerWeek = 4)
+        val preview = current.plan!!.copy(targetCaloriesKcal = 2420, proteinGrams = 165, carbohydrateGrams = 248, fatGrams = 72)
+        composeRule.setContent {
+            KyvoTheme {
+                ReviewGoalUpdatesScreen(
+                    PersonalPreferencesUiState.Review(current, draft, true, true, requireNotNull(current.plan), preview),
+                )
+            }
+        }
+        composeRule.onNodeWithText("Tus datos han cambiado").assertIsDisplayed()
+        composeRule.onNodeWithText("Cambios realizados").assertIsDisplayed()
+        composeRule.onNodeWithText("2,300 kcal  |  2,420 kcal").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Confirmar actualización").assertIsDisplayed()
+    }
+
+    @Test
+    fun confirmationScreenShowsFinalAction() {
+        composeRule.setContent { KyvoTheme { PersonalPreferencesConfirmationScreen() } }
+        composeRule.onNodeWithText("Cambios guardados").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Volver al perfil").assertIsDisplayed()
+    }
+
     private fun sample() = SavedOnboarding(
         gender = GenderOption.Male, ageYears = 28, heightCm = 180.0, weightKg = 75.0,
         trainingDaysPerWeek = 5, trainingType = TrainingType.Hypertrophy, workActivity = WorkActivity.Sedentary,

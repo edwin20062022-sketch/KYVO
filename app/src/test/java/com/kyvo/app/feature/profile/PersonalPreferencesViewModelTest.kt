@@ -107,6 +107,74 @@ class PersonalPreferencesViewModelTest {
         assertEquals(0, repository.writeCount)
     }
 
+    @Test
+    fun noChangesDoNotWriteAndNonPlanChangesPreservePlan() = runTest(mainDispatcherRule.testDispatcher) {
+        val saved = sample()
+        val repository = FakeRepository(saved)
+        val viewModel = PersonalPreferencesViewModel(repository)
+        advanceUntilIdle()
+        assertTrue(viewModel.prepareReview())
+        assertTrue((viewModel.state.value as PersonalPreferencesUiState.Review).hasChanges.not())
+        viewModel.confirmUpdate()
+        advanceUntilIdle()
+        assertEquals(0, repository.writeCount)
+
+        val secondRepository = FakeRepository(saved)
+        val secondViewModel = PersonalPreferencesViewModel(secondRepository)
+        advanceUntilIdle()
+        secondViewModel.updateFoodPreference(FoodPreference.Vegan)
+        assertTrue(secondViewModel.prepareReview())
+        val review = secondViewModel.state.value as PersonalPreferencesUiState.Review
+        assertTrue(review.hasChanges)
+        assertTrue(!review.planImpact)
+        assertEquals(saved.plan, review.previewPlan)
+        secondViewModel.confirmUpdate()
+        advanceUntilIdle()
+        assertEquals(saved.plan, secondRepository.current.value.plan)
+        assertEquals(1, secondRepository.writeCount)
+    }
+
+    @Test
+    fun planInputsProduceCalculatorPreviewAndPersistItAtomically() = runTest(mainDispatcherRule.testDispatcher) {
+        val saved = sample()
+        val repository = FakeRepository(saved)
+        val viewModel = PersonalPreferencesViewModel(repository)
+        advanceUntilIdle()
+        viewModel.updateWeightKg(68.0)
+        viewModel.updateTrainingDays(4)
+        assertTrue(viewModel.prepareReview())
+        val review = viewModel.state.value as PersonalPreferencesUiState.Review
+        assertTrue(review.planImpact)
+        assertEquals(68.0, review.draft.weightKg ?: -1.0, 0.0)
+        assertTrue(review.previewPlan != review.oldPlan)
+        viewModel.confirmUpdate()
+        viewModel.confirmUpdate()
+        advanceUntilIdle()
+        assertEquals(1, repository.writeCount)
+        assertEquals(review.previewPlan, repository.current.value.plan)
+        assertEquals(review.draft.copy(plan = review.previewPlan, isCompleted = true, currentStep = saved.currentStep), repository.current.value)
+    }
+
+    @Test
+    fun failedWritePreservesReviewAndRetryPersistsDraft() = runTest(mainDispatcherRule.testDispatcher) {
+        val repository = FakeRepository(sample()).apply { failSaves = true }
+        val viewModel = PersonalPreferencesViewModel(repository)
+        advanceUntilIdle()
+        viewModel.updateAge(31)
+        assertTrue(viewModel.prepareReview())
+        val review = viewModel.state.value as PersonalPreferencesUiState.Review
+        viewModel.confirmUpdate()
+        advanceUntilIdle()
+        val error = viewModel.state.value as PersonalPreferencesUiState.SaveError
+        assertEquals(review.draft, error.review.draft)
+        assertEquals(28, repository.current.value.ageYears)
+        repository.failSaves = false
+        viewModel.retrySave()
+        advanceUntilIdle()
+        assertTrue(viewModel.state.value is PersonalPreferencesUiState.Saved)
+        assertEquals(31, repository.current.value.ageYears)
+    }
+
     private fun sample() = SavedOnboarding(
         gender = GenderOption.Male, ageYears = 28, heightCm = 180.0, weightKg = 75.0,
         trainingDaysPerWeek = 5, trainingType = TrainingType.Hypertrophy, workActivity = WorkActivity.Sedentary,
@@ -117,7 +185,8 @@ class PersonalPreferencesViewModelTest {
     private class FakeRepository(initial: SavedOnboarding) : OnboardingRepository {
         val current = MutableStateFlow(initial)
         var writeCount = 0
+        var failSaves = false
         override fun observe(): Flow<SavedOnboarding> = current
-        override suspend fun save(progress: SavedOnboarding) { writeCount++; current.value = progress }
+        override suspend fun save(progress: SavedOnboarding) { if (failSaves) throw IllegalStateException("test failure"); writeCount++; current.value = progress }
     }
 }
