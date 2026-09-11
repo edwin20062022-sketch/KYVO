@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -28,6 +29,9 @@ import com.kyvo.app.feature.food.domain.repository.FoodRepository
 import com.kyvo.app.domain.auth.AuthRepository
 import com.kyvo.app.domain.auth.AuthState
 import com.kyvo.app.feature.onboarding.data.DataStoreOnboardingRepository
+import com.kyvo.app.feature.settings.data.DataStoreAppSettingsRepository
+import com.kyvo.app.feature.settings.domain.AppSettings
+import com.kyvo.app.feature.settings.domain.resolveDarkTheme
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.handleDeeplinks
 private data class AuthDependencies(
@@ -41,6 +45,8 @@ fun KyvoApp(
     onStartupReady: () -> Unit = {},
 ) {
     val context = LocalContext.current
+    val appSettingsRepository = remember(context) { DataStoreAppSettingsRepository(context) }
+    val appSettings by appSettingsRepository.observe().collectAsStateWithLifecycle(initialValue = AppSettings())
     val authDependencies = remember(context) {
         if (BuildConfig.SUPABASE_URL.isBlank() || BuildConfig.SUPABASE_PUBLISHABLE_KEY.isBlank()) {
             AuthDependencies(ConfigurationRequiredAuthRepository())
@@ -72,7 +78,11 @@ fun KyvoApp(
     LaunchedEffect(authIntent, authDependencies.client) {
         if (authIntent != null) authDependencies.client?.handleDeeplinks(authIntent)
     }
-    KyvoTheme {
+    KyvoTheme(
+        darkTheme = appSettings.appearance.resolveDarkTheme(isSystemInDarkTheme()),
+        reduceBrightnessInDarkMode = appSettings.reduceBrightnessInDarkMode,
+        highContrast = appSettings.highContrast,
+    ) {
         val navController = rememberNavController()
         when (val state = authState) {
             AuthState.Initializing -> Box(Modifier.fillMaxSize())
@@ -85,6 +95,7 @@ fun KyvoApp(
                     mealRepository = null,
                     foodRepository = null,
                     savedDishRepository = null,
+                    appSettingsRepository = appSettingsRepository,
                     authState = state,
                     onboardingCompleted = false,
                 )
@@ -106,6 +117,7 @@ fun KyvoApp(
                         mealRepository = mealRepository,
                         foodRepository = foodRepository,
                         savedDishRepository = savedDishRepository,
+                        appSettingsRepository = appSettingsRepository,
                         authState = state,
                         onboardingCompleted = onboarding?.isCompleted == true,
                     )

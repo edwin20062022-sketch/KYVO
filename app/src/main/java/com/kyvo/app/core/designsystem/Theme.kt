@@ -46,15 +46,22 @@ object KyvoTheme {
 @Composable
 fun KyvoTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    reduceBrightnessInDarkMode: Boolean = true,
+    highContrast: Boolean = false,
     content: @Composable () -> Unit,
 ) {
+    val baseColors = if (darkTheme) DarkColors else LightColors
+    val colors = baseColors.copy(
+        onSurface = if (highContrast) baseColors.onBackground else baseColors.onSurface,
+        onSurfaceVariant = if (highContrast) baseColors.onBackground else baseColors.onSurfaceVariant,
+        primary = if (darkTheme && reduceBrightnessInDarkMode) baseColors.primary.copy(alpha = 0.88f) else baseColors.primary,
+    )
     CompositionLocalProvider(LocalKyvoSpacing provides KyvoSpacing()) {
         MaterialTheme(
-            colorScheme = if (darkTheme) DarkColors else LightColors,
+            colorScheme = colors,
             typography = KyvoTypography,
             shapes = KyvoShapes,
             content = content,
         )
     }
 }
-
