@@ -45,4 +45,5 @@ interface AuthRepository {
         return AuthResult.Failure(AuthError.Unknown)
     }
     suspend fun signOut()
+    suspend fun deleteAccount(): AuthResult = AuthResult.Failure(AuthError.Unknown)
 }

@@ -110,6 +110,7 @@ import com.kyvo.app.feature.settings.presentation.HelpScreen
 import com.kyvo.app.feature.settings.presentation.AboutScreen
 import com.kyvo.app.feature.settings.presentation.LegalScreen
 import com.kyvo.app.feature.settings.presentation.LegalPendingScreen
+import com.kyvo.app.feature.settings.presentation.DeleteAccountRoute
 import kotlinx.coroutines.launch
 
 @Composable
@@ -353,13 +354,30 @@ fun KyvoNavHost(
                 onLicenses = { navController.navigate(KyvoDestination.SettingsLicenses.route) },
             )
         }
+        composable(KyvoDestination.SettingsDeleteAccount.route) {
+            if (onboardingRepository != null) {
+                DeleteAccountRoute(
+                    auth = authRepository,
+                    onboarding = onboardingRepository,
+                    cacheDir = context.cacheDir,
+                    onDeleted = {
+                        navController.navigate(KyvoDestination.Login.route) {
+                            popUpTo(navController.graph.id) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                    onBack = { navController.popBackStack() },
+                )
+            } else {
+                SettingsPlaceholderScreen("Eliminar cuenta", onBack = { navController.popBackStack() })
+            }
+        }
         composable(KyvoDestination.SettingsTerms.route) { LegalPendingScreen("Términos y condiciones", onBack = { navController.popBackStack() }) }
         composable(KyvoDestination.SettingsNutritionNotice.route) { LegalPendingScreen("Aviso sobre información nutricional", onBack = { navController.popBackStack() }) }
         composable(KyvoDestination.SettingsLicenses.route) { LegalPendingScreen("Licencias de terceros", onBack = { navController.popBackStack() }) }
         listOf(
             KyvoDestination.SettingsNutritionGoals to "Objetivos nutricionales",
             KyvoDestination.SettingsFoodPreferences to "Preferencias alimenticias",
-            KyvoDestination.SettingsDeleteAccount to "Eliminar cuenta",
         ).forEach { (destination, title) ->
             composable(destination.route) { SettingsPlaceholderScreen(title, onBack = { navController.popBackStack() }) }
         }

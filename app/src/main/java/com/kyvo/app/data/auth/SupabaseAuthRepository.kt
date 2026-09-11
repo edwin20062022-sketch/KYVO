@@ -56,6 +56,14 @@ class SupabaseAuthRepository(
         runCatching { googleCredentials.clearCredentialState() }
     }
 
+    override suspend fun deleteAccount(): AuthResult = runAuthRequest {
+        val session = requireNotNull(currentSession()) { "No authenticated session" }
+        dataSource.deleteAccount()
+        runCatching { dataSource.signOut() }
+        runCatching { googleCredentials.clearCredentialState() }
+        AuthResult.Success(session)
+    }
+
     private suspend fun withPassword(
         password: CharArray,
         operation: suspend (String) -> AuthResult,

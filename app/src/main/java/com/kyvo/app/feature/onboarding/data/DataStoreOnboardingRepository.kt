@@ -66,6 +66,10 @@ class DataStoreOnboardingRepository(context: Context, userId: String) : Onboardi
         }
     }
 
+    override suspend fun clearUserData() {
+        dataStore.edit { preferences -> keys.all.forEach { key -> preferences.remove(key) } }
+    }
+
     private fun decode(preferences: Preferences): SavedOnboarding = SavedOnboarding(
         currentStep = preferences[keys.Step].enumValueOr(OnboardingStep.Gender),
         gender = preferences[keys.Gender].enumValueOrNull(),

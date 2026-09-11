@@ -9,6 +9,7 @@ import io.github.jan.supabase.auth.providers.Google
 import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.auth.providers.builtin.IDToken
 import io.github.jan.supabase.auth.status.SessionStatus
+import io.github.jan.supabase.functions.functions
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.contentOrNull
@@ -25,6 +26,7 @@ interface SupabaseAuthDataSource {
     suspend fun updateProfileMetadata(displayName: String, username: String?): AuthSession
     suspend fun updatePassword(newPassword: String): AuthSession = requireNotNull(currentSession())
     suspend fun signOut()
+    suspend fun deleteAccount() = Unit
 }
 
 class SupabaseSdkAuthDataSource(private val client: SupabaseClient) : SupabaseAuthDataSource {
@@ -80,6 +82,10 @@ class SupabaseSdkAuthDataSource(private val client: SupabaseClient) : SupabaseAu
 
     override suspend fun signOut() {
         client.auth.signOut()
+    }
+
+    override suspend fun deleteAccount() {
+        client.functions.invoke(function = "delete-account")
     }
 }
 

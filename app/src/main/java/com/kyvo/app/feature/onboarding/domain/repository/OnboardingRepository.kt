@@ -6,4 +6,5 @@ import kotlinx.coroutines.flow.Flow
 interface OnboardingRepository {
     fun observe(): Flow<SavedOnboarding>
     suspend fun save(progress: SavedOnboarding)
+    suspend fun clearUserData() = Unit
 }
