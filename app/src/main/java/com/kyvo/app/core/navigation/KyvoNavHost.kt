@@ -111,6 +111,7 @@ import com.kyvo.app.feature.settings.presentation.AboutScreen
 import com.kyvo.app.feature.settings.presentation.LegalScreen
 import com.kyvo.app.feature.settings.presentation.LegalPendingScreen
 import com.kyvo.app.feature.settings.presentation.DeleteAccountRoute
+import com.kyvo.app.feature.settings.presentation.NotificationCenterScreen
 import kotlinx.coroutines.launch
 
 @Composable
@@ -262,6 +263,7 @@ fun KyvoNavHost(
                             "Preferencias alimenticias" -> KyvoDestination.SettingsFoodPreferences
                             "Unidades" -> KyvoDestination.SettingsUnits
                             "Notificaciones" -> KyvoDestination.SettingsNotifications
+                            "Centro de notificaciones" -> KyvoDestination.NotificationCenter
                             "Apariencia" -> KyvoDestination.SettingsAppearance
                             "Preferencias de Meal Share" -> KyvoDestination.SettingsMealShare
                             "Privacidad" -> KyvoDestination.SettingsPrivacy
@@ -287,6 +289,13 @@ fun KyvoNavHost(
             } else {
                 TopLevelPlaceholder("Ajustes", "Completa tu sesión para ver tus ajustes.") { navController.popBackStack() }
             }
+        }
+        composable(KyvoDestination.NotificationCenter.route) {
+            NotificationCenterScreen(
+                onBack = { navController.popBackStack() },
+                onNotificationSettings = { navController.navigate(KyvoDestination.SettingsNotifications.route) },
+                onPermissions = { navController.navigate(KyvoDestination.SettingsPermissions.route) },
+            )
         }
         composable(KyvoDestination.Account.route) {
             if (authState is AuthState.SignedIn) {

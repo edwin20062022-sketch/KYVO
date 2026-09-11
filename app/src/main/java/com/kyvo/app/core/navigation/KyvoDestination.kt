@@ -23,6 +23,7 @@ enum class KyvoDestination(val route: String) {
     ProfileRecalculateGoals("profile/recalculate-goals"),
     ProfileNewGoals("profile/new-goals"),
     Settings("profile/settings"),
+    NotificationCenter("profile/notifications"),
     Account("profile/settings/account"),
     SettingsSecurity("profile/settings/security"),
     SettingsNutritionGoals("profile/settings/nutrition-goals"),
