@@ -81,6 +81,10 @@ import com.kyvo.app.feature.profile.presentation.AthleteProfileRoute
 import com.kyvo.app.feature.profile.presentation.EditAthleteProfileRoute
 import com.kyvo.app.feature.profile.presentation.NutritionCalculationRoute
 import com.kyvo.app.feature.profile.presentation.NutritionPlanRoute
+import com.kyvo.app.feature.profile.presentation.RecalculateNutritionPlanViewModel
+import com.kyvo.app.feature.profile.presentation.UpdateGoalRoute
+import com.kyvo.app.feature.profile.presentation.RecalculateGoalsRoute
+import com.kyvo.app.feature.profile.presentation.NewGoalsRoute
 import kotlinx.coroutines.launch
 
 @Composable
@@ -96,6 +100,7 @@ fun KyvoNavHost(
 ) {
     val target = resolveStartDestination(authState, onboardingCompleted)
     val scope = rememberCoroutineScope()
+    val recalculateViewModel = onboardingRepository?.let { repository -> viewModel<RecalculateNutritionPlanViewModel>(factory = RecalculateNutritionPlanViewModel.factory(repository)) }
     val currentEntry by navController.currentBackStackEntryAsState()
     val currentDestination = currentEntry?.destination
     val showBottomNavigation = shouldShowKyvoBottomNavigation(currentDestination?.route)
@@ -207,7 +212,7 @@ fun KyvoNavHost(
                     onEditProfile = { navController.navigate(KyvoDestination.ProfileEdit.route) },
                     onNutritionPlan = { navController.navigate(KyvoDestination.ProfileNutritionPlan.route) },
                     onUpdateGoal = { navController.navigate(KyvoDestination.ProfileUpdateGoal.route) },
-                    onRecalculateGoals = { navController.navigate(KyvoDestination.ProfileRecalculateGoals.route) },
+                    onRecalculateGoals = { navController.navigate(KyvoDestination.ProfileUpdateGoal.route) },
                 )
             } else {
                 TopLevelPlaceholder("Perfil", "Completa tu sesión para ver tu perfil de atleta.")
@@ -230,7 +235,7 @@ fun KyvoNavHost(
                     repository = repository,
                     onBack = { navController.popBackStack() },
                     onHowCalculated = { navController.navigate(KyvoDestination.ProfileCalculation.route) },
-                    onRecalculate = { navController.navigate(KyvoDestination.ProfileRecalculateGoals.route) },
+                    onRecalculate = { navController.navigate(KyvoDestination.ProfileUpdateGoal.route) },
                 )
             }
         }
@@ -240,10 +245,31 @@ fun KyvoNavHost(
             }
         }
         composable(KyvoDestination.ProfileUpdateGoal.route) {
-            TopLevelPlaceholder("Actualizar objetivo", "Esta pantalla estará disponible en el siguiente checkpoint.") { navController.popBackStack() }
+            recalculateViewModel?.let { flowViewModel ->
+                UpdateGoalRoute(
+                    viewModel = flowViewModel,
+                    onBack = { navController.popBackStack() },
+                    onContinue = { navController.navigate(KyvoDestination.ProfileRecalculateGoals.route) },
+                )
+            }
         }
         composable(KyvoDestination.ProfileRecalculateGoals.route) {
-            TopLevelPlaceholder("Recalcular metas", "Esta pantalla estará disponible en el siguiente checkpoint.") { navController.popBackStack() }
+            recalculateViewModel?.let { flowViewModel ->
+                RecalculateGoalsRoute(
+                    viewModel = flowViewModel,
+                    onBack = { navController.popBackStack() },
+                    onPreview = { navController.navigate(KyvoDestination.ProfileNewGoals.route) { launchSingleTop = true } },
+                )
+            }
+        }
+        composable(KyvoDestination.ProfileNewGoals.route) {
+            recalculateViewModel?.let { flowViewModel ->
+                NewGoalsRoute(
+                    viewModel = flowViewModel,
+                    onBack = { navController.popBackStack() },
+                    onSaved = { navController.popBackStack(KyvoDestination.ProfileNutritionPlan.route, inclusive = false) },
+                )
+            }
         }
         composable(KyvoDestination.FoodHub.route) {
             FoodHubScreen(

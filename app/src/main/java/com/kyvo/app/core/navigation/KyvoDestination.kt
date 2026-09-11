@@ -21,6 +21,7 @@ enum class KyvoDestination(val route: String) {
     ProfileCalculation("profile/nutrition-plan/calculation"),
     ProfileUpdateGoal("profile/update-goal"),
     ProfileRecalculateGoals("profile/recalculate-goals"),
+    ProfileNewGoals("profile/new-goals"),
     FoodHub("food/hub"),
     FoodSearch("food/search?selectionContext={selectionContext}"),
     FoodFrequent("food/frequent"),
