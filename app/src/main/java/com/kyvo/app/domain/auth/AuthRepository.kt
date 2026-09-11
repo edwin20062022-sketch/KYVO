@@ -40,5 +40,9 @@ interface AuthRepository {
     suspend fun signInWithGoogle(): AuthResult
     suspend fun updateProfileMetadata(displayName: String, username: String?): AuthResult =
         AuthResult.Failure(AuthError.Unknown)
+    suspend fun updatePassword(newPassword: CharArray): AuthResult {
+        newPassword.fill('\u0000')
+        return AuthResult.Failure(AuthError.Unknown)
+    }
     suspend fun signOut()
 }

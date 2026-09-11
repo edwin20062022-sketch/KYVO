@@ -23,6 +23,7 @@ interface SupabaseAuthDataSource {
     suspend fun signInWithEmail(email: String, password: String): AuthSession
     suspend fun signInWithGoogle(idToken: String, rawNonce: String): AuthSession
     suspend fun updateProfileMetadata(displayName: String, username: String?): AuthSession
+    suspend fun updatePassword(newPassword: String): AuthSession = requireNotNull(currentSession())
     suspend fun signOut()
 }
 
@@ -70,6 +71,11 @@ class SupabaseSdkAuthDataSource(private val client: SupabaseClient) : SupabaseAu
             }
         }
         return requireNotNull(currentSession()) { "Supabase returned no session after profile update" }
+    }
+
+    override suspend fun updatePassword(newPassword: String): AuthSession {
+        client.auth.updateUser { password = newPassword }
+        return requireNotNull(currentSession()) { "Supabase returned no session after password update" }
     }
 
     override suspend fun signOut() {

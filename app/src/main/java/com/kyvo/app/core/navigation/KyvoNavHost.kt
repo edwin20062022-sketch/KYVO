@@ -97,6 +97,10 @@ import com.kyvo.app.feature.profile.presentation.PersonalPreferencesConfirmation
 import com.kyvo.app.feature.settings.presentation.SettingsRoute
 import com.kyvo.app.feature.settings.presentation.AccountRoute
 import com.kyvo.app.feature.settings.presentation.SettingsPlaceholderScreen
+import com.kyvo.app.feature.settings.presentation.SecurityRoute
+import com.kyvo.app.feature.settings.presentation.UnitsRoute
+import com.kyvo.app.feature.settings.presentation.AppearanceRoute
+import com.kyvo.app.feature.settings.data.AppSettingsRepository
 import kotlinx.coroutines.launch
 
 @Composable
@@ -107,6 +111,7 @@ fun KyvoNavHost(
     mealRepository: MealRepository?,
     foodRepository: FoodRepository?,
     savedDishRepository: SavedDishRepository?,
+    appSettingsRepository: AppSettingsRepository,
     authState: AuthState,
     onboardingCompleted: Boolean,
 ) {
@@ -297,13 +302,20 @@ fun KyvoNavHost(
                 TopLevelPlaceholder("Cuenta", "Completa tu sesión para ver tu cuenta.") { navController.popBackStack() }
             }
         }
+        composable(KyvoDestination.SettingsSecurity.route) {
+            if (authState is AuthState.SignedIn) SecurityRoute(authState.session, authRepository, onBack = { navController.popBackStack() })
+            else SettingsPlaceholderScreen("Seguridad", onBack = { navController.popBackStack() })
+        }
+        composable(KyvoDestination.SettingsUnits.route) {
+            UnitsRoute(appSettingsRepository, onBack = { navController.popBackStack() })
+        }
+        composable(KyvoDestination.SettingsAppearance.route) {
+            AppearanceRoute(appSettingsRepository, onBack = { navController.popBackStack() })
+        }
         listOf(
-            KyvoDestination.SettingsSecurity to "Seguridad",
             KyvoDestination.SettingsNutritionGoals to "Objetivos nutricionales",
             KyvoDestination.SettingsFoodPreferences to "Preferencias alimenticias",
-            KyvoDestination.SettingsUnits to "Unidades",
             KyvoDestination.SettingsNotifications to "Notificaciones",
-            KyvoDestination.SettingsAppearance to "Apariencia",
             KyvoDestination.SettingsMealShare to "Preferencias de Meal Share",
             KyvoDestination.SettingsPrivacy to "Privacidad",
             KyvoDestination.SettingsPermissions to "Permisos",
