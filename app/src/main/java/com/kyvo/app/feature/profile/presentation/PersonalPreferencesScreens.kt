@@ -67,6 +67,8 @@ import kotlin.math.roundToInt
 const val PERSONAL_PREFERENCES_SCREEN_TAG = "personal_preferences_screen"
 const val PERSONAL_DATA_SCREEN_TAG = "personal_data_screen"
 const val ACTIVITY_TRAINING_SCREEN_TAG = "activity_training_screen"
+const val REVIEW_GOAL_UPDATES_SCREEN_TAG = "review_goal_updates_screen"
+const val PERSONAL_PREFERENCES_CONFIRMATION_SCREEN_TAG = "personal_preferences_confirmation_screen"
 
 @Composable
 fun PersonalPreferencesHubRoute(viewModel: PersonalPreferencesViewModel, onBack: () -> Unit, onPersonalData: () -> Unit, onActivity: () -> Unit, onFuture: (String) -> Unit) {
@@ -80,6 +82,8 @@ fun PersonalPreferencesHubScreen(state: PersonalPreferencesUiState, onBack: () -
         PersonalPreferencesUiState.Loading -> PreferencesLoading(PERSONAL_PREFERENCES_SCREEN_TAG)
         is PersonalPreferencesUiState.Error -> PreferencesError(PERSONAL_PREFERENCES_SCREEN_TAG, state.message, onRetry, onBack)
         is PersonalPreferencesUiState.Editing -> PreferencesHubContent(state.draft, onBack, onPersonalData, onActivity, onFuture)
+        is PersonalPreferencesUiState.Saved -> PreferencesHubContent(state.onboarding, onBack, onPersonalData, onActivity, onFuture)
+        else -> PreferencesLoading(PERSONAL_PREFERENCES_SCREEN_TAG)
     }
 }
 
@@ -300,6 +304,130 @@ private fun MealCountCard(label: String, selected: Boolean, onClick: () -> Unit,
 private fun MealPreview(meals: Int) {
     val labels = when (meals) { 3 -> listOf("Desayuno", "Comida", "Cena"); 4 -> listOf("Desayuno", "Comida", "Snack", "Cena"); 5 -> listOf("Desayuno", "Snack 1", "Comida", "Snack 2", "Cena"); 6 -> listOf("Desayuno", "Snack 1", "Comida", "Snack 2", "Cena", "Snack 3"); else -> emptyList() }
     Card(Modifier.padding(horizontal = 16.dp).fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) { Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) { labels.forEach { label -> Surface(Modifier.weight(1f), RoundedCornerShape(12.dp), color = KyvoColors.PurpleSoft) { Text(label, Modifier.padding(10.dp), textAlign = TextAlign.Center, style = MaterialTheme.typography.labelMedium) } } } }
+}
+
+@Composable
+fun ReviewGoalUpdatesRoute(viewModel: PersonalPreferencesViewModel, onBack: () -> Unit, onSaved: () -> Unit) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    LaunchedEffect(state) { if (state is PersonalPreferencesUiState.Saved) onSaved() }
+    ReviewGoalUpdatesScreen(state, viewModel::confirmUpdate, viewModel::confirmKeepingCurrentPlan, viewModel::retrySave, onBack)
+}
+
+@Composable
+fun ReviewGoalUpdatesScreen(
+    state: PersonalPreferencesUiState,
+    onUpdate: () -> Unit = {},
+    onKeepCurrent: () -> Unit = {},
+    onRetry: () -> Unit = {},
+    onBack: () -> Unit = {},
+) {
+    val review = when (state) {
+        is PersonalPreferencesUiState.Review -> state
+        is PersonalPreferencesUiState.Saving -> state.review
+        is PersonalPreferencesUiState.SaveError -> state.review
+        else -> null
+    }
+    if (review == null) {
+        PreferencesLoading(REVIEW_GOAL_UPDATES_SCREEN_TAG)
+        return
+    }
+    val saving = state is PersonalPreferencesUiState.Saving
+    val error = state as? PersonalPreferencesUiState.SaveError
+    PreferencesScaffold(
+        REVIEW_GOAL_UPDATES_SCREEN_TAG,
+        if (review.hasChanges) "Tus datos han cambiado" else "Tus datos están actualizados",
+        if (review.hasChanges) "Estos cambios pueden modificar tus requerimientos nutricionales. Revisa la comparación y decide si deseas actualizar tus metas." else "No hay cambios pendientes en tus datos. Tus metas actuales se mantienen sin modificaciones.",
+        onBack,
+    ) {
+        if (review.hasChanges) item { ChangedFieldsCard(review.current, review.draft) }
+        else item { InfoNotice("No detectamos cambios pendientes. Conservaremos tu plan actual.") }
+        item { PlanComparisonCard(review.oldPlan, review.previewPlan, review.planImpact) }
+        item {
+            KyvoPrimaryButton(
+                if (!review.hasChanges) "Sin cambios" else if (review.planImpact) "Actualizar mis metas" else "Guardar cambios",
+                onUpdate,
+                Modifier.padding(horizontal = 16.dp).semantics { contentDescription = "Confirmar actualización" },
+                enabled = review.hasChanges && !saving,
+                isLoading = saving,
+            )
+        }
+        item {
+            OutlinedButton(
+                onClick = onKeepCurrent,
+                enabled = !saving,
+                modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth().height(56.dp).semantics { contentDescription = "Mantener metas actuales" },
+            ) { Text(if (saving) "Guardando…" else "Mantener metas actuales") }
+        }
+        if (error != null) item {
+            Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(error.message, color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
+                OutlinedButton(onClick = onRetry, modifier = Modifier.padding(top = 8.dp)) { Text("Reintentar") }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChangedFieldsCard(current: SavedOnboarding, draft: SavedOnboarding) {
+    Card(Modifier.padding(horizontal = 16.dp).fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = KyvoColors.PurpleSoft)) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text("Cambios realizados", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            changedFields(current, draft).forEach { (label, oldValue, newValue) ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("$oldValue → $newValue", fontWeight = FontWeight.Bold, textAlign = TextAlign.End)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PlanComparisonCard(oldPlan: com.kyvo.app.feature.onboarding.domain.model.NutritionPlan, newPlan: com.kyvo.app.feature.onboarding.domain.model.NutritionPlan, planImpact: Boolean) {
+    Card(Modifier.padding(horizontal = 16.dp).fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text("Comparativa de metas", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(if (planImpact) "Actual                         Nuevo" else "Metas actuales", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            PlanMetricRow("Calorías", oldPlan.targetCaloriesKcal.toString() + " kcal", newPlan.targetCaloriesKcal.toString() + " kcal", planImpact)
+            PlanMetricRow("Proteína", oldPlan.proteinGrams.toString() + " g", newPlan.proteinGrams.toString() + " g", planImpact)
+            PlanMetricRow("Carbohidratos", oldPlan.carbohydrateGrams.toString() + " g", newPlan.carbohydrateGrams.toString() + " g", planImpact)
+            PlanMetricRow("Grasas", oldPlan.fatGrams.toString() + " g", newPlan.fatGrams.toString() + " g", planImpact)
+        }
+    }
+}
+
+@Composable
+private fun PlanMetricRow(label: String, oldValue: String, newValue: String, changed: Boolean) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Text(label, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Column(horizontalAlignment = Alignment.End) {
+            Text(if (changed) "$oldValue  |  $newValue" else oldValue)
+            if (changed) Text("Nuevo", color = KyvoColors.PurplePrimary, style = MaterialTheme.typography.labelMedium)
+        }
+    }
+}
+
+@Composable
+fun PersonalPreferencesConfirmationScreen(onDone: () -> Unit = {}) {
+    PreferencesScaffold(PERSONAL_PREFERENCES_CONFIRMATION_SCREEN_TAG, "Cambios guardados", "Tu información y tus metas nutricionales están actualizadas.", onDone) {
+        item { InfoNotice("Tu perfil de atleta ya refleja los datos que confirmaste.") }
+        item { KyvoPrimaryButton("Volver al perfil", onDone, Modifier.padding(horizontal = 16.dp).semantics { contentDescription = "Volver al perfil" }) }
+    }
+}
+
+private data class ChangedField(val label: String, val oldValue: String, val newValue: String)
+
+private fun changedFields(current: SavedOnboarding, draft: SavedOnboarding): List<ChangedField> = buildList {
+    if (current.gender != draft.gender) add(ChangedField("Género", current.gender.label(), draft.gender.label()))
+    if (current.ageYears != draft.ageYears) add(ChangedField("Edad", "${current.ageYears ?: "—"} años", "${draft.ageYears ?: "—"} años"))
+    if (current.heightCm != draft.heightCm) add(ChangedField("Altura", "${current.heightCm ?: "—"} cm", "${draft.heightCm ?: "—"} cm"))
+    if (current.weightKg != draft.weightKg) add(ChangedField("Peso actual", "${current.weightKg ?: "—"} kg", "${draft.weightKg ?: "—"} kg"))
+    if (current.trainingDaysPerWeek != draft.trainingDaysPerWeek) add(ChangedField("Días de entrenamiento", "${current.trainingDaysPerWeek ?: "—"}", "${draft.trainingDaysPerWeek ?: "—"}"))
+    if (current.trainingType != draft.trainingType) add(ChangedField("Tipo de entrenamiento", current.trainingType.label(), draft.trainingType.label()))
+    if (current.workActivity != draft.workActivity) add(ChangedField("Actividad laboral", current.workActivity.label(), draft.workActivity.label()))
+    if (current.experience != draft.experience) add(ChangedField("Experiencia", current.experience?.label() ?: "—", draft.experience?.label() ?: "—"))
+    if (current.foodPreference != draft.foodPreference) add(ChangedField("Preferencia alimenticia", current.foodPreference?.label() ?: "—", draft.foodPreference?.label() ?: "—"))
+    if (current.mealsPerDay != draft.mealsPerDay) add(ChangedField("Comidas al día", "${current.mealsPerDay ?: "—"}", "${draft.mealsPerDay ?: "—"}"))
 }
 
 @Composable

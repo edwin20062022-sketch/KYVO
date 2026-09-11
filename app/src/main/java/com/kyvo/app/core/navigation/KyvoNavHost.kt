@@ -92,6 +92,8 @@ import com.kyvo.app.feature.profile.presentation.ActivityTrainingRoute
 import com.kyvo.app.feature.profile.presentation.ExperienceRoute
 import com.kyvo.app.feature.profile.presentation.FoodPreferencesRoute
 import com.kyvo.app.feature.profile.presentation.MealOrganizationRoute
+import com.kyvo.app.feature.profile.presentation.ReviewGoalUpdatesRoute
+import com.kyvo.app.feature.profile.presentation.PersonalPreferencesConfirmationScreen
 import kotlinx.coroutines.launch
 
 @Composable
@@ -292,9 +294,13 @@ fun KyvoNavHost(
                             "Nivel de experiencia" -> KyvoDestination.Experience
                             "Preferencias alimenticias" -> KyvoDestination.FoodPreferences
                             "Organización de comidas" -> KyvoDestination.MealOrganization
-                            else -> KyvoDestination.ReviewGoalUpdates
+                            else -> null
                         }
-                        navController.navigate(destination.route)
+                        if (destination != null) {
+                            navController.navigate(destination.route)
+                        } else if (flowViewModel.prepareReview()) {
+                            navController.navigate(KyvoDestination.ReviewGoalUpdates.route)
+                        }
                     },
                 )
             }
@@ -321,10 +327,30 @@ fun KyvoNavHost(
         }
         composable(KyvoDestination.MealOrganization.route) {
             personalPreferencesViewModel?.let { flowViewModel ->
-                MealOrganizationRoute(flowViewModel, onBack = { navController.popBackStack() }, onContinue = { navController.navigate(KyvoDestination.ReviewGoalUpdates.route) })
+                MealOrganizationRoute(flowViewModel, onBack = { navController.popBackStack() }, onContinue = { if (flowViewModel.prepareReview()) navController.navigate(KyvoDestination.ReviewGoalUpdates.route) })
             }
         }
-        composable(KyvoDestination.ReviewGoalUpdates.route) { TopLevelPlaceholder("Revisar actualización de metas", "Esta pantalla estará disponible en el siguiente checkpoint.") { navController.popBackStack() } }
+        composable(KyvoDestination.ReviewGoalUpdates.route) {
+            personalPreferencesViewModel?.let { flowViewModel ->
+                ReviewGoalUpdatesRoute(
+                    viewModel = flowViewModel,
+                    onBack = { navController.popBackStack() },
+                    onSaved = {
+                        navController.navigate(KyvoDestination.PersonalPreferencesConfirmation.route) {
+                            popUpTo(KyvoDestination.PersonalPreferences.route) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                )
+            }
+        }
+        composable(KyvoDestination.PersonalPreferencesConfirmation.route) {
+            PersonalPreferencesConfirmationScreen(
+                onDone = {
+                    navController.popBackStack(KyvoDestination.Profile.route, inclusive = false)
+                },
+            )
+        }
         composable(KyvoDestination.FoodHub.route) {
             FoodHubScreen(
                 onSearch = { navController.navigate(foodSearchRoute(FoodSelectionContext.NORMAL_MEAL_LOGGING)) },

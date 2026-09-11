@@ -29,6 +29,7 @@ enum class KyvoDestination(val route: String) {
     FoodPreferences("profile/food-preferences"),
     MealOrganization("profile/meal-organization"),
     ReviewGoalUpdates("profile/review-goal-updates"),
+    PersonalPreferencesConfirmation("profile/personal-preferences-confirmation"),
     FoodHub("food/hub"),
     FoodSearch("food/search?selectionContext={selectionContext}"),
     FoodFrequent("food/frequent"),
