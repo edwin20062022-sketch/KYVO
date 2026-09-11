@@ -94,6 +94,9 @@ import com.kyvo.app.feature.profile.presentation.FoodPreferencesRoute
 import com.kyvo.app.feature.profile.presentation.MealOrganizationRoute
 import com.kyvo.app.feature.profile.presentation.ReviewGoalUpdatesRoute
 import com.kyvo.app.feature.profile.presentation.PersonalPreferencesConfirmationScreen
+import com.kyvo.app.feature.settings.presentation.SettingsRoute
+import com.kyvo.app.feature.settings.presentation.AccountRoute
+import com.kyvo.app.feature.settings.presentation.SettingsPlaceholderScreen
 import kotlinx.coroutines.launch
 
 @Composable
@@ -223,11 +226,93 @@ fun KyvoNavHost(
                     onNutritionPlan = { navController.navigate(KyvoDestination.ProfileNutritionPlan.route) },
                     onUpdateGoal = { navController.navigate(KyvoDestination.ProfileUpdateGoal.route) },
                     onRecalculateGoals = { navController.navigate(KyvoDestination.ProfileUpdateGoal.route) },
-                    onPersonalPreferences = { navController.navigate(KyvoDestination.PersonalPreferences.route) },
+                    onPersonalPreferences = { navController.navigate(KyvoDestination.Settings.route) },
                 )
             } else {
                 TopLevelPlaceholder("Perfil", "Completa tu sesión para ver tu perfil de atleta.")
             }
+        }
+        composable(KyvoDestination.Settings.route) {
+            if (authState is AuthState.SignedIn) {
+                SettingsRoute(
+                    session = authState.session,
+                    onBack = { navController.popBackStack() },
+                    onProfile = { navController.navigate(KyvoDestination.Profile.route) },
+                    onAccount = { navController.navigate(KyvoDestination.Account.route) },
+                    onFuture = { title ->
+                        val destination = when (title) {
+                            "Seguridad" -> KyvoDestination.SettingsSecurity
+                            "Objetivos nutricionales" -> KyvoDestination.SettingsNutritionGoals
+                            "Preferencias alimenticias" -> KyvoDestination.SettingsFoodPreferences
+                            "Unidades" -> KyvoDestination.SettingsUnits
+                            "Notificaciones" -> KyvoDestination.SettingsNotifications
+                            "Apariencia" -> KyvoDestination.SettingsAppearance
+                            "Preferencias de Meal Share" -> KyvoDestination.SettingsMealShare
+                            "Privacidad" -> KyvoDestination.SettingsPrivacy
+                            "Permisos" -> KyvoDestination.SettingsPermissions
+                            "Eliminar cuenta" -> KyvoDestination.SettingsDeleteAccount
+                            "Ayuda y soporte" -> KyvoDestination.SettingsHelp
+                            "Acerca de KYVO" -> KyvoDestination.SettingsAbout
+                            else -> KyvoDestination.SettingsLegal
+                        }
+                        navController.navigate(destination.route)
+                    },
+                    onSignOut = {
+                        scope.launch {
+                            runCatching { authRepository.signOut() }.onSuccess {
+                                navController.navigate(KyvoDestination.Login.route) {
+                                    popUpTo(navController.graph.id) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            }
+                        }
+                    },
+                )
+            } else {
+                TopLevelPlaceholder("Ajustes", "Completa tu sesión para ver tus ajustes.") { navController.popBackStack() }
+            }
+        }
+        composable(KyvoDestination.Account.route) {
+            if (authState is AuthState.SignedIn) {
+                AccountRoute(
+                    session = authState.session,
+                    authRepository = authRepository,
+                    onBack = { navController.popBackStack() },
+                    onEditProfile = { navController.navigate(KyvoDestination.ProfileEdit.route) },
+                    onFuture = { title ->
+                        val destination = when (title) {
+                            "Eliminar cuenta" -> KyvoDestination.SettingsDeleteAccount
+                            else -> KyvoDestination.SettingsSecurity
+                        }
+                        navController.navigate(destination.route)
+                    },
+                    onSignedOut = {
+                        navController.navigate(KyvoDestination.Login.route) {
+                            popUpTo(navController.graph.id) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                )
+            } else {
+                TopLevelPlaceholder("Cuenta", "Completa tu sesión para ver tu cuenta.") { navController.popBackStack() }
+            }
+        }
+        listOf(
+            KyvoDestination.SettingsSecurity to "Seguridad",
+            KyvoDestination.SettingsNutritionGoals to "Objetivos nutricionales",
+            KyvoDestination.SettingsFoodPreferences to "Preferencias alimenticias",
+            KyvoDestination.SettingsUnits to "Unidades",
+            KyvoDestination.SettingsNotifications to "Notificaciones",
+            KyvoDestination.SettingsAppearance to "Apariencia",
+            KyvoDestination.SettingsMealShare to "Preferencias de Meal Share",
+            KyvoDestination.SettingsPrivacy to "Privacidad",
+            KyvoDestination.SettingsPermissions to "Permisos",
+            KyvoDestination.SettingsDeleteAccount to "Eliminar cuenta",
+            KyvoDestination.SettingsHelp to "Ayuda y soporte",
+            KyvoDestination.SettingsAbout to "Acerca de KYVO",
+            KyvoDestination.SettingsLegal to "Legal",
+        ).forEach { (destination, title) ->
+            composable(destination.route) { SettingsPlaceholderScreen(title, onBack = { navController.popBackStack() }) }
         }
         composable(KyvoDestination.ProfileEdit.route) {
             if (authState is AuthState.SignedIn) {

@@ -123,7 +123,7 @@ private fun ProfileContent(
         item {
             Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
                 KyvoBrandLockup(horizontal = true, markSize = 32.dp)
-                IconButton(onClick = onPersonalPreferences, Modifier.size(48.dp).semantics { contentDescription = "Datos personales y preferencias" }) { Icon(Icons.Outlined.Info, null) }
+                IconButton(onClick = onPersonalPreferences, Modifier.size(48.dp).semantics { contentDescription = "Ajustes" }) { Icon(Icons.Outlined.Info, null) }
             }
         }
         item { Identity(profile, onEditProfile) }
