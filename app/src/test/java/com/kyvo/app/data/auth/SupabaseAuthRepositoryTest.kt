@@ -116,6 +116,9 @@ private class FakeDataSource(
         }
     }
 
+    override suspend fun updateProfileMetadata(displayName: String, username: String?): AuthSession =
+        requireNotNull(currentSession())
+
     override suspend fun signOut() {
         states.value = AuthState.SignedOut
     }
