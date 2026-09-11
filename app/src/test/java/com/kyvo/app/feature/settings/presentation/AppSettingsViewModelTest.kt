@@ -42,6 +42,21 @@ class AppSettingsViewModelTest {
         assertEquals(AppearanceMode.DARK, repository.settings.value.appearance)
         assertEquals(repository.settings.value, repository.observe().first())
     }
+
+    @Test
+    fun notificationPreferencesPersistWithoutStoringSystemPermission() = runTest(mainDispatcherRule.testDispatcher) {
+        val repository = FakeAppSettingsRepository()
+        val viewModel = AppSettingsViewModel(repository)
+
+        viewModel.setNotificationsEnabled(false)
+        viewModel.setBreakfastNotifications(false)
+        advanceUntilIdle()
+
+        assertEquals(false, repository.settings.value.notifications.enabled)
+        assertEquals(false, repository.settings.value.notifications.breakfast)
+        assertEquals(true, repository.settings.value.notifications.lunch)
+        assertEquals(repository.settings.value, repository.observe().first())
+    }
 }
 
 private class FakeAppSettingsRepository : AppSettingsRepository {
@@ -54,4 +69,13 @@ private class FakeAppSettingsRepository : AppSettingsRepository {
     override suspend fun setAppearance(mode: AppearanceMode) { settings.value = settings.value.copy(appearance = mode) }
     override suspend fun setReduceBrightnessInDarkMode(enabled: Boolean) { settings.value = settings.value.copy(reduceBrightnessInDarkMode = enabled) }
     override suspend fun setHighContrast(enabled: Boolean) { settings.value = settings.value.copy(highContrast = enabled) }
+    override suspend fun setNotificationsEnabled(enabled: Boolean) { settings.value = settings.value.copy(notifications = settings.value.notifications.copy(enabled = enabled)) }
+    override suspend fun setBreakfastNotifications(enabled: Boolean) { settings.value = settings.value.copy(notifications = settings.value.notifications.copy(breakfast = enabled)) }
+    override suspend fun setLunchNotifications(enabled: Boolean) { settings.value = settings.value.copy(notifications = settings.value.notifications.copy(lunch = enabled)) }
+    override suspend fun setSnackNotifications(enabled: Boolean) { settings.value = settings.value.copy(notifications = settings.value.notifications.copy(snack = enabled)) }
+    override suspend fun setDinnerNotifications(enabled: Boolean) { settings.value = settings.value.copy(notifications = settings.value.notifications.copy(dinner = enabled)) }
+    override suspend fun setDayCloseNotifications(enabled: Boolean) { settings.value = settings.value.copy(notifications = settings.value.notifications.copy(dayClose = enabled)) }
+    override suspend fun setNewFeaturesNotifications(enabled: Boolean) { settings.value = settings.value.copy(notifications = settings.value.notifications.copy(newFeatures = enabled)) }
+    override suspend fun setTipsAndContentNotifications(enabled: Boolean) { settings.value = settings.value.copy(notifications = settings.value.notifications.copy(tipsAndContent = enabled)) }
+    override suspend fun setAccountNoticesNotifications(enabled: Boolean) { settings.value = settings.value.copy(notifications = settings.value.notifications.copy(accountNotices = enabled)) }
 }

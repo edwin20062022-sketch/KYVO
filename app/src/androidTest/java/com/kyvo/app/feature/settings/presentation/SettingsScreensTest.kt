@@ -93,4 +93,37 @@ class SettingsScreensTest {
         composeRule.onNodeWithText("Administrada por Google").assertIsDisplayed()
         composeRule.onNodeWithText("No disponible todavía").assertIsDisplayed()
     }
+
+    @Test
+    fun notificationsShowsInternalPreferencesAndSystemStateSeparately() {
+        composeRule.setContent {
+            KyvoTheme(darkTheme = false) {
+                NotificationsScreen(AppSettings(), NotificationPermissionStatus.NOT_REQUIRED)
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("notifications_screen").assertIsDisplayed()
+        composeRule.onNodeWithText("Recordatorios de comidas").assertIsDisplayed()
+        composeRule.onNodeWithText("No requiere permiso en esta versión de Android").assertIsDisplayed()
+        composeRule.onNodeWithText("Nuevas funcionalidades").assertIsDisplayed()
+    }
+
+    @Test
+    fun permissionsAndPrivacyShowOnlyActualPermissionAndInformationSurfaces() {
+        composeRule.setContent {
+            KyvoTheme(darkTheme = false) {
+                PermissionsScreen(PermissionScreenState(CameraPermissionStatus.DENIED, NotificationPermissionStatus.DENIED))
+            }
+        }
+        composeRule.onNodeWithText("Permisos").assertIsDisplayed()
+        composeRule.onNodeWithText("Fotos").assertIsDisplayed()
+        composeRule.onNodeWithText("No permitido").assertIsDisplayed()
+
+        composeRule.setContent {
+            KyvoTheme(darkTheme = false) { PrivacyScreen() }
+        }
+        composeRule.onNodeWithText("Privacidad").assertIsDisplayed()
+        composeRule.onNodeWithText("Datos personales").assertIsDisplayed()
+        composeRule.onNodeWithText("Política de privacidad").assertIsDisplayed()
+    }
 }
