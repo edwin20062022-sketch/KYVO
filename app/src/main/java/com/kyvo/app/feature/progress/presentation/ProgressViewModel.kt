@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 
 sealed interface ProgressUiState {
     data object Loading : ProgressUiState
-    data object Empty : ProgressUiState
+    data object InsufficientData : ProgressUiState
     data class Content(val days: List<DailyNutritionSummary>, val plan: NutritionPlan) : ProgressUiState
     data class Error(val message: String) : ProgressUiState
 }
@@ -45,7 +45,7 @@ class ProgressViewModel(
                 .collect { result ->
                     _state.value = when {
                         result == null -> ProgressUiState.Error("Tu plan nutricional aún no está disponible.")
-                        result.second.none { it.mealCount > 0 } -> ProgressUiState.Empty
+                        result.second.none { it.mealCount > 0 } -> ProgressUiState.InsufficientData
                         else -> ProgressUiState.Content(result.second, result.first)
                     }
                 }

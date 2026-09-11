@@ -45,6 +45,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kyvo.app.core.designsystem.KyvoColors
 import com.kyvo.app.core.designsystem.component.KyvoCard
+import com.kyvo.app.core.designsystem.component.KyvoLoadErrorState
 import com.kyvo.app.core.designsystem.component.KyvoPrimaryButton
 import com.kyvo.app.feature.food.domain.model.FoodSearchResult
 import com.kyvo.app.feature.food.domain.repository.FoodRepository
@@ -69,7 +70,7 @@ private fun SavedFoodsRouteContent(title: String, subtitle: String, state: Saved
         when (state) {
             SavedFoodsUiState.Loading -> LoadingFood("Cargando alimentos…")
             SavedFoodsUiState.Empty -> SavedEmptyState(title, onSearch)
-            is SavedFoodsUiState.Error -> FoodStateMessage("No pudimos cargar $title", state.message, "Reintentar", onRetry)
+            is SavedFoodsUiState.Error -> KyvoLoadErrorState(state.kind, Modifier.fillMaxSize(), onRetry)
             is SavedFoodsUiState.Content -> {
                 state.message?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)) }
                 SavedFoodsList(state.items, onSelect, onPortion, showFavorite, onRemoveFavorite)

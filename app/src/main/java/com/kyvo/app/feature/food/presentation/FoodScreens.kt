@@ -70,6 +70,7 @@ import coil3.compose.AsyncImage
 import com.kyvo.app.core.designsystem.KyvoBrushes
 import com.kyvo.app.core.designsystem.KyvoColors
 import com.kyvo.app.core.designsystem.component.KyvoCard
+import com.kyvo.app.core.designsystem.component.KyvoLoadErrorState
 import com.kyvo.app.core.designsystem.component.KyvoPrimaryButton
 import com.kyvo.app.feature.food.domain.FoodRegistrationFactory
 import com.kyvo.app.feature.food.domain.validateFoodAmount
@@ -205,7 +206,7 @@ fun FoodResultsRoute(query: String, repository: FoodRepository, onBack: () -> Un
             FoodSearchUiState.Idle -> LoadingFood("Preparando búsqueda…")
             FoodSearchUiState.Loading -> LoadingFood("Buscando alimentos…")
             is FoodSearchUiState.Empty -> SearchEmptyState(current.query, onBack, onCreateDish)
-            is FoodSearchUiState.Error -> FoodStateMessage("No pudimos cargar resultados", current.message, "Reintentar", vm::retry)
+            is FoodSearchUiState.Error -> KyvoLoadErrorState(current.kind, Modifier.fillMaxSize(), vm::retry)
             is FoodSearchUiState.Results -> {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text("${current.items.size} resultados", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
@@ -240,7 +241,7 @@ fun FoodDetailRoute(foodId: String, type: String, repository: FoodRepository, on
     when (val current = state) {
         FoodDetailUiState.Loading -> LoadingFood("Cargando alimento…")
         FoodDetailUiState.NotFound -> FoodStateMessage("Alimento no disponible", "Este alimento ya no está disponible en el catálogo.", "Volver", onBack)
-        is FoodDetailUiState.Error -> FoodStateMessage("No pudimos cargar el alimento", current.message, "Reintentar", vm::retry)
+        is FoodDetailUiState.Error -> KyvoLoadErrorState(current.kind, Modifier.fillMaxSize(), vm::retry)
         is FoodDetailUiState.Content -> FoodDetailContent(current.food, favoriteState, onBack, { onPortion(current.food) }, favoriteVm::toggle)
     }
 }
@@ -281,7 +282,7 @@ fun FoodPortionRoute(foodId: String, type: String, repository: FoodRepository, m
     when (val current = state) {
         FoodDetailUiState.Loading -> LoadingFood("Cargando alimento…")
         FoodDetailUiState.NotFound -> FoodStateMessage("Alimento no disponible", "No pudimos recuperar este alimento.", "Volver", onBack)
-        is FoodDetailUiState.Error -> FoodStateMessage("No pudimos cargar el alimento", current.message, "Reintentar", vm::retry)
+        is FoodDetailUiState.Error -> KyvoLoadErrorState(current.kind, Modifier.fillMaxSize(), vm::retry)
         is FoodDetailUiState.Content -> FoodPortionContent(
             current.food,
             mealRepository,

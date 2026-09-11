@@ -3,6 +3,8 @@ package com.kyvo.app.feature.food.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.kyvo.app.core.designsystem.LoadFailureKind
+import com.kyvo.app.core.designsystem.toLoadFailureKind
 import com.kyvo.app.feature.food.domain.model.FoodDetail
 import com.kyvo.app.feature.food.domain.model.FoodSearchResult
 import com.kyvo.app.feature.food.domain.repository.FoodRepository
@@ -19,14 +21,14 @@ sealed interface FoodSearchUiState {
     data object Loading : FoodSearchUiState
     data class Results(val query: String, val items: List<FoodSearchResult>) : FoodSearchUiState
     data class Empty(val query: String) : FoodSearchUiState
-    data class Error(val query: String, val message: String) : FoodSearchUiState
+    data class Error(val query: String, val message: String, val kind: LoadFailureKind = LoadFailureKind.Generic) : FoodSearchUiState
 }
 
 sealed interface FoodDetailUiState {
     data object Loading : FoodDetailUiState
     data class Content(val food: FoodDetail) : FoodDetailUiState
     data object NotFound : FoodDetailUiState
-    data class Error(val message: String) : FoodDetailUiState
+    data class Error(val message: String, val kind: LoadFailureKind = LoadFailureKind.Generic) : FoodDetailUiState
 }
 
 class FoodSearchViewModel(
@@ -74,9 +76,7 @@ class FoodSearchViewModel(
             .onSuccess { results ->
                 _state.value = if (results.isEmpty()) FoodSearchUiState.Empty(normalized) else FoodSearchUiState.Results(normalized, results)
             }
-            .onFailure { error ->
-                _state.value = FoodSearchUiState.Error(normalized, error.message ?: "No pudimos cargar los alimentos.")
-            }
+            .onFailure { error -> _state.value = FoodSearchUiState.Error(normalized, error.message ?: "No pudimos cargar los alimentos.", error.toLoadFailureKind()) }
     }
 
     companion object {
@@ -106,7 +106,7 @@ class FoodDetailViewModel(
             _state.value = FoodDetailUiState.Loading
             runCatching { repository.getFood(foodId) }
                 .onSuccess { food -> _state.value = food?.let(FoodDetailUiState::Content) ?: FoodDetailUiState.NotFound }
-                .onFailure { error -> _state.value = FoodDetailUiState.Error(error.message ?: "No pudimos cargar este alimento.") }
+                .onFailure { error -> _state.value = FoodDetailUiState.Error(error.message ?: "No pudimos cargar este alimento.", error.toLoadFailureKind()) }
         }
     }
 

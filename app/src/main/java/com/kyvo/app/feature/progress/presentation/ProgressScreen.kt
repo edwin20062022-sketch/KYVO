@@ -33,6 +33,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kyvo.app.core.designsystem.KyvoColors
 import com.kyvo.app.core.designsystem.component.KyvoCard
 import com.kyvo.app.core.designsystem.component.KyvoPrimaryButton
+import com.kyvo.app.core.designsystem.component.KyvoStateView
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Info
 import com.kyvo.app.feature.progress.domain.DailyNutritionSummary
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -51,7 +54,7 @@ fun ProgressRoute(
 ) {
     when (val state = viewModel.state.collectAsStateWithLifecycle().value) {
         ProgressUiState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-        ProgressUiState.Empty -> ProgressEmptyState(onHome, onMeals, onMealShare)
+        ProgressUiState.InsufficientData -> ProgressEmptyState(onMeals)
         is ProgressUiState.Error -> ProgressErrorState(state.message, viewModel::retry)
         is ProgressUiState.Content -> ProgressScreen(state.days, onHome, onMeals, onMealShare, onCaloriesDetail, onProteinDetail, onConsistency, onHistory)
     }
@@ -189,16 +192,11 @@ private fun FutureCard(title: String, subtitle: String, modifier: Modifier, onCl
 }
 
 @Composable
-private fun ProgressEmptyState(onHome: () -> Unit, onMeals: () -> Unit, onMealShare: () -> Unit) = Column(Modifier.fillMaxSize()) {
+private fun ProgressEmptyState(onMeals: () -> Unit) = Column(Modifier.fillMaxSize()) {
     Column(Modifier.weight(1f).fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Progreso", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
         Text("Tu esfuerzo se refleja en tus hábitos.", color = KyvoColors.Slate, style = MaterialTheme.typography.titleMedium)
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("Aún no hay progreso nutricional", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-                Text("Registra comidas para comenzar a ver tu avance real.", color = KyvoColors.Slate, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 8.dp))
-            }
-        }
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { KyvoStateView(Icons.Outlined.Info, "Estamos construyendo tu progreso", "Registra tus comidas durante los próximos días para empezar a ver tus tendencias y conocer mejor tu nutrición.", actionLabel = "Registrar mi primera comida", onAction = onMeals) }
     }
 }
 

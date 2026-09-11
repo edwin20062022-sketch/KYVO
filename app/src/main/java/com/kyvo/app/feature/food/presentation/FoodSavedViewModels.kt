@@ -3,6 +3,8 @@ package com.kyvo.app.feature.food.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.kyvo.app.core.designsystem.LoadFailureKind
+import com.kyvo.app.core.designsystem.toLoadFailureKind
 import com.kyvo.app.feature.food.domain.model.FoodSearchResult
 import com.kyvo.app.feature.food.domain.model.FoodType
 import com.kyvo.app.feature.food.domain.repository.FoodRepository
@@ -17,7 +19,7 @@ sealed interface SavedFoodsUiState {
     data object Loading : SavedFoodsUiState
     data class Content(val items: List<FoodSearchResult>, val message: String? = null) : SavedFoodsUiState
     data object Empty : SavedFoodsUiState
-    data class Error(val message: String) : SavedFoodsUiState
+    data class Error(val message: String, val kind: LoadFailureKind = LoadFailureKind.Generic) : SavedFoodsUiState
 }
 
 class FavoriteFoodsViewModel(private val repository: FoodRepository, private val dispatcher: CoroutineDispatcher = Dispatchers.IO) : ViewModel() {
@@ -25,7 +27,7 @@ class FavoriteFoodsViewModel(private val repository: FoodRepository, private val
     val state: StateFlow<SavedFoodsUiState> = _state.asStateFlow()
     init { load() }
     fun retry() = load()
-    private fun load() { viewModelScope.launch(dispatcher) { _state.value = SavedFoodsUiState.Loading; runCatching { repository.getFavoriteFoods() }.onSuccess { foods -> _state.value = if (foods.isEmpty()) SavedFoodsUiState.Empty else SavedFoodsUiState.Content(foods) }.onFailure { _state.value = SavedFoodsUiState.Error(it.message ?: "No pudimos cargar tus favoritos.") } } }
+    private fun load() { viewModelScope.launch(dispatcher) { _state.value = SavedFoodsUiState.Loading; runCatching { repository.getFavoriteFoods() }.onSuccess { foods -> _state.value = if (foods.isEmpty()) SavedFoodsUiState.Empty else SavedFoodsUiState.Content(foods) }.onFailure { _state.value = SavedFoodsUiState.Error(it.message ?: "No pudimos cargar tus favoritos.", it.toLoadFailureKind()) } } }
     fun remove(food: FoodSearchResult) {
         val previous = _state.value
         val content = previous as? SavedFoodsUiState.Content ?: return
@@ -46,7 +48,7 @@ class FrequentFoodsViewModel(private val repository: FoodRepository, private val
     val state: StateFlow<SavedFoodsUiState> = _state.asStateFlow()
     init { load() }
     fun retry() { load() }
-    private fun load() { viewModelScope.launch(dispatcher) { _state.value = SavedFoodsUiState.Loading; runCatching { repository.getFrequentFoods() }.onSuccess { foods -> _state.value = if (foods.isEmpty()) SavedFoodsUiState.Empty else SavedFoodsUiState.Content(foods) }.onFailure { _state.value = SavedFoodsUiState.Error(it.message ?: "No pudimos cargar tus frecuentes.") } } }
+    private fun load() { viewModelScope.launch(dispatcher) { _state.value = SavedFoodsUiState.Loading; runCatching { repository.getFrequentFoods() }.onSuccess { foods -> _state.value = if (foods.isEmpty()) SavedFoodsUiState.Empty else SavedFoodsUiState.Content(foods) }.onFailure { _state.value = SavedFoodsUiState.Error(it.message ?: "No pudimos cargar tus frecuentes.", it.toLoadFailureKind()) } } }
     companion object { fun factory(repository: FoodRepository) = object : ViewModelProvider.Factory { @Suppress("UNCHECKED_CAST") override fun <T : ViewModel> create(modelClass: Class<T>): T = FrequentFoodsViewModel(repository) as T } }
 }
 
