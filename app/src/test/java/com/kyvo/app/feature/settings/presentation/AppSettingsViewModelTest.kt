@@ -7,6 +7,7 @@ import com.kyvo.app.feature.settings.domain.FoodUnit
 import com.kyvo.app.feature.settings.domain.HeightUnit
 import com.kyvo.app.feature.settings.domain.TemperatureUnit
 import com.kyvo.app.feature.settings.domain.WeightUnit
+import com.kyvo.app.feature.mealshare.domain.model.MealShareTemplate
 import com.kyvo.app.test.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -57,6 +58,22 @@ class AppSettingsViewModelTest {
         assertEquals(true, repository.settings.value.notifications.lunch)
         assertEquals(repository.settings.value, repository.observe().first())
     }
+
+    @Test
+    fun mealSharePreferencesPersistThroughSettingsRepository() = runTest(mainDispatcherRule.testDispatcher) {
+        val repository = FakeAppSettingsRepository()
+        val viewModel = AppSettingsViewModel(repository)
+
+        viewModel.setMealShareTemplate(MealShareTemplate.EDITORIAL)
+        viewModel.setMealShareShowFat(false)
+        viewModel.setMealShareSuggestInstagram(false)
+        advanceUntilIdle()
+
+        assertEquals(MealShareTemplate.EDITORIAL, repository.settings.value.mealShare.defaultTemplate)
+        assertEquals(false, repository.settings.value.mealShare.showFat)
+        assertEquals(false, repository.settings.value.mealShare.suggestInstagram)
+        assertEquals(repository.settings.value, repository.observe().first())
+    }
 }
 
 private class FakeAppSettingsRepository : AppSettingsRepository {
@@ -78,4 +95,11 @@ private class FakeAppSettingsRepository : AppSettingsRepository {
     override suspend fun setNewFeaturesNotifications(enabled: Boolean) { settings.value = settings.value.copy(notifications = settings.value.notifications.copy(newFeatures = enabled)) }
     override suspend fun setTipsAndContentNotifications(enabled: Boolean) { settings.value = settings.value.copy(notifications = settings.value.notifications.copy(tipsAndContent = enabled)) }
     override suspend fun setAccountNoticesNotifications(enabled: Boolean) { settings.value = settings.value.copy(notifications = settings.value.notifications.copy(accountNotices = enabled)) }
+    override suspend fun setMealShareTemplate(template: MealShareTemplate) { settings.value = settings.value.copy(mealShare = settings.value.mealShare.copy(defaultTemplate = template)) }
+    override suspend fun setMealShareShowCalories(enabled: Boolean) { settings.value = settings.value.copy(mealShare = settings.value.mealShare.copy(showCalories = enabled)) }
+    override suspend fun setMealShareShowProtein(enabled: Boolean) { settings.value = settings.value.copy(mealShare = settings.value.mealShare.copy(showProtein = enabled)) }
+    override suspend fun setMealShareShowCarbohydrates(enabled: Boolean) { settings.value = settings.value.copy(mealShare = settings.value.mealShare.copy(showCarbohydrates = enabled)) }
+    override suspend fun setMealShareShowFat(enabled: Boolean) { settings.value = settings.value.copy(mealShare = settings.value.mealShare.copy(showFat = enabled)) }
+    override suspend fun setMealShareAutoSave(enabled: Boolean) { settings.value = settings.value.copy(mealShare = settings.value.mealShare.copy(autoSave = enabled)) }
+    override suspend fun setMealShareSuggestInstagram(enabled: Boolean) { settings.value = settings.value.copy(mealShare = settings.value.mealShare.copy(suggestInstagram = enabled)) }
 }
