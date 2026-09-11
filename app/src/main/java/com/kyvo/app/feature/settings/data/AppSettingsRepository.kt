@@ -30,6 +30,15 @@ interface AppSettingsRepository {
     suspend fun setAppearance(mode: AppearanceMode)
     suspend fun setReduceBrightnessInDarkMode(enabled: Boolean)
     suspend fun setHighContrast(enabled: Boolean)
+    suspend fun setNotificationsEnabled(enabled: Boolean)
+    suspend fun setBreakfastNotifications(enabled: Boolean)
+    suspend fun setLunchNotifications(enabled: Boolean)
+    suspend fun setSnackNotifications(enabled: Boolean)
+    suspend fun setDinnerNotifications(enabled: Boolean)
+    suspend fun setDayCloseNotifications(enabled: Boolean)
+    suspend fun setNewFeaturesNotifications(enabled: Boolean)
+    suspend fun setTipsAndContentNotifications(enabled: Boolean)
+    suspend fun setAccountNoticesNotifications(enabled: Boolean)
 }
 
 class DataStoreAppSettingsRepository(context: Context) : AppSettingsRepository {
@@ -46,6 +55,15 @@ class DataStoreAppSettingsRepository(context: Context) : AppSettingsRepository {
     override suspend fun setAppearance(mode: AppearanceMode) = edit { it[Keys.Appearance] = mode.name }
     override suspend fun setReduceBrightnessInDarkMode(enabled: Boolean) = edit { it[Keys.ReduceBrightness] = enabled }
     override suspend fun setHighContrast(enabled: Boolean) = edit { it[Keys.HighContrast] = enabled }
+    override suspend fun setNotificationsEnabled(enabled: Boolean) = edit { it[Keys.NotificationsEnabled] = enabled }
+    override suspend fun setBreakfastNotifications(enabled: Boolean) = edit { it[Keys.Breakfast] = enabled }
+    override suspend fun setLunchNotifications(enabled: Boolean) = edit { it[Keys.Lunch] = enabled }
+    override suspend fun setSnackNotifications(enabled: Boolean) = edit { it[Keys.Snack] = enabled }
+    override suspend fun setDinnerNotifications(enabled: Boolean) = edit { it[Keys.Dinner] = enabled }
+    override suspend fun setDayCloseNotifications(enabled: Boolean) = edit { it[Keys.DayClose] = enabled }
+    override suspend fun setNewFeaturesNotifications(enabled: Boolean) = edit { it[Keys.NewFeatures] = enabled }
+    override suspend fun setTipsAndContentNotifications(enabled: Boolean) = edit { it[Keys.TipsAndContent] = enabled }
+    override suspend fun setAccountNoticesNotifications(enabled: Boolean) = edit { it[Keys.AccountNotices] = enabled }
 
     private suspend fun edit(block: (MutableMap<Preferences.Key<*>, Any>) -> Unit) {
         dataStore.edit { preferences ->
@@ -68,6 +86,17 @@ class DataStoreAppSettingsRepository(context: Context) : AppSettingsRepository {
         appearance = preferences[Keys.Appearance].enumOr(AppearanceMode.SYSTEM),
         reduceBrightnessInDarkMode = preferences[Keys.ReduceBrightness] ?: true,
         highContrast = preferences[Keys.HighContrast] ?: false,
+        notifications = com.kyvo.app.feature.settings.domain.NotificationPreferences(
+            enabled = preferences[Keys.NotificationsEnabled] ?: true,
+            breakfast = preferences[Keys.Breakfast] ?: true,
+            lunch = preferences[Keys.Lunch] ?: true,
+            snack = preferences[Keys.Snack] ?: true,
+            dinner = preferences[Keys.Dinner] ?: true,
+            dayClose = preferences[Keys.DayClose] ?: true,
+            newFeatures = preferences[Keys.NewFeatures] ?: true,
+            tipsAndContent = preferences[Keys.TipsAndContent] ?: true,
+            accountNotices = preferences[Keys.AccountNotices] ?: true,
+        ),
     )
 
     private object Keys {
@@ -78,6 +107,15 @@ class DataStoreAppSettingsRepository(context: Context) : AppSettingsRepository {
         val Appearance = stringPreferencesKey("appearance_mode")
         val ReduceBrightness = booleanPreferencesKey("reduce_brightness_dark_mode")
         val HighContrast = booleanPreferencesKey("high_contrast")
+        val NotificationsEnabled = booleanPreferencesKey("notifications_enabled")
+        val Breakfast = booleanPreferencesKey("notification_breakfast")
+        val Lunch = booleanPreferencesKey("notification_lunch")
+        val Snack = booleanPreferencesKey("notification_snack")
+        val Dinner = booleanPreferencesKey("notification_dinner")
+        val DayClose = booleanPreferencesKey("notification_day_close")
+        val NewFeatures = booleanPreferencesKey("notification_new_features")
+        val TipsAndContent = booleanPreferencesKey("notification_tips_content")
+        val AccountNotices = booleanPreferencesKey("notification_account_notices")
     }
 }
 

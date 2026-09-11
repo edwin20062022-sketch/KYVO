@@ -100,6 +100,10 @@ import com.kyvo.app.feature.settings.presentation.SettingsPlaceholderScreen
 import com.kyvo.app.feature.settings.presentation.SecurityRoute
 import com.kyvo.app.feature.settings.presentation.UnitsRoute
 import com.kyvo.app.feature.settings.presentation.AppearanceRoute
+import com.kyvo.app.feature.settings.presentation.NotificationsRoute
+import com.kyvo.app.feature.settings.presentation.PermissionsRoute
+import com.kyvo.app.feature.settings.presentation.PrivacyScreen
+import com.kyvo.app.feature.settings.presentation.openKyvoAppSettings
 import com.kyvo.app.feature.settings.data.AppSettingsRepository
 import kotlinx.coroutines.launch
 
@@ -117,6 +121,7 @@ fun KyvoNavHost(
 ) {
     val target = resolveStartDestination(authState, onboardingCompleted)
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val recalculateViewModel = onboardingRepository?.let { repository -> viewModel<RecalculateNutritionPlanViewModel>(factory = RecalculateNutritionPlanViewModel.factory(repository)) }
     val personalPreferencesViewModel = onboardingRepository?.let { repository -> viewModel<PersonalPreferencesViewModel>(factory = PersonalPreferencesViewModel.factory(repository)) }
     val currentEntry by navController.currentBackStackEntryAsState()
@@ -312,13 +317,23 @@ fun KyvoNavHost(
         composable(KyvoDestination.SettingsAppearance.route) {
             AppearanceRoute(appSettingsRepository, onBack = { navController.popBackStack() })
         }
+        composable(KyvoDestination.SettingsNotifications.route) {
+            NotificationsRoute(appSettingsRepository, onBack = { navController.popBackStack() }, onOpenSettings = { openKyvoAppSettings(context) })
+        }
+        composable(KyvoDestination.SettingsPermissions.route) {
+            PermissionsRoute(onBack = { navController.popBackStack() })
+        }
+        composable(KyvoDestination.SettingsPrivacy.route) {
+            PrivacyScreen(
+                onBack = { navController.popBackStack() },
+                onPolicy = { navController.navigate(KyvoDestination.SettingsLegal.route) },
+                onDeleteData = { navController.navigate(KyvoDestination.SettingsDeleteAccount.route) },
+            )
+        }
         listOf(
             KyvoDestination.SettingsNutritionGoals to "Objetivos nutricionales",
             KyvoDestination.SettingsFoodPreferences to "Preferencias alimenticias",
-            KyvoDestination.SettingsNotifications to "Notificaciones",
             KyvoDestination.SettingsMealShare to "Preferencias de Meal Share",
-            KyvoDestination.SettingsPrivacy to "Privacidad",
-            KyvoDestination.SettingsPermissions to "Permisos",
             KyvoDestination.SettingsDeleteAccount to "Eliminar cuenta",
             KyvoDestination.SettingsHelp to "Ayuda y soporte",
             KyvoDestination.SettingsAbout to "Acerca de KYVO",

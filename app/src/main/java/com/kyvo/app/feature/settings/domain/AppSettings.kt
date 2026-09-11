@@ -6,6 +6,18 @@ enum class FoodUnit(val label: String) { GRAMS("gramos"), OUNCES("onzas") }
 enum class TemperatureUnit(val label: String) { CELSIUS("°C"), FAHRENHEIT("°F") }
 enum class AppearanceMode(val label: String) { LIGHT("Claro"), DARK("Oscuro"), SYSTEM("Automático") }
 
+data class NotificationPreferences(
+    val enabled: Boolean = true,
+    val breakfast: Boolean = true,
+    val lunch: Boolean = true,
+    val snack: Boolean = true,
+    val dinner: Boolean = true,
+    val dayClose: Boolean = true,
+    val newFeatures: Boolean = true,
+    val tipsAndContent: Boolean = true,
+    val accountNotices: Boolean = true,
+)
+
 data class UnitPreferences(
     val weight: WeightUnit = WeightUnit.KILOGRAMS,
     val height: HeightUnit = HeightUnit.CENTIMETERS,
@@ -18,6 +30,7 @@ data class AppSettings(
     val appearance: AppearanceMode = AppearanceMode.SYSTEM,
     val reduceBrightnessInDarkMode: Boolean = true,
     val highContrast: Boolean = false,
+    val notifications: NotificationPreferences = NotificationPreferences(),
 )
 
 fun AppearanceMode.resolveDarkTheme(systemDark: Boolean): Boolean = when (this) {

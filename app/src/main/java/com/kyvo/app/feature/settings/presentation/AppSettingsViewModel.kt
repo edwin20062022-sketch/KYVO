@@ -25,6 +25,15 @@ class AppSettingsViewModel(private val repository: AppSettingsRepository) : View
     fun setAppearance(mode: AppearanceMode) = viewModelScope.launch { repository.setAppearance(mode) }
     fun setReduceBrightnessInDarkMode(enabled: Boolean) = viewModelScope.launch { repository.setReduceBrightnessInDarkMode(enabled) }
     fun setHighContrast(enabled: Boolean) = viewModelScope.launch { repository.setHighContrast(enabled) }
+    fun setNotificationsEnabled(enabled: Boolean) = viewModelScope.launch { repository.setNotificationsEnabled(enabled) }
+    fun setBreakfastNotifications(enabled: Boolean) = viewModelScope.launch { repository.setBreakfastNotifications(enabled) }
+    fun setLunchNotifications(enabled: Boolean) = viewModelScope.launch { repository.setLunchNotifications(enabled) }
+    fun setSnackNotifications(enabled: Boolean) = viewModelScope.launch { repository.setSnackNotifications(enabled) }
+    fun setDinnerNotifications(enabled: Boolean) = viewModelScope.launch { repository.setDinnerNotifications(enabled) }
+    fun setDayCloseNotifications(enabled: Boolean) = viewModelScope.launch { repository.setDayCloseNotifications(enabled) }
+    fun setNewFeaturesNotifications(enabled: Boolean) = viewModelScope.launch { repository.setNewFeaturesNotifications(enabled) }
+    fun setTipsAndContentNotifications(enabled: Boolean) = viewModelScope.launch { repository.setTipsAndContentNotifications(enabled) }
+    fun setAccountNoticesNotifications(enabled: Boolean) = viewModelScope.launch { repository.setAccountNoticesNotifications(enabled) }
 
     companion object {
         fun factory(repository: AppSettingsRepository): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
