@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,7 +26,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -95,12 +95,15 @@ private fun NutritionPlanContent(
     val plan = onboarding.plan ?: return
     PlanScaffold(NUTRITION_PLAN_SCREEN_TAG, onBack, "Mi plan nutricional") {
         item {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                OutlinedButton(onClick = onRecalculate, shape = RoundedCornerShape(24.dp)) { Text("Recalcular metas") }
-            }
+            Button(
+                onClick = onRecalculate,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(52.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = KyvoColors.PurplePrimary),
+                shape = MaterialTheme.shapes.large,
+            ) { Text("Recalcular metas", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
         }
         item {
-            Text("Tu guía diaria para alcanzar tus objetivos.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.titleMedium)
+            Text("Tu guía diaria para alcanzar tus objetivos.", Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.titleMedium)
         }
         item { GoalCard(onboarding.goal) }
         item {

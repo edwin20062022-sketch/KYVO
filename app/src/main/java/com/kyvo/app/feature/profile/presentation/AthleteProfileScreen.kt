@@ -17,7 +17,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material3.Card
@@ -197,24 +196,20 @@ private fun InfoCard(info: Info, modifier: Modifier) {
 private fun NutritionCard(profile: AthleteProfile, onClick: () -> Unit) {
     Card(onClick = onClick, Modifier.fillMaxWidth().semantics { role = Role.Button; contentDescription = "Ver detalles del plan nutricional" }, shape = MaterialTheme.shapes.large, colors = CardDefaults.cardColors(containerColor = KyvoColors.PurpleSoft)) {
         Column(Modifier.padding(20.dp)) {
-            Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-                Text("Tu plan nutricional", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Row(verticalAlignment = Alignment.CenterVertically) { Text("Ver detalles", color = KyvoColors.PurplePrimary, fontWeight = FontWeight.Bold); Icon(Icons.Outlined.Info, null, tint = KyvoColors.PurplePrimary) }
-            }
+            Text("Tu plan nutricional", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text("Ver detalles", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = KyvoColors.PurplePrimary, modifier = Modifier.padding(top = 4.dp))
             val plan = profile.nutritionPlan
             if (plan == null) {
                 Text("Tu plan aún no está disponible.", Modifier.padding(top = 18.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
             } else {
-                Row(Modifier.fillMaxWidth().padding(top = 18.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1.18f)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Outlined.Info, null, tint = KyvoColors.PurplePrimary); Text("Meta diaria", Modifier.padding(start = 8.dp), color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                        Text("${plan.targetCaloriesKcal} kcal", style = MaterialTheme.typography.displayLarge, fontWeight = FontWeight.Black, maxLines = 1)
-                        Text("Calculado para tu objetivo y nivel de actividad.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Column(Modifier.fillMaxWidth().padding(top = 18.dp)) {
+                    Text("Meta diaria", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
+                    Text("${plan.targetCaloriesKcal} kcal", style = MaterialTheme.typography.displayLarge, fontWeight = FontWeight.Black, maxLines = 1)
+                    Text("Calculado para tu objetivo y nivel de actividad.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
+                    Row(Modifier.fillMaxWidth().padding(top = 18.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Macro("Proteína", plan.proteinGrams, KyvoColors.Protein, Icons.Outlined.CheckCircle)
-                        Macro("Carbohidratos", plan.carbohydrateGrams, KyvoColors.Carbohydrate, Icons.Outlined.Info)
-                        Macro("Grasas", plan.fatGrams, KyvoColors.Fat, Icons.Outlined.Info)
+                        Macro("Carbohidratos", plan.carbohydrateGrams, KyvoColors.Carbohydrate, Icons.Outlined.CheckCircle)
+                        Macro("Grasas", plan.fatGrams, KyvoColors.Fat, Icons.Outlined.CheckCircle)
                     }
                 }
             }
@@ -234,22 +229,19 @@ private fun RowScope.Macro(label: String, value: Int, color: Color, icon: ImageV
 
 @Composable
 private fun PreferenceCards(profile: AthleteProfile) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        SmallCard("Comidas al día", profile.mealsPerDay?.let { "$it comidas" } ?: "Sin definir", "Distribuidas según tu estilo de vida.", Icons.Outlined.Info, Modifier.weight(1f))
-        SmallCard("Preferencia alimenticia", profile.foodPreference?.label() ?: "Sin definir", "Preferencia registrada.", Icons.Outlined.CheckCircle, Modifier.weight(1f))
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        SmallCard("Comidas al día", profile.mealsPerDay?.let { "$it comidas" } ?: "Sin definir", "Distribuidas según tu estilo de vida.", Modifier.fillMaxWidth())
+        SmallCard("Preferencia alimenticia", profile.foodPreference?.label() ?: "Sin definir", "Preferencia registrada.", Modifier.fillMaxWidth())
     }
 }
 
 @Composable
-private fun SmallCard(title: String, value: String, caption: String, icon: ImageVector, modifier: Modifier) {
+private fun SmallCard(title: String, value: String, caption: String, modifier: Modifier) {
     KyvoCard(modifier, PaddingValues(14.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Surface(Modifier.size(44.dp), RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surfaceVariant) { Box(contentAlignment = Alignment.Center) { Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) } }
-            Column(Modifier.padding(start = 10.dp)) {
-                Text(title, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
-                Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 2)
-                Text(caption, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
-            }
+        Column {
+            Text(title, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
+            Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 2)
+            Text(caption, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
         }
     }
 }
@@ -271,7 +263,6 @@ private fun Action(title: String, subtitle: String, icon: ImageVector, onClick: 
         Row(Modifier.fillMaxSize().padding(horizontal = 2.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(icon, null, Modifier.size(28.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
             Column(Modifier.weight(1f).padding(start = 16.dp)) { Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold); Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2) }
-            Icon(Icons.Outlined.Info, null)
         }
     }
 }
@@ -282,7 +273,6 @@ private fun EditCard(onClick: () -> Unit) {
         Row(Modifier.fillMaxWidth().height(86.dp).padding(horizontal = 18.dp), verticalAlignment = Alignment.CenterVertically) {
             Surface(Modifier.size(44.dp), RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surfaceVariant) { Box(contentAlignment = Alignment.Center) { Icon(Icons.Outlined.Edit, null) } }
             Column(Modifier.weight(1f).padding(start = 16.dp)) { Text("Editar perfil", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold); Text("Foto, nombre y datos de tu cuenta.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
-            Icon(Icons.Outlined.Info, null)
         }
     }
 }
