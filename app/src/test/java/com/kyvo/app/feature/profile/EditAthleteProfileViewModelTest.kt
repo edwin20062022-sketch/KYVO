@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -21,15 +22,15 @@ class EditAthleteProfileViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
-    private val session = AuthSession("user-1", "alex@kyvo.app", AuthProvider.Email, "Alex Martínez", "alexmrtz")
+    private val session = AuthSession("user-1", "alex@kyvo.app", AuthProvider.Email, "Alex Martínez", avatarUrl = "https://example.com/avatar.jpg")
 
     @Test
     fun initialStateMapsAuthValues() {
         val viewModel = EditAthleteProfileViewModel(session, FakeAuthRepository(session))
         val state = viewModel.state.value as EditAthleteProfileUiState.Editing
         assertEquals("Alex Martínez", state.draft.displayName)
-        assertEquals("alexmrtz", state.draft.username)
         assertEquals("alex@kyvo.app", state.draft.email)
+        assertEquals("https://example.com/avatar.jpg", state.draft.avatarUrl)
     }
 
     @Test
@@ -37,10 +38,9 @@ class EditAthleteProfileViewModelTest {
         val repository = FakeAuthRepository(session)
         val viewModel = EditAthleteProfileViewModel(session, repository)
         viewModel.onDisplayNameChanged("  Alex Rivera  ")
-        viewModel.onUsernameChanged("  alexrv  ")
         viewModel.save()
         advanceUntilIdle()
-        assertEquals("Alex Rivera" to "alexrv", repository.updated)
+        assertEquals("Alex Rivera", repository.updatedName)
         assertTrue(viewModel.state.value is EditAthleteProfileUiState.Saved)
     }
 
@@ -52,7 +52,7 @@ class EditAthleteProfileViewModelTest {
         viewModel.save()
         val state = viewModel.state.value as EditAthleteProfileUiState.Editing
         assertEquals("Escribe tu nombre.", state.validationMessage)
-        assertEquals(null, repository.updated)
+        assertNull(repository.updatedName)
     }
 
     @Test
@@ -74,21 +74,29 @@ class EditAthleteProfileViewModelTest {
             it.save()
             assertTrue(it.state.value is EditAthleteProfileUiState.Saved)
         }
-        assertEquals(null, repository.updated)
+        assertNull(repository.updatedName)
+    }
+
+    @Test
+    fun oldUsernameMetadataDoesNotBreakRead() {
+        val legacySession = AuthSession("user-2", "test@kyvo.app", AuthProvider.Email, "Legacy User", username = "old_user")
+        val viewModel = EditAthleteProfileViewModel(legacySession, FakeAuthRepository(legacySession))
+        val state = viewModel.state.value as EditAthleteProfileUiState.Editing
+        assertEquals("Legacy User", state.draft.displayName)
     }
 
     private class FakeAuthRepository(
         private val session: AuthSession,
         private val updateResult: AuthResult = AuthResult.Success(session),
     ) : AuthRepository {
-        var updated: Pair<String, String?>? = null
+        var updatedName: String? = null
         override fun observeSession(): Flow<AuthState> = flowOf(AuthState.SignedIn(session))
         override fun currentSession(): AuthSession = session
         override suspend fun signUpWithEmail(email: String, password: CharArray): AuthResult = updateResult
         override suspend fun signInWithEmail(email: String, password: CharArray): AuthResult = updateResult
         override suspend fun signInWithGoogle(): AuthResult = updateResult
         override suspend fun updateProfileMetadata(displayName: String, username: String?): AuthResult {
-            updated = displayName to username
+            updatedName = displayName
             return updateResult
         }
         override suspend fun signOut() = Unit

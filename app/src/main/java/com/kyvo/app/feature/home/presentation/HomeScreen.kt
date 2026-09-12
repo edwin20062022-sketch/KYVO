@@ -70,24 +70,24 @@ internal val DASHBOARD_MACRO_LABELS = listOf("Proteína", "Carbohidratos", "Gras
 internal const val MACRO_CIRCLE_SHOWS_PERCENTAGE = false
 
 @Composable
-fun HomeRoute(onboardingRepository: OnboardingRepository, mealRepository: MealRepository, onAddFood: () -> Unit = {}, onMealShare: () -> Unit = {}, onProgress: () -> Unit = {}, viewModel: HomeViewModel = viewModel(factory = HomeViewModel.factory(onboardingRepository, mealRepository))) {
+fun HomeRoute(onboardingRepository: OnboardingRepository, mealRepository: MealRepository, displayName: String? = null, avatarUrl: String? = null, onAddFood: () -> Unit = {}, onMealShare: () -> Unit = {}, onProgress: () -> Unit = {}, viewModel: HomeViewModel = viewModel(factory = HomeViewModel.factory(onboardingRepository, mealRepository))) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val destination by viewModel.destination.collectAsStateWithLifecycle()
     when (val screen = destination) {
-        HomeDestination.Dashboard -> HomeScreen(state, viewModel::onEvent, onAddFood, onMealShare, onProgress)
-        HomeDestination.NutritionDetail -> when (val value = state) { is HomeUiState.Content -> NutritionDetailScreen(value.daily, onBack = { viewModel.onEvent(HomeEvent.BackToDashboard) }); else -> HomeScreen(value, viewModel::onEvent, onAddFood, onMealShare, onProgress) }
+        HomeDestination.Dashboard -> HomeScreen(state, viewModel::onEvent, displayName, avatarUrl, onAddFood, onMealShare, onProgress)
+        HomeDestination.NutritionDetail -> when (val value = state) { is HomeUiState.Content -> NutritionDetailScreen(value.daily, onBack = { viewModel.onEvent(HomeEvent.BackToDashboard) }); else -> HomeScreen(value, viewModel::onEvent, displayName, avatarUrl, onAddFood, onMealShare, onProgress) }
         is HomeDestination.MealDetail -> MealDetailRoute(mealRepository, screen.mealId, onBack = { viewModel.onEvent(HomeEvent.BackToDashboard) }, onEdit = { viewModel.onEvent(HomeEvent.OpenMealEditor(it)) }, onDelete = { viewModel.onEvent(HomeEvent.DeleteMeal(it)) })
         is HomeDestination.EditMeal -> { val meal by viewModel.mealForEditing(screen.mealId).collectAsStateWithLifecycle(null); MealEditorScreen(meal, onBack = { viewModel.onEvent(HomeEvent.BackToDashboard) }, onSave = { viewModel.onEvent(HomeEvent.UpdateMeal(it)) }, onDelete = { viewModel.onEvent(HomeEvent.DeleteMeal(it)) }) }
     }
 }
 
 @Composable
-fun HomeScreen(state: HomeUiState, onEvent: (HomeEvent) -> Unit, onAddFood: () -> Unit = {}, onMealShare: () -> Unit = {}, onProgress: () -> Unit = {}) = Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+fun HomeScreen(state: HomeUiState, onEvent: (HomeEvent) -> Unit, displayName: String? = null, avatarUrl: String? = null, onAddFood: () -> Unit = {}, onMealShare: () -> Unit = {}, onProgress: () -> Unit = {}) = Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
     when (state) {
         HomeUiState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
         is HomeUiState.Error -> ErrorHomeState(state.message, onRetry = { onEvent(HomeEvent.Retry) })
         is HomeUiState.Content -> LazyColumn(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            item { DashboardHeader() }
+            item { DashboardHeader(displayName, avatarUrl) }
             item { DailySummary(state.daily) }
             item { MacroSummary(state.daily, onDetail = { onEvent(HomeEvent.OpenNutritionDetail) }) }
             item { MealsSection(state.daily.meals, onMeal = { onEvent(HomeEvent.OpenMeal(it.id)) }, onAddFood = onAddFood, onMealShare = onMealShare) }
@@ -99,9 +99,9 @@ fun HomeScreen(state: HomeUiState, onEvent: (HomeEvent) -> Unit, onAddFood: () -
 @Composable
 fun HomeScreen(state: HomeUiState, onAddFood: () -> Unit) = HomeScreen(state, onEvent = {}, onAddFood = onAddFood)
 
-@Composable private fun DashboardHeader() = Row(Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 28.dp), verticalAlignment = Alignment.Top) {
+@Composable private fun DashboardHeader(displayName: String? = null, avatarUrl: String? = null) = Row(Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 28.dp), verticalAlignment = Alignment.Top) {
     Column(Modifier.weight(1f)) { Text("Hola", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold); Text("Listo para alimentar tu mejor versión.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
-    Box(Modifier.size(52.dp).clip(CircleShape).background(KyvoColors.PurpleSoft), contentAlignment = Alignment.Center) { Text("K", color = KyvoColors.PurplePrimary, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) }
+    com.kyvo.app.core.designsystem.component.KyvoUserAvatar(name = displayName, avatarUrl = avatarUrl, size = 52.dp)
 }
 
 @Composable private fun DailySummary(daily: DailyNutrition) = KyvoCard(Modifier.padding(horizontal = 20.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(28.dp)) {

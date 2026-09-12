@@ -10,6 +10,8 @@ import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.auth.providers.builtin.IDToken
 import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.functions.functions
+import io.github.jan.supabase.storage.storage
+import io.github.jan.supabase.storage.UploadData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.contentOrNull
@@ -24,6 +26,7 @@ interface SupabaseAuthDataSource {
     suspend fun signInWithEmail(email: String, password: String): AuthSession
     suspend fun signInWithGoogle(idToken: String, rawNonce: String): AuthSession
     suspend fun updateProfileMetadata(displayName: String, username: String?): AuthSession
+    suspend fun updateAvatar(bytes: ByteArray): AuthSession
     suspend fun updatePassword(newPassword: String): AuthSession = requireNotNull(currentSession())
     suspend fun signOut()
     suspend fun deleteAccount() = Unit
@@ -75,6 +78,20 @@ class SupabaseSdkAuthDataSource(private val client: SupabaseClient) : SupabaseAu
         return requireNotNull(currentSession()) { "Supabase returned no session after profile update" }
     }
 
+    override suspend fun updateAvatar(bytes: ByteArray): AuthSession {
+        val userId = requireNotNull(client.auth.currentUserOrNull()?.id) { "No authenticated user" }
+        val bucket = client.storage.from("avatars")
+        val path = "$userId/avatar.jpg"
+        bucket.upload(path, bytes) { upsert = true }
+        val publicUrl = bucket.publicUrl(path)
+        client.auth.updateUser {
+            data = buildJsonObject {
+                put("avatar_url", JsonPrimitive(publicUrl))
+            }
+        }
+        return requireNotNull(currentSession()) { "Supabase returned no session after avatar update" }
+    }
+
     override suspend fun updatePassword(newPassword: String): AuthSession {
         client.auth.updateUser { password = newPassword }
         return requireNotNull(currentSession()) { "Supabase returned no session after password update" }
@@ -104,5 +121,6 @@ private fun io.github.jan.supabase.auth.user.UserSession.toDomain(): AuthSession
                 .firstNotNullOfOrNull { key -> metadata[key]?.jsonPrimitive?.contentOrNull?.takeIf(String::isNotBlank) }
         },
         username = user?.userMetadata?.get("username")?.jsonPrimitive?.contentOrNull?.takeIf(String::isNotBlank),
+        avatarUrl = user?.userMetadata?.get("avatar_url")?.jsonPrimitive?.contentOrNull?.takeIf(String::isNotBlank),
     )
 }

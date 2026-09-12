@@ -1,5 +1,6 @@
 package com.kyvo.app.feature.profile.presentation
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -14,9 +15,23 @@ import kotlinx.coroutines.launch
 
 data class EditAthleteProfileDraft(
     val displayName: String,
-    val username: String,
     val email: String,
-)
+    val avatarUrl: String?,
+    val pendingPhotoBytes: ByteArray? = null,
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is EditAthleteProfileDraft) return false
+        return displayName == other.displayName && email == other.email && avatarUrl == other.avatarUrl && pendingPhotoBytes.contentEquals(other.pendingPhotoBytes)
+    }
+    override fun hashCode(): Int {
+        var result = displayName.hashCode()
+        result = 31 * result + email.hashCode()
+        result = 31 * result + (avatarUrl?.hashCode() ?: 0)
+        result = 31 * result + (pendingPhotoBytes?.contentHashCode() ?: 0)
+        return result
+    }
+}
 
 sealed interface EditAthleteProfileUiState {
     data object Loading : EditAthleteProfileUiState
@@ -32,22 +47,19 @@ class EditAthleteProfileViewModel(
 ) : ViewModel() {
     private val initialDraft = EditAthleteProfileDraft(
         displayName = session.displayName.orEmpty(),
-        username = session.username.orEmpty(),
         email = session.email,
+        avatarUrl = session.avatarUrl,
     )
     private val _state = MutableStateFlow<EditAthleteProfileUiState>(EditAthleteProfileUiState.Editing(initialDraft))
     val state: StateFlow<EditAthleteProfileUiState> = _state.asStateFlow()
 
     fun onDisplayNameChanged(value: String) = updateDraft { copy(displayName = value) }
 
-    fun onUsernameChanged(value: String) = updateDraft { copy(username = value) }
+    fun onPhotoSelected(bytes: ByteArray) = updateDraft { copy(pendingPhotoBytes = bytes) }
 
     fun save() {
         val draft = currentDraft() ?: return
-        val normalized = draft.copy(
-            displayName = draft.displayName.trim(),
-            username = draft.username.trim(),
-        )
+        val normalized = draft.copy(displayName = draft.displayName.trim())
         when {
             normalized.displayName.isBlank() -> {
                 _state.value = EditAthleteProfileUiState.Editing(normalized, "Escribe tu nombre.")
@@ -55,10 +67,7 @@ class EditAthleteProfileViewModel(
             normalized.displayName.length > 120 -> {
                 _state.value = EditAthleteProfileUiState.Editing(normalized, "El nombre es demasiado largo.")
             }
-            normalized.username.length > 64 -> {
-                _state.value = EditAthleteProfileUiState.Editing(normalized, "El nombre de usuario es demasiado largo.")
-            }
-            normalized.displayName == initialDraft.displayName && normalized.username == initialDraft.username -> {
+            normalized.displayName == initialDraft.displayName && normalized.pendingPhotoBytes == null -> {
                 _state.value = EditAthleteProfileUiState.Saved
             }
             else -> persist(normalized)
@@ -68,10 +77,33 @@ class EditAthleteProfileViewModel(
     private fun persist(draft: EditAthleteProfileDraft) {
         _state.value = EditAthleteProfileUiState.Saving(draft)
         viewModelScope.launch {
-            when (val result = authRepository.updateProfileMetadata(draft.displayName, draft.username.ifBlank { null })) {
-                is AuthResult.Success -> _state.value = EditAthleteProfileUiState.Saved
-                is AuthResult.Failure -> _state.value = EditAthleteProfileUiState.Error(draft, result.error.message())
-                is AuthResult.ConfirmationRequired -> _state.value = EditAthleteProfileUiState.Error(draft, "No pudimos guardar tu perfil.")
+            var currentDraft = draft
+            if (draft.pendingPhotoBytes != null) {
+                when (val avatarResult = authRepository.updateAvatarBytes(draft.pendingPhotoBytes)) {
+                    is AuthResult.Success -> {
+                        currentDraft = currentDraft.copy(
+                            avatarUrl = avatarResult.session.avatarUrl,
+                            pendingPhotoBytes = null,
+                        )
+                    }
+                    is AuthResult.Failure -> {
+                        _state.value = EditAthleteProfileUiState.Error(currentDraft, "No pudimos actualizar tu foto. Intenta de nuevo.")
+                        return@launch
+                    }
+                    is AuthResult.ConfirmationRequired -> {
+                        _state.value = EditAthleteProfileUiState.Error(currentDraft, "No pudimos actualizar tu foto.")
+                        return@launch
+                    }
+                }
+            }
+            if (draft.displayName != initialDraft.displayName) {
+                when (val result = authRepository.updateProfileMetadata(draft.displayName, null)) {
+                    is AuthResult.Success -> _state.value = EditAthleteProfileUiState.Saved
+                    is AuthResult.Failure -> _state.value = EditAthleteProfileUiState.Error(currentDraft, result.error.message())
+                    is AuthResult.ConfirmationRequired -> _state.value = EditAthleteProfileUiState.Error(currentDraft, "No pudimos guardar tu perfil.")
+                }
+            } else {
+                _state.value = EditAthleteProfileUiState.Saved
             }
         }
     }

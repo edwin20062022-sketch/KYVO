@@ -73,12 +73,13 @@ fun AthleteProfileRoute(
     viewModel: AthleteProfileViewModel = viewModel(factory = AthleteProfileViewModel.factory(session, repository)),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    AthleteProfileScreen(state, viewModel::retry, onEditProfile, onNutritionPlan, onUpdateGoal, onRecalculateGoals, onPersonalPreferences, modifier)
+    AthleteProfileScreen(state, session.avatarUrl, viewModel::retry, onEditProfile, onNutritionPlan, onUpdateGoal, onRecalculateGoals, onPersonalPreferences, modifier)
 }
 
 @Composable
 fun AthleteProfileScreen(
     state: AthleteProfileUiState,
+    avatarUrl: String? = null,
     onRetry: () -> Unit = {},
     onEditProfile: () -> Unit = {},
     onNutritionPlan: () -> Unit = {},
@@ -91,8 +92,8 @@ fun AthleteProfileScreen(
         when (state) {
             AthleteProfileUiState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
             is AthleteProfileUiState.Error -> ProfileError(state.message, onRetry)
-            is AthleteProfileUiState.Content -> ProfileContent(state.profile, false, onEditProfile, onNutritionPlan, onUpdateGoal, onRecalculateGoals, onPersonalPreferences)
-            is AthleteProfileUiState.Incomplete -> ProfileContent(state.profile, true, onEditProfile, onNutritionPlan, onUpdateGoal, onRecalculateGoals, onPersonalPreferences)
+            is AthleteProfileUiState.Content -> ProfileContent(state.profile, avatarUrl, false, onEditProfile, onNutritionPlan, onUpdateGoal, onRecalculateGoals, onPersonalPreferences)
+            is AthleteProfileUiState.Incomplete -> ProfileContent(state.profile, avatarUrl, true, onEditProfile, onNutritionPlan, onUpdateGoal, onRecalculateGoals, onPersonalPreferences)
         }
     }
 }
@@ -108,6 +109,7 @@ private fun ProfileError(message: String, onRetry: () -> Unit) {
 @Composable
 private fun ProfileContent(
     profile: AthleteProfile,
+    avatarUrl: String? = null,
     incomplete: Boolean,
     onEditProfile: () -> Unit,
     onNutritionPlan: () -> Unit,
@@ -126,7 +128,7 @@ private fun ProfileContent(
                 IconButton(onClick = onPersonalPreferences, Modifier.size(48.dp).semantics { contentDescription = "Ajustes" }) { Icon(Icons.Outlined.Info, null) }
             }
         }
-        item { Identity(profile, onEditProfile) }
+        item { Identity(profile, avatarUrl, onEditProfile) }
         if (incomplete) item {
             Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer), shape = MaterialTheme.shapes.large) {
                 Text("Completa tu onboarding para ver todos tus datos.", Modifier.padding(18.dp), style = MaterialTheme.typography.bodyMedium)
@@ -141,12 +143,14 @@ private fun ProfileContent(
 }
 
 @Composable
-private fun Identity(profile: AthleteProfile, onEditProfile: () -> Unit) {
+private fun Identity(profile: AthleteProfile, avatarUrl: String? = null, onEditProfile: () -> Unit) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(112.dp), contentAlignment = Alignment.BottomEnd) {
-            Surface(Modifier.size(104.dp), CircleShape, color = MaterialTheme.colorScheme.surfaceVariant, tonalElevation = 2.dp) {
-                Box(contentAlignment = Alignment.Center) { Icon(Icons.Outlined.Person, null, Modifier.size(58.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant) }
-            }
+            com.kyvo.app.core.designsystem.component.KyvoUserAvatar(
+                name = profile.displayName,
+                avatarUrl = avatarUrl,
+                size = 104.dp,
+            )
             Surface(Modifier.size(42.dp), CircleShape, color = KyvoColors.Ink, contentColor = Color.White, border = BorderStroke(3.dp, MaterialTheme.colorScheme.background)) {
                 IconButton(onClick = onEditProfile, Modifier.fillMaxSize().semantics { contentDescription = "Editar foto de perfil" }) { Icon(Icons.Outlined.Edit, null, Modifier.size(20.dp)) }
             }

@@ -1,5 +1,10 @@
 package com.kyvo.app.feature.profile.presentation
 
+import android.graphics.BitmapFactory
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,7 +18,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -25,6 +29,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -37,8 +42,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kyvo.app.core.designsystem.KyvoColors
 import com.kyvo.app.core.designsystem.component.KyvoPrimaryButton
 import com.kyvo.app.core.designsystem.component.KyvoTextField
+import com.kyvo.app.core.designsystem.component.KyvoUserAvatar
 import com.kyvo.app.domain.auth.AuthRepository
 import com.kyvo.app.domain.auth.AuthSession
+import java.io.ByteArrayOutputStream
 
 const val EDIT_PROFILE_SCREEN_TAG = "edit_profile_screen"
 const val EDIT_PROFILE_SAVE_TAG = "edit_profile_save"
@@ -51,13 +58,22 @@ fun EditAthleteProfileRoute(
     viewModel: EditAthleteProfileViewModel = viewModel(factory = EditAthleteProfileViewModel.factory(session, authRepository)),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
     LaunchedEffect(state) {
         if (state is EditAthleteProfileUiState.Saved) onBack()
+    }
+    val photoLauncher = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
+        if (uri != null) {
+            val bytes = context.contentResolver.openInputStream(uri)?.use { stream ->
+                compressAvatar(stream.readBytes())
+            }
+            if (bytes != null) viewModel.onPhotoSelected(bytes)
+        }
     }
     EditAthleteProfileScreen(
         state = state,
         onDisplayNameChanged = viewModel::onDisplayNameChanged,
-        onUsernameChanged = viewModel::onUsernameChanged,
+        onPickPhoto = { photoLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
         onSave = viewModel::save,
         onBack = onBack,
     )
@@ -67,7 +83,7 @@ fun EditAthleteProfileRoute(
 fun EditAthleteProfileScreen(
     state: EditAthleteProfileUiState,
     onDisplayNameChanged: (String) -> Unit = {},
-    onUsernameChanged: (String) -> Unit = {},
+    onPickPhoto: () -> Unit = {},
     onSave: () -> Unit = {},
     onBack: () -> Unit = {},
 ) {
@@ -99,7 +115,12 @@ fun EditAthleteProfileScreen(
                 }
                 Text("Editar perfil", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
                 Text("Actualiza tu información personal.\nTu perfil es privado.", color = KyvoColors.Slate, style = MaterialTheme.typography.bodyLarge)
-                AvatarPlaceholder()
+                AvatarSection(
+                    name = draft.displayName,
+                    avatarUrl = draft.avatarUrl,
+                    isUploading = saving,
+                    onPickPhoto = onPickPhoto,
+                )
                 KyvoTextField(
                     value = draft.displayName,
                     onValueChange = onDisplayNameChanged,
@@ -110,15 +131,6 @@ fun EditAthleteProfileScreen(
                     supportingText = error,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 )
-                KyvoTextField(
-                    value = draft.username,
-                    onValueChange = onUsernameChanged,
-                    label = "Nombre de usuario (opcional)",
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !saving,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                )
-                Text("Esto te ayudará a ser identificado dentro de la app.", color = KyvoColors.Slate, style = MaterialTheme.typography.bodyMedium)
                 KyvoTextField(
                     value = draft.email,
                     onValueChange = {},
@@ -141,12 +153,40 @@ fun EditAthleteProfileScreen(
 }
 
 @Composable
-private fun AvatarPlaceholder() {
+private fun AvatarSection(
+    name: String?,
+    avatarUrl: String?,
+    isUploading: Boolean,
+    onPickPhoto: () -> Unit,
+) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-        Surface(Modifier.size(144.dp), shape = androidx.compose.foundation.shape.CircleShape, color = MaterialTheme.colorScheme.surfaceVariant) {
-            Icon(Icons.Outlined.Person, null, Modifier.padding(34.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        TextButton(onClick = {}, enabled = false, modifier = Modifier.padding(top = 4.dp)) { Text("Cambiar foto") }
-        Text("JPG, PNG o HEIC. Máx. 5 MB.", color = KyvoColors.Slate, style = MaterialTheme.typography.bodySmall)
+        KyvoUserAvatar(
+            name = name,
+            avatarUrl = avatarUrl,
+            size = 144.dp,
+        )
+        TextButton(
+            onClick = onPickPhoto,
+            enabled = !isUploading,
+            modifier = Modifier.padding(top = 4.dp),
+        ) { Text("Cambiar foto") }
     }
+}
+
+private fun compressAvatar(rawBytes: ByteArray): ByteArray {
+    val maxSize = 256 * 1024
+    if (rawBytes.size <= maxSize) return rawBytes
+    val bitmap = BitmapFactory.decodeByteArray(rawBytes, 0, rawBytes.size) ?: return rawBytes
+    val ratio = maxSize.toFloat() / rawBytes.size
+    val scaled = android.graphics.Bitmap.createScaledBitmap(
+        bitmap,
+        (bitmap.width * ratio).toInt().coerceAtLeast(64),
+        (bitmap.height * ratio).toInt().coerceAtLeast(64),
+        true,
+    )
+    if (scaled !== bitmap) bitmap.recycle()
+    val output = ByteArrayOutputStream()
+    scaled.compress(android.graphics.Bitmap.CompressFormat.JPEG, 85, output)
+    scaled.recycle()
+    return output.toByteArray()
 }

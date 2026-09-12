@@ -46,6 +46,9 @@ class SupabaseAuthRepository(
     override suspend fun updateProfileMetadata(displayName: String, username: String?): AuthResult =
         runAuthRequest { AuthResult.Success(dataSource.updateProfileMetadata(displayName, username)) }
 
+    override suspend fun updateAvatarBytes(bytes: ByteArray): AuthResult =
+        runAuthRequest { AuthResult.Success(dataSource.updateAvatar(bytes)) }
+
     override suspend fun updatePassword(newPassword: CharArray): AuthResult =
         withPassword(newPassword) { passwordValue ->
             runAuthRequest { AuthResult.Success(dataSource.updatePassword(passwordValue)) }
