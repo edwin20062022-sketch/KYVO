@@ -58,11 +58,14 @@ import com.kyvo.app.feature.onboarding.domain.model.NutritionPlan
 import com.kyvo.app.feature.onboarding.domain.model.OnboardingStep
 import com.kyvo.app.feature.onboarding.domain.model.TrainingType
 import com.kyvo.app.feature.onboarding.domain.model.WorkActivity
+import com.kyvo.app.feature.onboarding.domain.validation.OnboardingLimits
 import com.kyvo.app.feature.onboarding.domain.repository.OnboardingRepository
 import com.kyvo.app.feature.onboarding.domain.validation.OnboardingValidationError
 import com.kyvo.app.feature.onboarding.presentation.components.KyvoNumericInput
 import com.kyvo.app.feature.onboarding.presentation.components.KyvoOptionCard
 import com.kyvo.app.feature.onboarding.presentation.components.KyvoStepProgress
+import com.kyvo.app.feature.onboarding.presentation.components.KyvoVerticalDecimalWheelPicker
+import com.kyvo.app.feature.onboarding.presentation.components.KyvoVerticalWheelPicker
 import com.kyvo.app.feature.onboarding.presentation.components.WizardActions
 import java.text.NumberFormat
 
@@ -128,10 +131,11 @@ fun OnboardingScreen(
                     label = "onboarding-step",
                     modifier = Modifier.weight(1f),
                 ) { step ->
+                    val usesWheelPicker = step in setOf(OnboardingStep.Age, OnboardingStep.Height, OnboardingStep.CurrentWeight)
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
+                            .then(if (!usesWheelPicker) Modifier.verticalScroll(rememberScrollState()) else Modifier)
                             .padding(top = if (compact) 18.dp else 28.dp, bottom = 16.dp),
                     ) {
                         StepContent(step, state, onEvent, compact)
@@ -173,31 +177,44 @@ private fun StepContent(
             )
             StepError(state.validationError)
         }
-        OnboardingStep.Age -> NumericStep(
-            "DATOS PERSONALES", "¿Cuál es tu edad?",
-            "Tu edad nos ayuda a calcular tu gasto calórico y necesidades nutricionales.",
-            "Ingresa tu edad", state.ageInput, "años", KeyboardType.Number, state.validationError, compact,
-            { onEvent(OnboardingEvent.ChangeAge(it)) }, { onEvent(OnboardingEvent.Continue) }, AGE_INPUT_TAG,
-            iconRes = R.drawable.ic_onboarding_age,
-        )
-        OnboardingStep.Height -> NumericStep(
-            "DATOS PERSONALES", "¿Cuál es tu altura?",
-            "Tu altura nos ayuda a estimar tu gasto calórico y calcular tus macros.",
-            "Ingresa tu altura", state.heightInput, "cm", KeyboardType.Decimal, state.validationError, compact,
-            { onEvent(OnboardingEvent.ChangeHeight(it)) }, { onEvent(OnboardingEvent.Continue) }, HEIGHT_INPUT_TAG,
-            iconRes = R.drawable.ic_onboarding_height,
-        )
-        OnboardingStep.CurrentWeight -> NumericStep(
-            "DATOS PERSONALES", "¿Cuál es tu peso actual?",
-            "Tu peso actual nos ayuda a calcular tus necesidades calóricas diarias.",
-            "Ingresa tu peso", state.weightInput, "kg", KeyboardType.Decimal, state.validationError, compact,
-            { onEvent(OnboardingEvent.ChangeWeight(it)) }, { onEvent(OnboardingEvent.Continue) }, WEIGHT_INPUT_TAG,
-            iconRes = R.drawable.ic_onboarding_weight,
-        )
+        OnboardingStep.Age -> {
+            StepHeading("DATOS PERSONALES", "¿Cuál es tu edad?",
+                "Tu edad nos ayuda a calcular tu gasto calórico y necesidades nutricionales.", compact)
+            KyvoVerticalWheelPicker(
+                items = (OnboardingLimits.MinimumAge..OnboardingLimits.MaximumAge).toList(),
+                selectedItem = state.ageInput.toIntOrNull() ?: OnboardingLimits.MinimumAge,
+                onItemSelected = { onEvent(OnboardingEvent.ChangeAge(it.toString())) },
+                label = "años",
+            )
+            StepError(state.validationError)
+        }
+        OnboardingStep.Height -> {
+            StepHeading("DATOS PERSONALES", "¿Cuál es tu altura?",
+                "Tu altura nos ayuda a estimar tu gasto calórico y calcular tus macros.", compact)
+            KyvoVerticalWheelPicker(
+                items = (OnboardingLimits.MinimumHeightCm.toInt()..OnboardingLimits.MaximumHeightCm.toInt()).toList(),
+                selectedItem = state.heightInput.toDoubleOrNull()?.toInt() ?: OnboardingLimits.MinimumHeightCm.toInt(),
+                onItemSelected = { onEvent(OnboardingEvent.ChangeHeight(it.toString())) },
+                label = "cm",
+            )
+            StepError(state.validationError)
+        }
+        OnboardingStep.CurrentWeight -> {
+            StepHeading("DATOS PERSONALES", "¿Cuál es tu peso actual?",
+                "Tu peso actual nos ayuda a calcular tus necesidades calóricas diarias.", compact)
+            KyvoVerticalDecimalWheelPicker(
+                items = (OnboardingLimits.MinimumWeightKg.toInt()..OnboardingLimits.MaximumWeightKg.toInt()).map { it.toDouble() },
+                selectedItem = state.weightInput.toDoubleOrNull() ?: OnboardingLimits.MinimumWeightKg,
+                onItemSelected = { onEvent(OnboardingEvent.ChangeWeight("%.1f".format(it))) },
+                label = "kg",
+                decimalPlaces = 1,
+            )
+            StepError(state.validationError)
+        }
         OnboardingStep.TrainingDays -> {
             StepHeading("ACTIVIDAD", "¿Cuántos días entrenas a la semana?", "Esto nos ayuda a calcular tu nivel de actividad física.", compact)
             OptionList((1..7).map { day ->
-                Option(day.toString() + if (day == 1) " día por semana" else " días por semana", day.toString(), state.trainingDaysPerWeek == day) {
+                Option(if (day == 1) "día por semana" else "días por semana", day.toString(), state.trainingDaysPerWeek == day) {
                     onEvent(OnboardingEvent.SelectTrainingDays(day))
                 }
             })
