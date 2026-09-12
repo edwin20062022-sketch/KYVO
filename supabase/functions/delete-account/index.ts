@@ -28,7 +28,19 @@ Deno.serve(async (request) => {
     const adminClient = createClient(url, serviceRoleKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
-    const deletion = await adminClient.auth.admin.deleteUser(data.user.id);
+
+    // Remove avatar from Storage before deleting Auth user.
+    // "File not found" is a valid state — avatar may never have been uploaded.
+    const userId = data.user.id;
+    const { error: storageError } = await adminClient.storage
+      .from("avatars")
+      .remove([`${userId}/avatar.jpg`]);
+    if (storageError && storageError.message !== "File not found") {
+      console.error("avatar cleanup failed", storageError.message);
+      return json({ error: "Account deletion failed" }, 500);
+    }
+
+    const deletion = await adminClient.auth.admin.deleteUser(userId);
     if (deletion.error) {
       console.error("account deletion failed", deletion.error.message);
       return json({ error: "Account deletion failed" }, 500);

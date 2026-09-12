@@ -84,9 +84,11 @@ class SupabaseSdkAuthDataSource(private val client: SupabaseClient) : SupabaseAu
         val path = "$userId/avatar.jpg"
         bucket.upload(path, bytes) { upsert = true }
         val publicUrl = bucket.publicUrl(path)
+        val version = System.currentTimeMillis().toString()
         client.auth.updateUser {
             data = buildJsonObject {
                 put("avatar_url", JsonPrimitive(publicUrl))
+                put("avatar_version", JsonPrimitive(version))
             }
         }
         return requireNotNull(currentSession()) { "Supabase returned no session after avatar update" }
@@ -122,5 +124,6 @@ private fun io.github.jan.supabase.auth.user.UserSession.toDomain(): AuthSession
         },
         username = user?.userMetadata?.get("username")?.jsonPrimitive?.contentOrNull?.takeIf(String::isNotBlank),
         avatarUrl = user?.userMetadata?.get("avatar_url")?.jsonPrimitive?.contentOrNull?.takeIf(String::isNotBlank),
+        avatarVersion = user?.userMetadata?.get("avatar_version")?.jsonPrimitive?.contentOrNull?.takeIf(String::isNotBlank),
     )
 }

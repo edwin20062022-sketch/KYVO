@@ -11,6 +11,7 @@ class AuthSessionAvatarTest {
     fun `avatarUrl defaults to null`() {
         val session = AuthSession("u1", "a@b.com", AuthProvider.Email)
         assertNull(session.avatarUrl)
+        assertNull(session.avatarVersion)
     }
 
     @Test
@@ -24,5 +25,23 @@ class AuthSessionAvatarTest {
     fun `blank avatarUrl treated as null`() {
         val url = "".takeIf(String::isNotBlank)
         assertNull(url)
+    }
+
+    @Test
+    fun `avatarVersion defaults to null`() {
+        val session = AuthSession("u1", "a@b.com", AuthProvider.Email)
+        assertNull(session.avatarVersion)
+    }
+
+    @Test
+    fun `avatarVersion persists after upload`() {
+        val session = AuthSession("u1", "a@b.com", AuthProvider.Email, "Test", avatarUrl = "https://example.com/avatar.jpg", avatarVersion = "1726166400000")
+        assertEquals("1726166400000", session.avatarVersion)
+    }
+
+    @Test
+    fun `legacy session without avatarVersion works`() {
+        val session = AuthSession("u1", "a@b.com", AuthProvider.Email, "Test", avatarUrl = "https://example.com/avatar.jpg")
+        assertNull(session.avatarVersion)
     }
 }

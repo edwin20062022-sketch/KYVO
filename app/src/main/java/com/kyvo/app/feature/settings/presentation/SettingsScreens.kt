@@ -45,6 +45,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kyvo.app.core.designsystem.KyvoColors
 import com.kyvo.app.core.designsystem.component.KyvoBrandLockup
+import com.kyvo.app.core.designsystem.component.KyvoUserAvatar
 import com.kyvo.app.domain.auth.AuthProvider
 import com.kyvo.app.domain.auth.AuthRepository
 import com.kyvo.app.domain.auth.AuthSession
@@ -74,7 +75,7 @@ fun SettingsScreen(session: AuthSession, onBack: () -> Unit = {}, onProfile: () 
 private fun SettingsProfileCard(session: AuthSession, onClick: () -> Unit) {
     val displayName = session.displayName?.takeIf { it.isNotBlank() } ?: session.email.substringBefore('@').ifBlank { "Tu perfil" }
     Card(onClick = onClick, Modifier.fillMaxWidth().padding(horizontal = 16.dp).semantics { role = Role.Button; contentDescription = "Ver mi perfil" }, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-        Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) { InitialAvatar(displayName); Column(Modifier.weight(1f).padding(start = 14.dp)) { Text(displayName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold); Text(session.email, color = MaterialTheme.colorScheme.onSurfaceVariant); Text("Ver mi perfil", color = KyvoColors.PurplePrimary, fontWeight = FontWeight.Bold) }; Text("›", color = KyvoColors.PurplePrimary, style = MaterialTheme.typography.headlineMedium) }
+        Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) { KyvoUserAvatar(name = session.displayName, avatarUrl = session.avatarUrl, avatarVersion = session.avatarVersion, size = 68.dp); Column(Modifier.weight(1f).padding(start = 14.dp)) { Text(displayName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold); Text(session.email, color = MaterialTheme.colorScheme.onSurfaceVariant); Text("Ver mi perfil", color = KyvoColors.PurplePrimary, fontWeight = FontWeight.Bold) }; Text("›", color = KyvoColors.PurplePrimary, style = MaterialTheme.typography.headlineMedium) }
     }
 }
 
@@ -123,7 +124,7 @@ private fun AccountContent(session: AuthSession, onBack: () -> Unit, onEditProfi
 @Composable
 private fun AccountIdentityCard(session: AuthSession, onEditProfile: () -> Unit) {
     val displayName = session.displayName?.takeIf { it.isNotBlank() } ?: session.email.substringBefore('@').ifBlank { "Tu cuenta" }
-    Card(Modifier.fillMaxWidth().padding(horizontal = 16.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) { Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) { InitialAvatar(displayName); Column(Modifier.weight(1f).padding(start = 16.dp)) { Text(displayName, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold); Text(session.email, color = MaterialTheme.colorScheme.onSurfaceVariant); Text(session.username?.takeIf { it.isNotBlank() }?.let { "@$it" } ?: "Sin nombre de usuario", color = MaterialTheme.colorScheme.onSurfaceVariant) }; OutlinedButton(onClick = onEditProfile) { Icon(Icons.Outlined.Edit, null); Text("Editar perfil", Modifier.padding(start = 6.dp)) } } }
+    Card(Modifier.fillMaxWidth().padding(horizontal = 16.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) { Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) { KyvoUserAvatar(name = session.displayName, avatarUrl = session.avatarUrl, avatarVersion = session.avatarVersion, size = 68.dp); Column(Modifier.weight(1f).padding(start = 16.dp)) { Text(displayName, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold); Text(session.email, color = MaterialTheme.colorScheme.onSurfaceVariant) }; OutlinedButton(onClick = onEditProfile) { Icon(Icons.Outlined.Edit, null); Text("Editar perfil", Modifier.padding(start = 6.dp)) } } }
 }
 
 @Composable
@@ -133,9 +134,6 @@ private fun AccountSection(title: String, rows: List<SettingRowData>) {
 
 @Composable
 private fun AccountRow(row: SettingRowData) { Row(Modifier.fillMaxWidth().heightIn(min = 64.dp).clickable(onClick = row.onClick).semantics { role = Role.Button; contentDescription = row.title }.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) { Icon(row.icon, null, Modifier.size(28.dp), tint = if (row.isDanger) Color(0xFFE53935) else KyvoColors.PurplePrimary); Column(Modifier.weight(1f).padding(start = 16.dp)) { Text(row.title, color = if (row.isDanger) Color(0xFFE53935) else MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold); Text(row.subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant) }; Text("›", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.headlineMedium) } }
-
-@Composable
-private fun InitialAvatar(value: String) { Surface(Modifier.size(68.dp), shape = androidx.compose.foundation.shape.CircleShape, color = KyvoColors.PurpleSoft) { Text(value.trim().take(1).uppercase().ifBlank { "K" }, Modifier.fillMaxSize().padding(top = 15.dp), textAlign = TextAlign.Center, style = MaterialTheme.typography.headlineMedium, color = KyvoColors.PurplePrimary, fontWeight = FontWeight.Bold) } }
 
 @Composable
 internal fun SettingsScaffold(tag: String, title: String, subtitle: String, onBack: () -> Unit, showBrand: Boolean = false, content: androidx.compose.foundation.lazy.LazyListScope.() -> Unit) { Surface(Modifier.fillMaxSize().semantics { contentDescription = tag }, color = MaterialTheme.colorScheme.background) { LazyColumn(contentPadding = PaddingValues(top = 16.dp, bottom = 28.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) { item { Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) { IconButton(onClick = onBack, Modifier.size(48.dp).semantics { contentDescription = "Volver" }) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Volver") }; Column(Modifier.weight(1f).padding(start = 4.dp)) { Text(title, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Black); Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.titleMedium) }; if (showBrand) KyvoBrandLockup(horizontal = true, markSize = 30.dp) } }; content() } } }

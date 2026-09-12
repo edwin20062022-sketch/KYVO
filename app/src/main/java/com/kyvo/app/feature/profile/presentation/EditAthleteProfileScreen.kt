@@ -118,6 +118,7 @@ fun EditAthleteProfileScreen(
                 AvatarSection(
                     name = draft.displayName,
                     avatarUrl = draft.avatarUrl,
+                    avatarVersion = draft.avatarVersion,
                     isUploading = saving,
                     onPickPhoto = onPickPhoto,
                 )
@@ -156,6 +157,7 @@ fun EditAthleteProfileScreen(
 private fun AvatarSection(
     name: String?,
     avatarUrl: String?,
+    avatarVersion: String?,
     isUploading: Boolean,
     onPickPhoto: () -> Unit,
 ) {
@@ -163,6 +165,7 @@ private fun AvatarSection(
         KyvoUserAvatar(
             name = name,
             avatarUrl = avatarUrl,
+            avatarVersion = avatarVersion,
             size = 144.dp,
         )
         TextButton(

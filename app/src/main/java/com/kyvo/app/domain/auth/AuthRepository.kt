@@ -11,6 +11,7 @@ data class AuthSession(
     val displayName: String? = null,
     val username: String? = null,
     val avatarUrl: String? = null,
+    val avatarVersion: String? = null,
 )
 
 sealed interface AuthError {

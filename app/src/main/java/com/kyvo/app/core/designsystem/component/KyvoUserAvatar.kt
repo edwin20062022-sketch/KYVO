@@ -26,6 +26,7 @@ import com.kyvo.app.core.designsystem.KyvoColors
 fun KyvoUserAvatar(
     name: String?,
     avatarUrl: String?,
+    avatarVersion: String? = null,
     size: Dp = 52.dp,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
@@ -34,10 +35,13 @@ fun KyvoUserAvatar(
         if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
     )
     val initial = name?.trim()?.firstOrNull()?.uppercase().orEmpty()
+    val displayUrl = if (!avatarUrl.isNullOrBlank()) {
+        if (!avatarVersion.isNullOrBlank()) "$avatarUrl?v=$avatarVersion" else avatarUrl
+    } else null
     Box(sizedModifier.background(KyvoColors.PurpleSoft), contentAlignment = Alignment.Center) {
-        if (!avatarUrl.isNullOrBlank()) {
+        if (!displayUrl.isNullOrBlank()) {
             AsyncImage(
-                model = avatarUrl,
+                model = displayUrl,
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize().clip(CircleShape),
                 contentScale = ContentScale.Crop,

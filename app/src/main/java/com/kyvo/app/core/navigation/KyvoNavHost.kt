@@ -172,6 +172,7 @@ fun KyvoNavHost(
                     mealRepository,
                     displayName = (authState as? AuthState.SignedIn)?.session?.displayName,
                     avatarUrl = (authState as? AuthState.SignedIn)?.session?.avatarUrl,
+                    avatarVersion = (authState as? AuthState.SignedIn)?.session?.avatarVersion,
                     onAddFood = { navController.navigate(KyvoDestination.FoodHub.route) },
                     onMealShare = { navController.navigate(KyvoDestination.MealShare.route) { launchSingleTop = true } },
                     onProgress = { navController.navigate(KyvoDestination.Progress.route) { launchSingleTop = true } },

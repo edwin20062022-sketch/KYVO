@@ -17,17 +17,19 @@ data class EditAthleteProfileDraft(
     val displayName: String,
     val email: String,
     val avatarUrl: String?,
+    val avatarVersion: String? = null,
     val pendingPhotoBytes: ByteArray? = null,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is EditAthleteProfileDraft) return false
-        return displayName == other.displayName && email == other.email && avatarUrl == other.avatarUrl && pendingPhotoBytes.contentEquals(other.pendingPhotoBytes)
+        return displayName == other.displayName && email == other.email && avatarUrl == other.avatarUrl && avatarVersion == other.avatarVersion && pendingPhotoBytes.contentEquals(other.pendingPhotoBytes)
     }
     override fun hashCode(): Int {
         var result = displayName.hashCode()
         result = 31 * result + email.hashCode()
         result = 31 * result + (avatarUrl?.hashCode() ?: 0)
+        result = 31 * result + (avatarVersion?.hashCode() ?: 0)
         result = 31 * result + (pendingPhotoBytes?.contentHashCode() ?: 0)
         return result
     }
@@ -49,6 +51,7 @@ class EditAthleteProfileViewModel(
         displayName = session.displayName.orEmpty(),
         email = session.email,
         avatarUrl = session.avatarUrl,
+        avatarVersion = session.avatarVersion,
     )
     private val _state = MutableStateFlow<EditAthleteProfileUiState>(EditAthleteProfileUiState.Editing(initialDraft))
     val state: StateFlow<EditAthleteProfileUiState> = _state.asStateFlow()
@@ -83,6 +86,7 @@ class EditAthleteProfileViewModel(
                     is AuthResult.Success -> {
                         currentDraft = currentDraft.copy(
                             avatarUrl = avatarResult.session.avatarUrl,
+                            avatarVersion = avatarResult.session.avatarVersion,
                             pendingPhotoBytes = null,
                         )
                     }
