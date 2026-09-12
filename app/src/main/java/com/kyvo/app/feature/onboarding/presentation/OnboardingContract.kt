@@ -7,7 +7,9 @@ import com.kyvo.app.feature.onboarding.domain.model.FoodPreference
 import com.kyvo.app.feature.onboarding.domain.model.GenderOption
 import com.kyvo.app.feature.onboarding.domain.model.HeightUnit
 import com.kyvo.app.feature.onboarding.domain.model.NutritionPlan
+import com.kyvo.app.feature.onboarding.domain.model.OnboardingMode
 import com.kyvo.app.feature.onboarding.domain.model.OnboardingStep
+import com.kyvo.app.feature.onboarding.domain.model.SavedOnboarding
 import com.kyvo.app.feature.onboarding.domain.model.TrainingType
 import com.kyvo.app.feature.onboarding.domain.model.WeightUnit
 import com.kyvo.app.feature.onboarding.domain.model.WorkActivity
@@ -37,6 +39,9 @@ data class OnboardingUiState(
     val isRestoring: Boolean = true,
     val shouldExit: Boolean = false,
     val shouldNavigateHome: Boolean = false,
+    val mode: OnboardingMode = OnboardingMode.Initial,
+    val originalOnboarding: SavedOnboarding? = null,
+    val shouldNavigateBack: Boolean = false,
 )
 
 sealed interface OnboardingEvent {

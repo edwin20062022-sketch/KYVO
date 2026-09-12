@@ -65,14 +65,13 @@ fun AthleteProfileRoute(
     repository: OnboardingRepository,
     onEditProfile: () -> Unit,
     onNutritionPlan: () -> Unit,
-    onUpdateGoal: () -> Unit,
-    onRecalculateGoals: () -> Unit,
+    onUpdateInfo: () -> Unit,
     onPersonalPreferences: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: AthleteProfileViewModel = viewModel(factory = AthleteProfileViewModel.factory(session, repository)),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    AthleteProfileScreen(state, session.avatarUrl, session.avatarVersion, viewModel::retry, onEditProfile, onNutritionPlan, onUpdateGoal, onRecalculateGoals, onPersonalPreferences, modifier)
+    AthleteProfileScreen(state, session.avatarUrl, session.avatarVersion, viewModel::retry, onEditProfile, onNutritionPlan, onUpdateInfo, onPersonalPreferences, modifier)
 }
 
 @Composable
@@ -83,8 +82,7 @@ fun AthleteProfileScreen(
     onRetry: () -> Unit = {},
     onEditProfile: () -> Unit = {},
     onNutritionPlan: () -> Unit = {},
-    onUpdateGoal: () -> Unit = {},
-    onRecalculateGoals: () -> Unit = {},
+    onUpdateInfo: () -> Unit = {},
     onPersonalPreferences: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -92,8 +90,8 @@ fun AthleteProfileScreen(
         when (state) {
             AthleteProfileUiState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
             is AthleteProfileUiState.Error -> ProfileError(state.message, onRetry)
-            is AthleteProfileUiState.Content -> ProfileContent(state.profile, avatarUrl, avatarVersion, false, onEditProfile, onNutritionPlan, onUpdateGoal, onRecalculateGoals, onPersonalPreferences)
-            is AthleteProfileUiState.Incomplete -> ProfileContent(state.profile, avatarUrl, avatarVersion, true, onEditProfile, onNutritionPlan, onUpdateGoal, onRecalculateGoals, onPersonalPreferences)
+            is AthleteProfileUiState.Content -> ProfileContent(state.profile, avatarUrl, avatarVersion, false, onEditProfile, onNutritionPlan, onUpdateInfo, onPersonalPreferences)
+            is AthleteProfileUiState.Incomplete -> ProfileContent(state.profile, avatarUrl, avatarVersion, true, onEditProfile, onNutritionPlan, onUpdateInfo, onPersonalPreferences)
         }
     }
 }
@@ -114,8 +112,7 @@ private fun ProfileContent(
     incomplete: Boolean,
     onEditProfile: () -> Unit,
     onNutritionPlan: () -> Unit,
-    onUpdateGoal: () -> Unit,
-    onRecalculateGoals: () -> Unit,
+    onUpdateInfo: () -> Unit,
     onPersonalPreferences: () -> Unit,
 ) {
     LazyColumn(
@@ -138,7 +135,7 @@ private fun ProfileContent(
         item { InfoGrid(profile) }
         item { NutritionCard(profile, onNutritionPlan) }
         item { PreferenceCards(profile) }
-        item { ActionCard(onNutritionPlan, onUpdateGoal, onRecalculateGoals) }
+        item { ActionCard(onNutritionPlan, onUpdateInfo) }
         item { EditCard(onEditProfile) }
     }
 }
@@ -247,13 +244,11 @@ private fun SmallCard(title: String, value: String, caption: String, modifier: M
 }
 
 @Composable
-private fun ActionCard(onPlan: () -> Unit, onGoal: () -> Unit, onRecalculate: () -> Unit) {
+private fun ActionCard(onPlan: () -> Unit, onUpdateInfo: () -> Unit) {
     KyvoCard(Modifier.fillMaxWidth(), PaddingValues(horizontal = 18.dp, vertical = 4.dp)) {
         Action("Mi plan nutricional", "Revisa tus calorías, macros y parámetros.", Icons.Outlined.CheckCircle, onPlan)
         HorizontalDivider()
-        Action("Actualizar objetivo", "Cambia tu objetivo y recalcula tus metas.", Icons.Outlined.Edit, onGoal)
-        HorizontalDivider()
-        Action("Recalcular metas", "Actualiza tus datos y obtén un nuevo plan.", Icons.Outlined.Info, onRecalculate)
+        Action("Actualizar información", "Actualiza tus datos, actividad y preferencias.", Icons.Outlined.Edit, onUpdateInfo)
     }
 }
 

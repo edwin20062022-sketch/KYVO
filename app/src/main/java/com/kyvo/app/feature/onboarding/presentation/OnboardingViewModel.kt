@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.kyvo.app.feature.onboarding.domain.calculator.NutritionPlanCalculator
 import com.kyvo.app.feature.onboarding.domain.model.OnboardingAnswers
+import com.kyvo.app.feature.onboarding.domain.model.OnboardingMode
 import com.kyvo.app.feature.onboarding.domain.model.OnboardingStep
 import com.kyvo.app.feature.onboarding.domain.model.SavedOnboarding
 import com.kyvo.app.feature.onboarding.domain.repository.OnboardingRepository
@@ -25,15 +26,24 @@ class OnboardingViewModel(
     private val repository: OnboardingRepository,
     private val calculator: NutritionPlanCalculator = NutritionPlanCalculator(),
     private val transitionMillis: Long = 450L,
+    private val mode: OnboardingMode = OnboardingMode.Initial,
+    private val onComplete: () -> Unit = {},
+    private val onCancel: () -> Unit = {},
 ) : ViewModel() {
-    private val mutableState = MutableStateFlow(OnboardingUiState())
+    private val mutableState = MutableStateFlow(OnboardingUiState(mode = mode))
     val state: StateFlow<OnboardingUiState> = mutableState.asStateFlow()
     private var calculationJob: Job? = null
+    private var original: SavedOnboarding? = null
 
     init {
         viewModelScope.launch {
             val saved = repository.observe().first()
-            mutableState.value = saved.toUiState()
+            if (mode == OnboardingMode.Edit && saved.isCompleted) {
+                original = saved
+                mutableState.value = saved.toUiStateForEdit()
+            } else {
+                mutableState.value = saved.toUiState()
+            }
         }
     }
 
@@ -57,13 +67,13 @@ class OnboardingViewModel(
             is OnboardingEvent.SelectMeals -> edit { copy(mealsPerDay = event.value, isCustomMeals = event.custom) }
             OnboardingEvent.Continue -> continueWizard()
             OnboardingEvent.Back -> goBack()
-            OnboardingEvent.NavigationHandled -> mutableState.update { it.copy(shouldExit = false, shouldNavigateHome = false) }
+            OnboardingEvent.NavigationHandled -> mutableState.update { it.copy(shouldExit = false, shouldNavigateHome = false, shouldNavigateBack = false) }
         }
     }
 
     private fun edit(transform: OnboardingUiState.() -> OnboardingUiState) {
         mutableState.update { it.transform().copy(validationError = null) }
-        persist()
+        if (mutableState.value.mode == OnboardingMode.Initial) persist()
     }
 
     private fun addCustomRestriction() {
@@ -93,12 +103,24 @@ class OnboardingViewModel(
             return
         }
         when (state.currentStep) {
-            OnboardingStep.MealsPerDay -> calculatePlan()
-            OnboardingStep.Summary -> completeOnboarding()
+            OnboardingStep.MealsPerDay -> {
+                if (state.mode == OnboardingMode.Edit) {
+                    editModeFinish()
+                } else {
+                    calculatePlan()
+                }
+            }
+            OnboardingStep.Summary -> {
+                if (state.mode == OnboardingMode.Edit) {
+                    editModeSave()
+                } else {
+                    completeOnboarding()
+                }
+            }
             OnboardingStep.Calculating -> Unit
             else -> {
                 mutableState.update { it.copy(currentStep = it.currentStep.next() ?: it.currentStep, validationError = null) }
-                persist()
+                if (state.mode == OnboardingMode.Initial) persist()
             }
         }
     }
@@ -121,10 +143,58 @@ class OnboardingViewModel(
         viewModelScope.launch { repository.save(mutableState.value.toSaved(isCompleted = true)) }
     }
 
+    private fun editModeFinish() {
+        val state = mutableState.value
+        val orig = original
+        if (orig == null) {
+            editModeSave()
+            return
+        }
+        val draft = state.toSaved()
+        val planImpact = orig.hasNutritionPlanImpact(draft)
+        if (planImpact) {
+            calculatePlanForEdit()
+        } else {
+            editModeSave()
+        }
+    }
+
+    private fun calculatePlanForEdit() {
+        calculationJob?.cancel()
+        val answers = mutableState.value.toAnswers() ?: return
+        mutableState.update { it.copy(currentStep = OnboardingStep.Calculating, validationError = null) }
+        calculationJob = viewModelScope.launch {
+            val plan = calculator.calculate(answers)
+            mutableState.update { it.copy(plan = plan) }
+            editModeSave()
+        }
+    }
+
+    private fun editModeSave() {
+        val state = mutableState.value
+        val orig = original
+        val draft = state.toSaved()
+        val finalDraft = if (orig != null && draft.plan == null) {
+            draft.copy(plan = orig.plan, isCompleted = true, currentStep = orig.currentStep)
+        } else {
+            draft.copy(isCompleted = true, currentStep = orig?.currentStep ?: OnboardingStep.Summary)
+        }
+        viewModelScope.launch {
+            repository.save(finalDraft)
+            mutableState.update { it.copy(shouldNavigateBack = true) }
+            onComplete()
+        }
+    }
+
     private fun goBack() {
         val state = mutableState.value
         if (state.currentStep == OnboardingStep.Gender) {
-            mutableState.update { it.copy(shouldExit = true) }
+            if (state.mode == OnboardingMode.Edit) {
+                mutableState.update { it.copy(shouldNavigateBack = true) }
+                onCancel()
+            } else {
+                mutableState.update { it.copy(shouldExit = true) }
+            }
             return
         }
         calculationJob?.cancel()
@@ -134,7 +204,7 @@ class OnboardingViewModel(
             else -> state.currentStep.previous() ?: OnboardingStep.Gender
         }
         mutableState.update { it.copy(currentStep = destination, validationError = null) }
-        persist()
+        if (state.mode == OnboardingMode.Initial) persist()
     }
 
     private fun validate(state: OnboardingUiState): ValidationResult = when (state.currentStep) {
@@ -206,12 +276,31 @@ class OnboardingViewModel(
         )
     }
 
+    private fun SavedOnboarding.toUiStateForEdit(): OnboardingUiState = OnboardingUiState(
+        currentStep = OnboardingStep.Gender, gender = gender,
+        ageInput = ageYears?.toString().orEmpty(),
+        heightInput = heightCm?.display().orEmpty(),
+        weightInput = weightKg?.display().orEmpty(),
+        trainingDaysPerWeek = trainingDaysPerWeek, trainingType = trainingType,
+        workActivity = workActivity, goal = goal, experience = experience,
+        foodPreference = foodPreference, customDietaryRestrictions = customDietaryRestrictions,
+        mealsPerDay = mealsPerDay,
+        isCustomMeals = mealsPerDay != null && mealsPerDay !in 2..5,
+        plan = plan, isRestoring = false, mode = OnboardingMode.Edit,
+        originalOnboarding = this,
+    )
+
     companion object {
-        fun factory(repository: OnboardingRepository): ViewModelProvider.Factory =
+        fun factory(
+            repository: OnboardingRepository,
+            mode: OnboardingMode = OnboardingMode.Initial,
+            onComplete: () -> Unit = {},
+            onCancel: () -> Unit = {},
+        ): ViewModelProvider.Factory =
             object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                    OnboardingViewModel(repository) as T
+                    OnboardingViewModel(repository, mode = mode, onComplete = onComplete, onCancel = onCancel) as T
             }
     }
 

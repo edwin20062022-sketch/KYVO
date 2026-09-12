@@ -65,6 +65,7 @@ import com.kyvo.app.feature.onboarding.domain.model.FitnessGoal
 import com.kyvo.app.feature.onboarding.domain.model.FoodPreference
 import com.kyvo.app.feature.onboarding.domain.model.GenderOption
 import com.kyvo.app.feature.onboarding.domain.model.NutritionPlan
+import com.kyvo.app.feature.onboarding.domain.model.OnboardingMode
 import com.kyvo.app.feature.onboarding.domain.model.OnboardingStep
 import com.kyvo.app.feature.onboarding.domain.model.TrainingType
 import com.kyvo.app.feature.onboarding.domain.model.WorkActivity
@@ -84,11 +85,17 @@ fun OnboardingRoute(
     repository: OnboardingRepository,
     onExit: () -> Unit,
     onCompleted: () -> Unit,
-    viewModel: OnboardingViewModel = viewModel(factory = OnboardingViewModel.factory(repository)),
+    mode: OnboardingMode = OnboardingMode.Initial,
+    onCancel: () -> Unit = {},
+    viewModel: OnboardingViewModel = viewModel(factory = OnboardingViewModel.factory(repository, mode = mode, onComplete = onCompleted, onCancel = onCancel)),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    LaunchedEffect(state.shouldExit, state.shouldNavigateHome) {
+    LaunchedEffect(state.shouldExit, state.shouldNavigateHome, state.shouldNavigateBack) {
         when {
+            state.shouldNavigateBack -> {
+                viewModel.onEvent(OnboardingEvent.NavigationHandled)
+                onCancel()
+            }
             state.shouldNavigateHome -> {
                 viewModel.onEvent(OnboardingEvent.NavigationHandled)
                 onCompleted()
@@ -153,7 +160,7 @@ fun OnboardingScreen(
                 }
                 if (state.currentStep != OnboardingStep.Calculating) {
                     WizardActions(
-                        continueLabel = continueLabel(state.currentStep),
+                        continueLabel = continueLabel(state.currentStep, state.mode),
                         onContinue = { onEvent(OnboardingEvent.Continue) },
                         onBack = { onEvent(OnboardingEvent.Back) },
                     )
@@ -556,7 +563,13 @@ private fun MacroRow(name: String, grams: Int, color: androidx.compose.ui.graphi
 
 @Composable
 private fun SummaryStep(state: OnboardingUiState) {
-    StepHeading("RESUMEN", "¡Listo! Aquí está tu plan personalizado", "Tus datos, objetivo y preferencias quedan reunidos en un único plan.", false)
+    val isEdit = state.mode == OnboardingMode.Edit
+    StepHeading(
+        if (isEdit) "REVISAR CAMBIOS" else "RESUMEN",
+        if (isEdit) "Revisa tu información antes de guardar" else "¡Listo! Aquí está tu plan personalizado",
+        if (isEdit) "Confirma que tus datos sean correctos." else "Tus datos, objetivo y preferencias quedan reunidos en un único plan.",
+        false,
+    )
     Surface(
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surface,
@@ -644,10 +657,11 @@ private fun StepError(validationError: OnboardingValidationError?) {
     )
 }
 
-private fun continueLabel(step: OnboardingStep): String = when (step) {
-    OnboardingStep.CalorieReveal -> "Ver mis macros"
-    OnboardingStep.MacroReveal -> "Ver resumen de mi plan"
-    OnboardingStep.Summary -> "Comenzar mi plan"
+private fun continueLabel(step: OnboardingStep, mode: OnboardingMode): String = when {
+    step == OnboardingStep.Summary && mode == OnboardingMode.Edit -> "Guardar cambios"
+    step == OnboardingStep.CalorieReveal -> "Ver mis macros"
+    step == OnboardingStep.MacroReveal -> "Ver resumen de mi plan"
+    step == OnboardingStep.Summary -> "Comenzar mi plan"
     else -> "Continuar"
 }
 

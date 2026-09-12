@@ -11,6 +11,8 @@ enum class OnboardingStep(val number: Int) {
     companion object { const val Total = 15 }
 }
 
+enum class OnboardingMode { Initial, Edit }
+
 enum class GenderOption { Male, Female, PreferNotToSay }
 enum class HeightUnit { Centimeters, FeetInches }
 enum class WeightUnit { Kilograms, Pounds }
@@ -65,4 +67,14 @@ data class SavedOnboarding(
     val mealsPerDay: Int? = null,
     val plan: NutritionPlan? = null,
     val isCompleted: Boolean = false,
-)
+) {
+    fun hasNutritionPlanImpact(other: SavedOnboarding): Boolean =
+        gender != other.gender ||
+            ageYears != other.ageYears ||
+            heightCm != other.heightCm ||
+            weightKg != other.weightKg ||
+            trainingDaysPerWeek != other.trainingDaysPerWeek ||
+            trainingType != other.trainingType ||
+            workActivity != other.workActivity ||
+            goal != other.goal
+}

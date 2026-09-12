@@ -76,15 +76,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.core.content.FileProvider
 import java.io.File
 import java.time.LocalDate
+import com.kyvo.app.feature.onboarding.domain.model.OnboardingMode
 import com.kyvo.app.feature.onboarding.presentation.OnboardingRoute
 import com.kyvo.app.feature.profile.presentation.AthleteProfileRoute
 import com.kyvo.app.feature.profile.presentation.EditAthleteProfileRoute
 import com.kyvo.app.feature.profile.presentation.NutritionCalculationRoute
 import com.kyvo.app.feature.profile.presentation.NutritionPlanRoute
-import com.kyvo.app.feature.profile.presentation.RecalculateNutritionPlanViewModel
-import com.kyvo.app.feature.profile.presentation.UpdateGoalRoute
-import com.kyvo.app.feature.profile.presentation.RecalculateGoalsRoute
-import com.kyvo.app.feature.profile.presentation.NewGoalsRoute
 import com.kyvo.app.feature.profile.presentation.PersonalPreferencesViewModel
 import com.kyvo.app.feature.profile.presentation.PersonalPreferencesHubRoute
 import com.kyvo.app.feature.profile.presentation.PersonalDataRoute
@@ -129,7 +126,6 @@ fun KyvoNavHost(
     val target = resolveStartDestination(authState, onboardingCompleted)
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    val recalculateViewModel = onboardingRepository?.let { repository -> viewModel<RecalculateNutritionPlanViewModel>(factory = RecalculateNutritionPlanViewModel.factory(repository)) }
     val personalPreferencesViewModel = onboardingRepository?.let { repository -> viewModel<PersonalPreferencesViewModel>(factory = PersonalPreferencesViewModel.factory(repository)) }
     val currentEntry by navController.currentBackStackEntryAsState()
     val currentDestination = currentEntry?.destination
@@ -162,6 +158,18 @@ fun KyvoNavHost(
                     repository = repository,
                     onExit = { scope.launch { authRepository.signOut() } },
                     onCompleted = {},
+                    mode = OnboardingMode.Initial,
+                )
+            }
+        }
+        composable(KyvoDestination.OnboardingEdit.route) {
+            onboardingRepository?.let { repository ->
+                OnboardingRoute(
+                    repository = repository,
+                    onExit = { navController.popBackStack() },
+                    onCompleted = { navController.popBackStack(KyvoDestination.Profile.route, inclusive = false) },
+                    mode = OnboardingMode.Edit,
+                    onCancel = { navController.popBackStack() },
                 )
             }
         }
@@ -195,7 +203,7 @@ fun KyvoNavHost(
                     repository = repository,
                     onBack = {},
                     onHowCalculated = { navController.navigate(KyvoDestination.ProfileCalculation.route) },
-                    onRecalculate = { navController.navigate(KyvoDestination.ProfileUpdateGoal.route) },
+                    onRecalculate = { navController.navigate(KyvoDestination.OnboardingEdit.route) },
                 )
             }
         }
@@ -255,8 +263,11 @@ fun KyvoNavHost(
                     repository = onboardingRepository,
                     onEditProfile = { navController.navigate(KyvoDestination.ProfileEdit.route) },
                     onNutritionPlan = { navController.navigate(KyvoDestination.ProfileNutritionPlan.route) },
-                    onUpdateGoal = { navController.navigate(KyvoDestination.ProfileUpdateGoal.route) },
-                    onRecalculateGoals = { navController.navigate(KyvoDestination.ProfileUpdateGoal.route) },
+                    onUpdateInfo = {
+                        navController.navigate(KyvoDestination.OnboardingEdit.route) {
+                            launchSingleTop = true
+                        }
+                    },
                     onPersonalPreferences = { navController.navigate(KyvoDestination.Settings.route) },
                 )
             } else {
@@ -421,40 +432,13 @@ fun KyvoNavHost(
                     repository = repository,
                     onBack = { navController.popBackStack() },
                     onHowCalculated = { navController.navigate(KyvoDestination.ProfileCalculation.route) },
-                    onRecalculate = { navController.navigate(KyvoDestination.ProfileUpdateGoal.route) },
+                    onRecalculate = { navController.navigate(KyvoDestination.OnboardingEdit.route) },
                 )
             }
         }
         composable(KyvoDestination.ProfileCalculation.route) {
             onboardingRepository?.let { repository ->
                 NutritionCalculationRoute(repository = repository, onBack = { navController.popBackStack() })
-            }
-        }
-        composable(KyvoDestination.ProfileUpdateGoal.route) {
-            recalculateViewModel?.let { flowViewModel ->
-                UpdateGoalRoute(
-                    viewModel = flowViewModel,
-                    onBack = { navController.popBackStack() },
-                    onContinue = { navController.navigate(KyvoDestination.ProfileRecalculateGoals.route) },
-                )
-            }
-        }
-        composable(KyvoDestination.ProfileRecalculateGoals.route) {
-            recalculateViewModel?.let { flowViewModel ->
-                RecalculateGoalsRoute(
-                    viewModel = flowViewModel,
-                    onBack = { navController.popBackStack() },
-                    onPreview = { navController.navigate(KyvoDestination.ProfileNewGoals.route) { launchSingleTop = true } },
-                )
-            }
-        }
-        composable(KyvoDestination.ProfileNewGoals.route) {
-            recalculateViewModel?.let { flowViewModel ->
-                NewGoalsRoute(
-                    viewModel = flowViewModel,
-                    onBack = { navController.popBackStack() },
-                    onSaved = { navController.popBackStack(KyvoDestination.ProfileNutritionPlan.route, inclusive = false) },
-                )
             }
         }
         composable(KyvoDestination.PersonalPreferences.route) {
