@@ -64,7 +64,7 @@ import com.kyvo.app.feature.onboarding.domain.validation.OnboardingValidationErr
 import com.kyvo.app.feature.onboarding.presentation.components.KyvoNumericInput
 import com.kyvo.app.feature.onboarding.presentation.components.KyvoOptionCard
 import com.kyvo.app.feature.onboarding.presentation.components.KyvoStepProgress
-import com.kyvo.app.feature.onboarding.presentation.components.KyvoVerticalDecimalWheelPicker
+import com.kyvo.app.feature.onboarding.presentation.components.KyvoHorizontalWeightRuler
 import com.kyvo.app.feature.onboarding.presentation.components.KyvoVerticalWheelPicker
 import com.kyvo.app.feature.onboarding.presentation.components.WizardActions
 import java.text.NumberFormat
@@ -202,19 +202,24 @@ private fun StepContent(
         OnboardingStep.CurrentWeight -> {
             StepHeading("DATOS PERSONALES", "¿Cuál es tu peso actual?",
                 "Tu peso actual nos ayuda a calcular tus necesidades calóricas diarias.", compact)
-            KyvoVerticalDecimalWheelPicker(
-                items = (OnboardingLimits.MinimumWeightKg.toInt()..OnboardingLimits.MaximumWeightKg.toInt()).map { it.toDouble() },
-                selectedItem = state.weightInput.toDoubleOrNull() ?: OnboardingLimits.MinimumWeightKg,
-                onItemSelected = { onEvent(OnboardingEvent.ChangeWeight("%.1f".format(it))) },
-                label = "kg",
-                decimalPlaces = 1,
+            val weightValues = remember {
+                generateSequence(OnboardingLimits.MinimumWeightKg) { it + 1.0 }
+                    .takeWhile { it <= OnboardingLimits.MaximumWeightKg + 0.01 }
+                    .map { "%.1f".format(it).toDouble() }
+                    .toList()
+            }
+            KyvoHorizontalWeightRuler(
+                values = weightValues,
+                selectedValue = weightValues.firstOrNull { it == (state.weightInput.toDoubleOrNull() ?: OnboardingLimits.MinimumWeightKg) }
+                    ?: OnboardingLimits.MinimumWeightKg,
+                onValueSelected = { onEvent(OnboardingEvent.ChangeWeight("%.1f".format(it))) },
             )
             StepError(state.validationError)
         }
         OnboardingStep.TrainingDays -> {
             StepHeading("ACTIVIDAD", "¿Cuántos días entrenas a la semana?", "Esto nos ayuda a calcular tu nivel de actividad física.", compact)
             OptionList((1..7).map { day ->
-                Option(if (day == 1) "día por semana" else "días por semana", day.toString(), state.trainingDaysPerWeek == day) {
+                Option(day.toString(), day.toString(), state.trainingDaysPerWeek == day) {
                     onEvent(OnboardingEvent.SelectTrainingDays(day))
                 }
             })
