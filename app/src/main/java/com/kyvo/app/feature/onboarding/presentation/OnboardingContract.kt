@@ -28,6 +28,8 @@ data class OnboardingUiState(
     val goal: FitnessGoal? = null,
     val experience: ExperienceLevel? = null,
     val foodPreference: FoodPreference? = null,
+    val customDietaryRestrictions: List<String> = emptyList(),
+    val customRestrictionInput: String = "",
     val mealsPerDay: Int? = null,
     val isCustomMeals: Boolean = false,
     val plan: NutritionPlan? = null,
@@ -48,6 +50,9 @@ sealed interface OnboardingEvent {
     data class SelectGoal(val value: FitnessGoal) : OnboardingEvent
     data class SelectExperience(val value: ExperienceLevel) : OnboardingEvent
     data class SelectFoodPreference(val value: FoodPreference) : OnboardingEvent
+    data class ChangeCustomRestrictionInput(val value: String) : OnboardingEvent
+    data object AddCustomRestriction : OnboardingEvent
+    data class RemoveCustomRestriction(val index: Int) : OnboardingEvent
     data class SelectMeals(val value: Int?, val custom: Boolean = false) : OnboardingEvent
     data object Continue : OnboardingEvent
     data object Back : OnboardingEvent

@@ -11,6 +11,7 @@ import com.kyvo.app.feature.onboarding.domain.repository.OnboardingRepository
 import com.kyvo.app.feature.onboarding.domain.validation.OnboardingValidationError
 import com.kyvo.app.feature.onboarding.domain.validation.OnboardingValidator
 import com.kyvo.app.feature.onboarding.domain.validation.ValidationResult
+import com.kyvo.app.feature.onboarding.domain.restriction.DietaryRestrictionNormalizer
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,6 +49,11 @@ class OnboardingViewModel(
             is OnboardingEvent.SelectGoal -> edit { copy(goal = event.value) }
             is OnboardingEvent.SelectExperience -> edit { copy(experience = event.value) }
             is OnboardingEvent.SelectFoodPreference -> edit { copy(foodPreference = event.value) }
+            is OnboardingEvent.ChangeCustomRestrictionInput -> edit { copy(customRestrictionInput = event.value) }
+            is OnboardingEvent.AddCustomRestriction -> addCustomRestriction()
+            is OnboardingEvent.RemoveCustomRestriction -> edit {
+                copy(customDietaryRestrictions = customDietaryRestrictions.toMutableList().apply { removeAt(event.index) })
+            }
             is OnboardingEvent.SelectMeals -> edit { copy(mealsPerDay = event.value, isCustomMeals = event.custom) }
             OnboardingEvent.Continue -> continueWizard()
             OnboardingEvent.Back -> goBack()
@@ -58,6 +64,25 @@ class OnboardingViewModel(
     private fun edit(transform: OnboardingUiState.() -> OnboardingUiState) {
         mutableState.update { it.transform().copy(validationError = null) }
         persist()
+    }
+
+    private fun addCustomRestriction() {
+        val input = mutableState.value.customRestrictionInput.trim()
+        if (input.isBlank()) return
+        val normalized = DietaryRestrictionNormalizer.normalize(input)
+        val isDuplicate = mutableState.value.customDietaryRestrictions.any { existing ->
+            DietaryRestrictionNormalizer.normalize(existing) == normalized
+        }
+        if (isDuplicate) {
+            mutableState.update { it.copy(customRestrictionInput = "", validationError = null) }
+            return
+        }
+        edit {
+            copy(
+                customDietaryRestrictions = customDietaryRestrictions + input,
+                customRestrictionInput = "",
+            )
+        }
     }
 
     private fun continueWizard() {
@@ -149,6 +174,7 @@ class OnboardingViewModel(
         experience = experience ?: return null,
         foodPreference = foodPreference ?: return null,
         mealsPerDay = mealsPerDay ?: return null,
+        customDietaryRestrictions = customDietaryRestrictions,
     )
 
     private fun OnboardingUiState.toSaved(isCompleted: Boolean = false) = SavedOnboarding(
@@ -156,7 +182,8 @@ class OnboardingViewModel(
         heightCm = heightInput.toDoubleOrNull(), weightKg = weightInput.toDoubleOrNull(),
         trainingDaysPerWeek = trainingDaysPerWeek, trainingType = trainingType,
         workActivity = workActivity, goal = goal, experience = experience,
-        foodPreference = foodPreference, mealsPerDay = mealsPerDay, plan = plan,
+        foodPreference = foodPreference, customDietaryRestrictions = customDietaryRestrictions,
+        mealsPerDay = mealsPerDay, plan = plan,
         isCompleted = isCompleted,
     )
 
@@ -172,7 +199,8 @@ class OnboardingViewModel(
             heightInput = heightCm?.display().orEmpty(), weightInput = weightKg?.display().orEmpty(),
             trainingDaysPerWeek = trainingDaysPerWeek, trainingType = trainingType,
             workActivity = workActivity, goal = goal, experience = experience,
-            foodPreference = foodPreference, mealsPerDay = mealsPerDay,
+            foodPreference = foodPreference, customDietaryRestrictions = customDietaryRestrictions,
+            mealsPerDay = mealsPerDay,
             isCustomMeals = mealsPerDay != null && mealsPerDay !in 2..5,
             plan = plan, isRestoring = false, shouldNavigateHome = isCompleted,
         )

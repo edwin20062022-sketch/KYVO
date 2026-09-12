@@ -32,6 +32,7 @@ data class OnboardingAnswers(
     val experience: ExperienceLevel,
     val foodPreference: FoodPreference,
     val mealsPerDay: Int,
+    val customDietaryRestrictions: List<String> = emptyList(),
 )
 
 data class NutritionPlan(
@@ -60,6 +61,7 @@ data class SavedOnboarding(
     val goal: FitnessGoal? = null,
     val experience: ExperienceLevel? = null,
     val foodPreference: FoodPreference? = null,
+    val customDietaryRestrictions: List<String> = emptyList(),
     val mealsPerDay: Int? = null,
     val plan: NutritionPlan? = null,
     val isCompleted: Boolean = false,

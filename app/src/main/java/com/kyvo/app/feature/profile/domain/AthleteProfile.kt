@@ -16,6 +16,7 @@ data class AthleteProfile(
     val goal: FitnessGoal?,
     val experience: ExperienceLevel?,
     val foodPreference: FoodPreference?,
+    val customDietaryRestrictions: List<String> = emptyList(),
     val mealsPerDay: Int?,
     val nutritionPlan: NutritionPlan?,
 )

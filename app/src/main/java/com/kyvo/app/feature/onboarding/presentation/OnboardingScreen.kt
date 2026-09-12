@@ -22,9 +22,13 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,10 +45,16 @@ import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.painterResource
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kyvo.app.R
@@ -268,6 +278,10 @@ private fun StepContent(
                     onEvent(OnboardingEvent.SelectFoodPreference(value))
                 }
             })
+            if (state.foodPreference == FoodPreference.Other) {
+                Spacer(Modifier.height(16.dp))
+                CustomRestrictionsSection(state, onEvent)
+            }
             StepError(state.validationError)
         }
         OnboardingStep.MealsPerDay -> MealsStep(state, onEvent, compact)
@@ -322,6 +336,79 @@ private fun OptionList(options: List<Option>) {
                 onClick = it.onClick,
                 testTag = OPTION_TAG_PREFIX + it.title,
             )
+        }
+    }
+}
+
+@Composable
+private fun CustomRestrictionsSection(state: OnboardingUiState, onEvent: (OnboardingEvent) -> Unit) {
+    val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
+    Column {
+        OutlinedTextField(
+            value = state.customRestrictionInput,
+            onValueChange = { onEvent(OnboardingEvent.ChangeCustomRestrictionInput(it)) },
+            label = { Text("Escribe tu restricción") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Done,
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    onEvent(OnboardingEvent.AddCustomRestriction)
+                    focusManager.clearFocus()
+                    keyboard?.hide()
+                },
+            ),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(Modifier.height(8.dp))
+        androidx.compose.material3.TextButton(
+            onClick = {
+                onEvent(OnboardingEvent.AddCustomRestriction)
+                focusManager.clearFocus()
+                keyboard?.hide()
+            },
+            enabled = state.customRestrictionInput.isNotBlank(),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Icon(Icons.Default.Add, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text("Añadir")
+        }
+        if (state.customDietaryRestrictions.isNotEmpty()) {
+            Spacer(Modifier.height(12.dp))
+            state.customDietaryRestrictions.forEachIndexed { index, restriction ->
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)),
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = restriction,
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.weight(1f),
+                        )
+                        IconButton(
+                            onClick = { onEvent(OnboardingEvent.RemoveCustomRestriction(index)) },
+                        ) {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = "Eliminar restricción $restriction",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -486,6 +573,9 @@ private fun SummaryStep(state: OnboardingUiState) {
             SummaryLine("Objetivo", state.goal?.label().orEmpty())
             SummaryLine("Experiencia", state.experience?.label().orEmpty())
             SummaryLine("Alimentación", state.foodPreference?.label().orEmpty())
+            if (state.customDietaryRestrictions.isNotEmpty()) {
+                SummaryLine("Restricciones", state.customDietaryRestrictions.joinToString(", "))
+            }
             SummaryLine("Comidas", state.mealsPerDay.toString() + " al día")
         }
     }
@@ -646,7 +736,7 @@ private fun FoodPreference.label() = when (this) {
     FoodPreference.Vegan -> "Vegano"
     FoodPreference.GlutenFree -> "Sin gluten"
     FoodPreference.DairyFree -> "Sin lácteos"
-    FoodPreference.Other -> "Otra"
+    FoodPreference.Other -> "Tengo otra restricción alimenticia"
 }
 private fun FoodPreference.description() = when (this) {
     FoodPreference.None -> "No tengo restricciones alimenticias."
@@ -654,7 +744,7 @@ private fun FoodPreference.description() = when (this) {
     FoodPreference.Vegan -> "No consumo productos de origen animal."
     FoodPreference.GlutenFree -> "Evito alimentos que contienen gluten."
     FoodPreference.DairyFree -> "No consumo productos lácteos."
-    FoodPreference.Other -> "Tengo otra preferencia alimenticia."
+    FoodPreference.Other -> "Agrega restricciones alimentarias personalizadas."
 }
 private fun FoodPreference.iconRes() = when (this) {
     FoodPreference.None -> R.drawable.ic_food_none

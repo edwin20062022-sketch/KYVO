@@ -64,6 +64,7 @@ internal fun SavedOnboarding.toAthleteProfile(session: AuthSession): AthleteProf
     goal = goal,
     experience = experience,
     foodPreference = foodPreference,
+    customDietaryRestrictions = customDietaryRestrictions,
     mealsPerDay = mealsPerDay,
     nutritionPlan = plan,
 )

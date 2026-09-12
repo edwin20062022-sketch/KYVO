@@ -51,6 +51,9 @@ class DataStoreOnboardingRepository(context: Context, userId: String) : Onboardi
             progress.goal?.let { preferences[keys.Goal] = it.name }
             progress.experience?.let { preferences[keys.Experience] = it.name }
             progress.foodPreference?.let { preferences[keys.FoodPreferenceKey] = it.name }
+            if (progress.customDietaryRestrictions.isNotEmpty()) {
+                preferences[keys.CustomRestrictions] = progress.customDietaryRestrictions.joinToString(separator = "\u001F")
+            }
             progress.mealsPerDay?.let { preferences[keys.Meals] = it }
             progress.plan?.let { plan ->
                 preferences[keys.Bmr] = plan.bmrKcal
@@ -82,6 +85,10 @@ class DataStoreOnboardingRepository(context: Context, userId: String) : Onboardi
         goal = preferences[keys.Goal].enumValueOrNull(),
         experience = preferences[keys.Experience].enumValueOrNull(),
         foodPreference = preferences[keys.FoodPreferenceKey].enumValueOrNull(),
+        customDietaryRestrictions = preferences[keys.CustomRestrictions]
+            ?.split("\u001F")
+            ?.filter { it.isNotBlank() }
+            ?: emptyList(),
         mealsPerDay = preferences[keys.Meals],
         plan = decodePlan(preferences),
         isCompleted = preferences[keys.Completed] ?: false,
@@ -116,6 +123,7 @@ class DataStoreOnboardingRepository(context: Context, userId: String) : Onboardi
         val Goal = stringPreferencesKey(prefix + "goal")
         val Experience = stringPreferencesKey(prefix + "experience")
         val FoodPreferenceKey = stringPreferencesKey(prefix + "food_preference")
+        val CustomRestrictions = stringPreferencesKey(prefix + "custom_restrictions")
         val Meals = intPreferencesKey(prefix + "meals_per_day")
         val Bmr = doublePreferencesKey(prefix + "bmr_kcal")
         val Tdee = doublePreferencesKey(prefix + "tdee_kcal")
@@ -128,7 +136,7 @@ class DataStoreOnboardingRepository(context: Context, userId: String) : Onboardi
         val CalculationNote = stringPreferencesKey(prefix + "calculation_note")
         val all: List<Preferences.Key<*>> = listOf(
             Step, Completed, Gender, Age, Height, Weight, TrainingDays, TrainingTypeKey,
-            WorkActivityKey, Goal, Experience, FoodPreferenceKey, Meals, Bmr, Tdee,
+            WorkActivityKey, Goal, Experience, FoodPreferenceKey, CustomRestrictions, Meals, Bmr, Tdee,
             ActivityFactor, GoalAdjustment, TargetCalories, Protein, Carbohydrates, Fat,
             CalculationNote,
         )
