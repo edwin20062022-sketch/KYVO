@@ -188,7 +188,7 @@ fun AddSavedDishToDayRoute(id: String, dishes: SavedDishRepository, meals: MealR
         Column(Modifier.padding(20.dp)) {
             error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(bottom = 8.dp)) }
             KyvoPrimaryButton("Agregar al día", {
-                if (!saving) { saving = true; scope.launch { runCatching { meals.addSavedDishToDay(id, LocalDate.now(), type, portions) }.fold(onSuccess = { onAdded() }, onFailure = { error = it.message ?: "No pudimos registrar el platillo." }); saving = false } }
+                if (!saving) { saving = true; scope.launch { runCatching { meals.addSavedDishToDay(id, LocalDate.now(), type, portions) }.fold(onSuccess = { onAdded() }, onFailure = { error = "No pudimos registrar el platillo. Intenta de nuevo." }); saving = false } }
             }, isLoading = saving)
         }
     }) { padding ->

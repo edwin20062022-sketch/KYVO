@@ -166,7 +166,7 @@ class MealShareDraftViewModel(private val savedStateHandle: SavedStateHandle) : 
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (failure: Exception) {
-                _finalization.value = MealShareFinalizationState.Error(failure.message ?: "No pudimos registrar tu comida.")
+                _finalization.value = MealShareFinalizationState.Error("No pudimos registrar tu comida. Intenta de nuevo.")
             }
         }
     }

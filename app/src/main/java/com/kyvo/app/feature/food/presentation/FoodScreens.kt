@@ -318,10 +318,10 @@ private fun FoodPortionContent(food: FoodDetail, mealRepository: MealRepository,
                                         onMealShareConfirmed(meal.items.single())
                                     } else {
                                         runCatching { mealRepository.addMeal(LocalDate.now(), meal) }
-                                            .fold(onSuccess = { onRegistered() }, onFailure = { saveError = it.message ?: "No pudimos guardar la comida." })
+                                            .fold(onSuccess = { onRegistered() }, onFailure = { saveError = "No pudimos guardar tu comida. Intenta de nuevo." })
                                     }
                                 },
-                                onFailure = { saveError = it.message ?: "No pudimos preparar el registro." },
+                                onFailure = { saveError = "No pudimos preparar el registro. Intenta de nuevo." },
                             )
                         saving = false
                     }
