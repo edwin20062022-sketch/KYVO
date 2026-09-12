@@ -183,7 +183,18 @@ fun KyvoNavHost(
                 onFavorites = { navController.navigate(KyvoDestination.FoodFavorites.route) },
                 onFuture = { title -> navController.navigate("food/placeholder/${Uri.encode(title)}") },
                 onDishes = { navController.navigate(KyvoDestination.SavedDishes.route) },
+                onMealShare = { navController.navigate(KyvoDestination.MealShare.route) { launchSingleTop = true } },
             )
+        }
+        composable(KyvoDestination.Plan.route) {
+            onboardingRepository?.let { repository ->
+                NutritionPlanRoute(
+                    repository = repository,
+                    onBack = {},
+                    onHowCalculated = { navController.navigate(KyvoDestination.ProfileCalculation.route) },
+                    onRecalculate = { navController.navigate(KyvoDestination.ProfileUpdateGoal.route) },
+                )
+            }
         }
         composable(KyvoDestination.Progress.route) {
             if (onboardingRepository != null && mealRepository != null) {
@@ -519,6 +530,7 @@ fun KyvoNavHost(
                 onFavorites = { navController.navigate(KyvoDestination.FoodFavorites.route) },
                 onFuture = { title -> navController.navigate("food/placeholder/${Uri.encode(title)}") },
                 onDishes = { navController.navigate(KyvoDestination.SavedDishes.route) },
+                onMealShare = { navController.navigate(KyvoDestination.MealShare.route) { launchSingleTop = true } },
             )
         }
         composable(KyvoDestination.FoodFrequent.route) {
@@ -718,10 +730,8 @@ fun KyvoNavHost(
                 selected = kyvoBottomDestinationFor(currentDestination),
                 onDestinationSelected = { destination ->
                     navController.navigate(destination.route) {
-                        if (destination != KyvoBottomDestination.MealShare) {
-                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                            restoreState = true
-                        }
+                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                        restoreState = true
                         launchSingleTop = true
                     }
                 },

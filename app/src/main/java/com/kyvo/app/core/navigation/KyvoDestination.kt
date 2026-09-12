@@ -8,6 +8,7 @@ enum class KyvoDestination(val route: String) {
     Onboarding("onboarding"),
     Home("home"),
     Meals("meals"),
+    Plan("plan"),
     MealShare("meal_share"),
     Progress("progress"),
     ProgressCalories("progress/calories"),
@@ -72,7 +73,7 @@ enum class KyvoDestination(val route: String) {
 val mainDestinations = listOf(
     KyvoDestination.Home,
     KyvoDestination.Meals,
-    KyvoDestination.MealShare,
+    KyvoDestination.Plan,
     KyvoDestination.Progress,
     KyvoDestination.Profile,
 )

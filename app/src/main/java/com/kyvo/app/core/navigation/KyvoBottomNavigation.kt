@@ -42,7 +42,7 @@ internal enum class KyvoBottomDestination(
 ) {
     Home(KyvoDestination.Home.route, "Inicio", icon = R.drawable.ic_nav_inicio),
     Meals(KyvoDestination.Meals.route, "Alimentos", accessibilityLabel = "Comidas", icon = R.drawable.ic_nav_alimentos),
-    MealShare(KyvoDestination.MealShare.route, "Plan", accessibilityLabel = "Meal Share", icon = R.drawable.ic_nav_plan),
+    Plan(KyvoDestination.Plan.route, "Plan", accessibilityLabel = "Plan nutricional", icon = R.drawable.ic_nav_plan),
     Progress(KyvoDestination.Progress.route, "Progreso", icon = R.drawable.ic_nav_progreso),
     Profile(KyvoDestination.Profile.route, "Perfil", icon = R.drawable.ic_nav_perfil),
 }
@@ -50,7 +50,7 @@ internal enum class KyvoBottomDestination(
 internal fun shouldShowKyvoBottomNavigation(route: String?): Boolean = route in setOf(
     KyvoDestination.Home.route,
     KyvoDestination.Meals.route,
-    KyvoDestination.MealShare.route,
+    KyvoDestination.Plan.route,
     KyvoDestination.Progress.route,
     KyvoDestination.Profile.route,
 )
@@ -58,7 +58,8 @@ internal fun shouldShowKyvoBottomNavigation(route: String?): Boolean = route in 
 internal fun kyvoBottomDestinationForRoute(route: String?): KyvoBottomDestination? = when {
     route == KyvoDestination.Home.route -> KyvoBottomDestination.Home
     route == KyvoDestination.Meals.route || route?.startsWith("food/") == true || route?.startsWith("dishes") == true -> KyvoBottomDestination.Meals
-    route?.startsWith("meal_share") == true -> KyvoBottomDestination.MealShare
+    route == KyvoDestination.Plan.route || route?.startsWith("plan") == true -> KyvoBottomDestination.Plan
+    route?.startsWith("meal_share") == true -> KyvoBottomDestination.Plan
     route == KyvoDestination.Progress.route || route?.startsWith("progress/") == true -> KyvoBottomDestination.Progress
     route == KyvoDestination.Profile.route -> KyvoBottomDestination.Profile
     else -> null

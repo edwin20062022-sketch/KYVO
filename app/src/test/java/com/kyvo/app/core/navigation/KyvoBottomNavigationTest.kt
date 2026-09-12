@@ -10,7 +10,7 @@ class KyvoBottomNavigationTest {
         listOf(
             KyvoDestination.Home.route,
             KyvoDestination.Meals.route,
-            KyvoDestination.MealShare.route,
+            KyvoDestination.Plan.route,
             KyvoDestination.Progress.route,
             KyvoDestination.Profile.route,
         ).forEach { route -> assertTrue("$route should show bottom navigation", shouldShowKyvoBottomNavigation(route)) }
@@ -29,14 +29,16 @@ class KyvoBottomNavigationTest {
     @Test fun activeDestinationUsesRouteGroupsForChildren() {
         assertEquals(KyvoBottomDestination.Home, kyvoBottomDestinationForRoute(KyvoDestination.Home.route))
         assertEquals(KyvoBottomDestination.Meals, kyvoBottomDestinationForRoute(KyvoDestination.FoodDetail.route))
-        assertEquals(KyvoBottomDestination.MealShare, kyvoBottomDestinationForRoute(KyvoDestination.MealShareEditor.route))
+        assertEquals(KyvoBottomDestination.Plan, kyvoBottomDestinationForRoute(KyvoDestination.Plan.route))
+        assertEquals(KyvoBottomDestination.Plan, kyvoBottomDestinationForRoute(KyvoDestination.MealShare.route))
+        assertEquals(KyvoBottomDestination.Plan, kyvoBottomDestinationForRoute(KyvoDestination.MealShareEditor.route))
         assertEquals(KyvoBottomDestination.Progress, kyvoBottomDestinationForRoute(KyvoDestination.ProgressCalories.route))
         assertEquals(KyvoBottomDestination.Progress, kyvoBottomDestinationForRoute(KyvoDestination.ProgressDay.route))
     }
 
-    @Test fun centralPlanAssetRepresentsTheMealShareAction() {
-        assertEquals("Plan", KyvoBottomDestination.MealShare.label)
-        assertEquals("Meal Share", KyvoBottomDestination.MealShare.accessibilityLabel)
-        assertEquals(KyvoDestination.MealShare.route, KyvoBottomDestination.MealShare.route)
+    @Test fun planTabRepresentsNutritionPlan() {
+        assertEquals("Plan", KyvoBottomDestination.Plan.label)
+        assertEquals("Plan nutricional", KyvoBottomDestination.Plan.accessibilityLabel)
+        assertEquals(KyvoDestination.Plan.route, KyvoBottomDestination.Plan.route)
     }
 }

@@ -32,7 +32,7 @@ class KyvoDestinationTest {
     @Test
     fun `main navigation keeps approved order`() {
         assertEquals(
-            listOf("home", "meals", "meal_share", "progress", "profile"),
+            listOf("home", "meals", "plan", "progress", "profile"),
             mainDestinations.map(KyvoDestination::route),
         )
     }
