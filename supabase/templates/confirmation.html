@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Confirma tu correo en KYVO</title>
+</head>
+<body style="margin:0;padding:0;background-color:#FBFAFE;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#FBFAFE;">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background-color:#FFFFFF;border-radius:16px;border:1px solid #F1EBFF;overflow:hidden;">
+          <!-- Header -->
+          <tr>
+            <td style="padding:32px 32px 0 32px;text-align:center;">
+              <h1 style="margin:0;font-size:28px;font-weight:800;color:#101323;letter-spacing:-0.5px;">KYVO</h1>
+            </td>
+          </tr>
+          <!-- Content -->
+          <tr>
+            <td style="padding:28px 32px 0 32px;text-align:center;">
+              <h2 style="margin:0 0 12px 0;font-size:20px;font-weight:700;color:#101323;">Confirma tu correo</h2>
+              <p style="margin:0 0 24px 0;font-size:15px;line-height:1.6;color:#667085;">
+                Gracias por crear tu cuenta en KYVO.<br>
+                Confirma tu dirección de correo para activar tu cuenta y comenzar a configurar tu plan nutricional.
+              </p>
+            </td>
+          </tr>
+          <!-- CTA Button -->
+          <tr>
+            <td style="padding:0 32px 28px 32px;text-align:center;">
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+                <tr>
+                  <td style="background-color:#6D32F5;border-radius:12px;">
+                    <a href="{{ .ConfirmationURL }}" target="_blank" style="display:inline-block;padding:14px 32px;font-size:16px;font-weight:700;color:#FFFFFF;text-decoration:none;letter-spacing:0.3px;">Confirmar correo</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- Fallback link -->
+          <tr>
+            <td style="padding:0 32px 28px 32px;text-align:center;">
+              <p style="margin:0;font-size:13px;line-height:1.5;color:#667085;">
+                Si el botón no funciona, copia y pega este enlace en tu navegador:<br>
+                <a href="{{ .ConfirmationURL }}" style="color:#6D32F5;text-decoration:underline;word-break:break-all;">{{ .ConfirmationURL }}</a>
+              </p>
+            </td>
+          </tr>
+          <!-- Divider -->
+          <tr>
+            <td style="padding:0 32px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="border-top:1px solid #F1EBFF;"></td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="padding:20px 32px 28px 32px;text-align:center;">
+              <p style="margin:0 0 8px 0;font-size:13px;line-height:1.5;color:#667085;">
+                Si tú no creaste esta cuenta, puedes ignorar este mensaje.
+              </p>
+              <p style="margin:0;font-size:12px;color:#667085;">
+                <span style="font-weight:700;color:#101323;">KYVO</span> &mdash; Disciplina hoy, resultados mañana.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
