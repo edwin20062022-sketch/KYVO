@@ -72,13 +72,11 @@ internal fun kyvoBottomDestinationFor(destination: NavDestination?): KyvoBottomD
 
 @Composable
 internal fun KyvoBottomNavigation(selected: KyvoBottomDestination?, onDestinationSelected: (KyvoBottomDestination) -> Unit) {
-    Surface(
+    androidx.compose.material3.Card(
         modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 18.dp, vertical = 10.dp),
         shape = RoundedCornerShape(38.dp),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        shadowElevation = 14.dp,
-        tonalElevation = 0.dp,
+        colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = androidx.compose.material3.CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().height(82.dp).padding(horizontal = 6.dp, vertical = 5.dp),

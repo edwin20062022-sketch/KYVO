@@ -29,7 +29,7 @@ data class UnitPreferences(
 
 data class AppSettings(
     val units: UnitPreferences = UnitPreferences(),
-    val appearance: AppearanceMode = AppearanceMode.SYSTEM,
+    val appearance: AppearanceMode = AppearanceMode.LIGHT,
     val reduceBrightnessInDarkMode: Boolean = true,
     val highContrast: Boolean = false,
     val notifications: NotificationPreferences = NotificationPreferences(),

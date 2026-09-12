@@ -98,7 +98,7 @@ class DataStoreAppSettingsRepository(context: Context) : AppSettingsRepository {
             food = preferences[Keys.Food].enumOr(FoodUnit.GRAMS),
             temperature = preferences[Keys.Temperature].enumOr(TemperatureUnit.CELSIUS),
         ),
-        appearance = preferences[Keys.Appearance].enumOr(AppearanceMode.SYSTEM),
+        appearance = preferences[Keys.Appearance].enumOr(AppearanceMode.LIGHT),
         reduceBrightnessInDarkMode = preferences[Keys.ReduceBrightness] ?: true,
         highContrast = preferences[Keys.HighContrast] ?: false,
         notifications = com.kyvo.app.feature.settings.domain.NotificationPreferences(

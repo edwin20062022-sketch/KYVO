@@ -6,12 +6,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AppSettingsTest {
-    @Test fun defaultsUseCurrentKyvoUnitsAndSystemTheme() {
+    @Test fun defaultsUseCurrentKyvoUnitsAndLightTheme() {
         assertEquals(WeightUnit.KILOGRAMS, AppSettings().units.weight)
         assertEquals(HeightUnit.CENTIMETERS, AppSettings().units.height)
         assertEquals(FoodUnit.GRAMS, AppSettings().units.food)
         assertEquals(TemperatureUnit.CELSIUS, AppSettings().units.temperature)
-        assertEquals(AppearanceMode.SYSTEM, AppSettings().appearance)
+        assertEquals(AppearanceMode.LIGHT, AppSettings().appearance)
     }
 
     @Test fun appearanceResolvesAgainstSystemOnlyForAutomatic() {

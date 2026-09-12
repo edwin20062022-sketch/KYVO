@@ -131,12 +131,12 @@ fun FoodHubScreen(onSearch: () -> Unit, onFrequent: () -> Unit, onFavorites: () 
                 }
             }
             item {
-                Surface(color = KyvoColors.PurpleDeep, shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
+                Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
                     Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Outlined.Info, null, tint = KyvoColors.PurpleAccent, modifier = Modifier.size(26.dp))
+                        Icon(Icons.Outlined.Info, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(26.dp))
                         Column(Modifier.padding(start = 12.dp)) {
-                            Text("Tip rápido", color = Color.White, fontWeight = FontWeight.Bold)
-                            Text("Registra tus porciones mientras están frescas en tu memoria.", color = Color.White.copy(alpha = .8f))
+                            Text("Tip rápido", color = MaterialTheme.colorScheme.onPrimaryContainer, fontWeight = FontWeight.Bold)
+                            Text("Registra tus porciones mientras están frescas en tu memoria.", color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = .8f))
                         }
                     }
                 }
