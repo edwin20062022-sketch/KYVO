@@ -1,0 +1,22 @@
+e: file:///C:/Users/edwin/OneDrive/Escritorio/KYVO/app/src/main/java/com/kyvo/app/feature/mealshare/presentation/MealShareDraftViewModel.kt:155:24 Unresolved reference 'launch'.
+e: file:///C:/Users/edwin/OneDrive/Escritorio/KYVO/app/src/main/java/com/kyvo/app/feature/mealshare/presentation/MealShareDraftViewModel.kt:157:38 Suspend function 'suspend fun addMeal(date: LocalDate, meal: Meal): Unit' can only be called from a coroutine or another suspend function.
+e: file:///C:/Users/edwin/OneDrive/Escritorio/KYVO/app/src/main/java/com/kyvo/app/feature/mealshare/presentation/MealShareEditorScreen.kt:128:15 Cannot infer type for type parameter 'R'. Specify it explicitly.
+e: file:///C:/Users/edwin/OneDrive/Escritorio/KYVO/app/src/main/java/com/kyvo/app/feature/mealshare/presentation/MealShareEditorScreen.kt:128:21 Unresolved reference 'java'.
+e: file:///C:/Users/edwin/OneDrive/Escritorio/KYVO/app/src/main/java/com/kyvo/app/feature/mealshare/presentation/MealShareEditorScreen.kt:128:26 Unresolved reference 'io'.
+e: file:///C:/Users/edwin/OneDrive/Escritorio/KYVO/app/src/main/java/com/kyvo/app/feature/mealshare/presentation/MealShareEditorScreen.kt:129:26 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+e: file:///C:/Users/edwin/OneDrive/Escritorio/KYVO/app/src/main/java/com/kyvo/app/feature/mealshare/presentation/MealShareEditorScreen.kt:129:39 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugKotlin' (registered by plugin 'com.android.internal.application').
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 47s

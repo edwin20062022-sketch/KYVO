@@ -72,8 +72,10 @@ fun EditAthleteProfileRoute(
     }
     EditAthleteProfileScreen(
         state = state,
+        hasExistingAvatar = !session.avatarUrl.isNullOrBlank(),
         onDisplayNameChanged = viewModel::onDisplayNameChanged,
         onPickPhoto = { photoLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+        onDeleteAvatar = viewModel::onDeleteAvatar,
         onSave = viewModel::save,
         onBack = onBack,
     )
@@ -82,8 +84,10 @@ fun EditAthleteProfileRoute(
 @Composable
 fun EditAthleteProfileScreen(
     state: EditAthleteProfileUiState,
+    hasExistingAvatar: Boolean = false,
     onDisplayNameChanged: (String) -> Unit = {},
     onPickPhoto: () -> Unit = {},
+    onDeleteAvatar: () -> Unit = {},
     onSave: () -> Unit = {},
     onBack: () -> Unit = {},
 ) {
@@ -120,7 +124,9 @@ fun EditAthleteProfileScreen(
                     avatarUrl = draft.avatarUrl,
                     avatarVersion = draft.avatarVersion,
                     isUploading = saving,
+                    hasExistingAvatar = hasExistingAvatar && draft.pendingPhotoBytes == null && !draft.deleteAvatarPending,
                     onPickPhoto = onPickPhoto,
+                    onDeleteAvatar = onDeleteAvatar,
                 )
                 KyvoTextField(
                     value = draft.displayName,
@@ -159,7 +165,9 @@ private fun AvatarSection(
     avatarUrl: String?,
     avatarVersion: String?,
     isUploading: Boolean,
+    hasExistingAvatar: Boolean,
     onPickPhoto: () -> Unit,
+    onDeleteAvatar: () -> Unit,
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
         KyvoUserAvatar(
@@ -173,6 +181,12 @@ private fun AvatarSection(
             enabled = !isUploading,
             modifier = Modifier.padding(top = 4.dp),
         ) { Text("Cambiar foto") }
+        if (hasExistingAvatar) {
+            TextButton(
+                onClick = onDeleteAvatar,
+                enabled = !isUploading,
+            ) { Text("Eliminar foto", color = MaterialTheme.colorScheme.error) }
+        }
     }
 }
 

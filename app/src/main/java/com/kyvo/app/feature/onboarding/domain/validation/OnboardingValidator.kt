@@ -1,10 +1,13 @@
 package com.kyvo.app.feature.onboarding.domain.validation
 
 object OnboardingLimits {
-    const val MinimumAge = 16
-    const val MaximumAge = 100
-    const val MinimumHeightCm = 120.0
-    const val MaximumHeightCm = 230.0
+    const val MinimumVisualAge = 0
+    const val MinimumAge = 1
+    const val MaximumAge = 150
+    const val DefaultAge = 18
+    const val MinimumHeightCm = 100.0
+    const val MaximumHeightCm = 300.0
+    const val DefaultHeightCm = 150.0
     const val MinimumWeightKg = 35.0
     const val MaximumWeightKg = 300.0
     const val MinimumTrainingDays = 1

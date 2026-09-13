@@ -44,6 +44,8 @@ interface AuthRepository {
         AuthResult.Failure(AuthError.Unknown)
     suspend fun updateAvatarBytes(bytes: ByteArray): AuthResult =
         AuthResult.Failure(AuthError.Unknown)
+    suspend fun deleteAvatar(): AuthResult =
+        AuthResult.Failure(AuthError.Unknown)
     suspend fun updatePassword(newPassword: CharArray): AuthResult {
         newPassword.fill('\u0000')
         return AuthResult.Failure(AuthError.Unknown)

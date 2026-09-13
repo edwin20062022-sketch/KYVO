@@ -6,6 +6,7 @@ import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,7 +14,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -26,9 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
@@ -50,18 +48,14 @@ fun KyvoVerticalWheelPicker(
 ) {
     if (items.isEmpty()) return
 
-    val listState = rememberLazyListState()
-    val itemHeightPx = with(LocalDensity.current) { 56.dp.roundToPx() }
+    val selectedIndex = wheelInitialIndex(items, selectedItem)
     val scope = rememberCoroutineScope()
-    val selectedIndex = items.indexOf(selectedItem).coerceAtLeast(0)
-    val flingBehavior: FlingBehavior = rememberSnapFlingBehavior(listState)
 
-    LaunchedEffect(selectedItem) {
-        val index = items.indexOf(selectedItem)
-        if (index >= 0 && listState.firstVisibleItemIndex != index) {
-            listState.animateScrollToItem(index, scrollOffset = -itemHeightPx * 2)
-        }
-    }
+    val listState = rememberLazyListState(
+        initialFirstVisibleItemIndex = selectedIndex,
+    )
+
+    val flingBehavior: FlingBehavior = rememberSnapFlingBehavior(listState)
 
     val centeredIndex by remember {
         derivedStateOf {
@@ -71,6 +65,13 @@ fun KyvoVerticalWheelPicker(
                 val itemCenter = item.offset + item.size / 2
                 abs(itemCenter - viewportCenter)
             }?.index?.coerceIn(items.indices) ?: selectedIndex
+        }
+    }
+
+    LaunchedEffect(selectedItem) {
+        val externalIndex = items.indexOf(selectedItem)
+        if (externalIndex >= 0 && externalIndex != centeredIndex) {
+            listState.scrollToItem(externalIndex)
         }
     }
 
@@ -93,8 +94,9 @@ fun KyvoVerticalWheelPicker(
                 flingBehavior = flingBehavior,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-                    .then(if (testTag != null) Modifier else Modifier),
+                    .height(WHEEL_VIEWPORT_HEIGHT)
+                    .padding(vertical = 8.dp),
+                contentPadding = PaddingValues(vertical = WHEEL_ITEM_HEIGHT),
             ) {
                 items(items.size) { index ->
                     val item = items[index]
@@ -115,7 +117,7 @@ fun KyvoVerticalWheelPicker(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(56.dp)
+                            .height(WHEEL_ITEM_HEIGHT)
                             .graphicsLayer {
                                 this.alpha = alpha
                                 scaleX = scale
@@ -123,8 +125,11 @@ fun KyvoVerticalWheelPicker(
                             }
                             .semantics { role = Role.Tab }
                             .clickable {
-                                onItemSelected(item)
-                                scope.launch { listState.animateScrollToItem(index, scrollOffset = -itemHeightPx * 2) }
+                                scope.launch {
+                                    listState.animateScrollToItem(
+                                        index,
+                                    )
+                                }
                             },
                         contentAlignment = Alignment.Center,
                     ) {
@@ -156,7 +161,7 @@ fun KyvoVerticalWheelPicker(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
+                    .height(WHEEL_ITEM_HEIGHT)
                     .padding(horizontal = 20.dp),
                 contentAlignment = Alignment.Center,
             ) {
@@ -172,3 +177,8 @@ fun KyvoVerticalWheelPicker(
         }
     }
 }
+
+private val WHEEL_ITEM_HEIGHT = 56.dp
+private val WHEEL_VIEWPORT_HEIGHT = WHEEL_ITEM_HEIGHT * 3
+
+internal fun wheelInitialIndex(items: List<Int>, selectedItem: Int): Int = items.indexOf(selectedItem).coerceAtLeast(0)

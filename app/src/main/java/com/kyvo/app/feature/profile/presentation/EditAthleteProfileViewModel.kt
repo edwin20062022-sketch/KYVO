@@ -8,6 +8,7 @@ import com.kyvo.app.domain.auth.AuthError
 import com.kyvo.app.domain.auth.AuthRepository
 import com.kyvo.app.domain.auth.AuthResult
 import com.kyvo.app.domain.auth.AuthSession
+import android.util.Base64
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,11 +20,12 @@ data class EditAthleteProfileDraft(
     val avatarUrl: String?,
     val avatarVersion: String? = null,
     val pendingPhotoBytes: ByteArray? = null,
+    val deleteAvatarPending: Boolean = false,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is EditAthleteProfileDraft) return false
-        return displayName == other.displayName && email == other.email && avatarUrl == other.avatarUrl && avatarVersion == other.avatarVersion && pendingPhotoBytes.contentEquals(other.pendingPhotoBytes)
+        return displayName == other.displayName && email == other.email && avatarUrl == other.avatarUrl && avatarVersion == other.avatarVersion && pendingPhotoBytes.contentEquals(other.pendingPhotoBytes) && deleteAvatarPending == other.deleteAvatarPending
     }
     override fun hashCode(): Int {
         var result = displayName.hashCode()
@@ -31,6 +33,7 @@ data class EditAthleteProfileDraft(
         result = 31 * result + (avatarUrl?.hashCode() ?: 0)
         result = 31 * result + (avatarVersion?.hashCode() ?: 0)
         result = 31 * result + (pendingPhotoBytes?.contentHashCode() ?: 0)
+        result = 31 * result + deleteAvatarPending.hashCode()
         return result
     }
 }
@@ -58,11 +61,20 @@ class EditAthleteProfileViewModel(
 
     fun onDisplayNameChanged(value: String) = updateDraft { copy(displayName = value) }
 
-    fun onPhotoSelected(bytes: ByteArray) = updateDraft { copy(pendingPhotoBytes = bytes) }
+    fun onPhotoSelected(bytes: ByteArray) {
+        val dataUri = "data:image/jpeg;base64," + Base64.encodeToString(bytes, Base64.NO_WRAP)
+        updateDraft { copy(pendingPhotoBytes = bytes, avatarUrl = dataUri, avatarVersion = null, deleteAvatarPending = false) }
+    }
+
+    fun onDeleteAvatar() {
+        updateDraft { copy(deleteAvatarPending = true, pendingPhotoBytes = null, avatarUrl = null, avatarVersion = null) }
+    }
 
     fun save() {
         val draft = currentDraft() ?: return
         val normalized = draft.copy(displayName = draft.displayName.trim())
+        val avatarChanged = normalized.pendingPhotoBytes != null || normalized.deleteAvatarPending
+        val nameChanged = normalized.displayName != initialDraft.displayName
         when {
             normalized.displayName.isBlank() -> {
                 _state.value = EditAthleteProfileUiState.Editing(normalized, "Escribe tu nombre.")
@@ -70,7 +82,7 @@ class EditAthleteProfileViewModel(
             normalized.displayName.length > 120 -> {
                 _state.value = EditAthleteProfileUiState.Editing(normalized, "El nombre es demasiado largo.")
             }
-            normalized.displayName == initialDraft.displayName && normalized.pendingPhotoBytes == null -> {
+            !avatarChanged && !nameChanged -> {
                 _state.value = EditAthleteProfileUiState.Saved
             }
             else -> persist(normalized)
@@ -81,7 +93,25 @@ class EditAthleteProfileViewModel(
         _state.value = EditAthleteProfileUiState.Saving(draft)
         viewModelScope.launch {
             var currentDraft = draft
-            if (draft.pendingPhotoBytes != null) {
+            if (draft.deleteAvatarPending) {
+                when (val result = authRepository.deleteAvatar()) {
+                    is AuthResult.Success -> {
+                        currentDraft = currentDraft.copy(
+                            avatarUrl = null,
+                            avatarVersion = null,
+                            deleteAvatarPending = false,
+                        )
+                    }
+                    is AuthResult.Failure -> {
+                        _state.value = EditAthleteProfileUiState.Error(currentDraft, "No pudimos eliminar tu foto. Intenta de nuevo.")
+                        return@launch
+                    }
+                    is AuthResult.ConfirmationRequired -> {
+                        _state.value = EditAthleteProfileUiState.Error(currentDraft, "No pudimos eliminar tu foto.")
+                        return@launch
+                    }
+                }
+            } else if (draft.pendingPhotoBytes != null) {
                 when (val avatarResult = authRepository.updateAvatarBytes(draft.pendingPhotoBytes)) {
                     is AuthResult.Success -> {
                         currentDraft = currentDraft.copy(

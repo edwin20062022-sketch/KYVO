@@ -37,6 +37,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -195,28 +196,44 @@ private fun StepContent(
             StepError(state.validationError)
         }
         OnboardingStep.Age -> {
+            Image(
+                painter = painterResource(R.drawable.ic_onboarding_age),
+                contentDescription = null,
+                modifier = Modifier.size(64.dp).padding(bottom = 8.dp),
+            )
             StepHeading("DATOS PERSONALES", "¿Cuál es tu edad?",
                 "Tu edad nos ayuda a calcular tu gasto calórico y necesidades nutricionales.", compact)
             KyvoVerticalWheelPicker(
-                items = (OnboardingLimits.MinimumAge..OnboardingLimits.MaximumAge).toList(),
-                selectedItem = state.ageInput.toIntOrNull() ?: OnboardingLimits.MinimumAge,
-                onItemSelected = { onEvent(OnboardingEvent.ChangeAge(it.toString())) },
+                items = (OnboardingLimits.MinimumVisualAge..OnboardingLimits.MaximumAge).toList(),
+                selectedItem = (state.ageInput.toIntOrNull() ?: OnboardingLimits.DefaultAge).coerceIn(OnboardingLimits.MinimumAge, OnboardingLimits.MaximumAge),
+                onItemSelected = { onEvent(OnboardingEvent.ChangeAge(it.coerceAtLeast(OnboardingLimits.MinimumAge).toString())) },
                 label = "años",
             )
             StepError(state.validationError)
         }
         OnboardingStep.Height -> {
+            Image(
+                painter = painterResource(R.drawable.ic_onboarding_height),
+                contentDescription = null,
+                modifier = Modifier.size(64.dp).padding(bottom = 8.dp),
+            )
             StepHeading("DATOS PERSONALES", "¿Cuál es tu altura?",
                 "Tu altura nos ayuda a estimar tu gasto calórico y calcular tus macros.", compact)
             KyvoVerticalWheelPicker(
                 items = (OnboardingLimits.MinimumHeightCm.toInt()..OnboardingLimits.MaximumHeightCm.toInt()).toList(),
-                selectedItem = state.heightInput.toDoubleOrNull()?.toInt() ?: OnboardingLimits.MinimumHeightCm.toInt(),
+                selectedItem = (state.heightInput.toDoubleOrNull()?.toInt() ?: OnboardingLimits.DefaultHeightCm.toInt()).coerceIn(OnboardingLimits.MinimumHeightCm.toInt(), OnboardingLimits.MaximumHeightCm.toInt()),
                 onItemSelected = { onEvent(OnboardingEvent.ChangeHeight(it.toString())) },
                 label = "cm",
             )
             StepError(state.validationError)
         }
         OnboardingStep.CurrentWeight -> {
+            Image(
+                painter = painterResource(R.drawable.ic_onboarding_weight),
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.size(64.dp).padding(bottom = 8.dp),
+            )
             StepHeading("DATOS PERSONALES", "¿Cuál es tu peso actual?",
                 "Tu peso actual nos ayuda a calcular tus necesidades calóricas diarias.", compact)
             val weightValues = remember {
@@ -236,7 +253,7 @@ private fun StepContent(
         OnboardingStep.TrainingDays -> {
             StepHeading("ACTIVIDAD", "¿Cuántos días entrenas a la semana?", "Esto nos ayuda a calcular tu nivel de actividad física.", compact)
             OptionList((1..7).map { day ->
-                Option(day.toString(), day.toString(), state.trainingDaysPerWeek == day) {
+                Option(TRAINING_DAYS_LABEL, day.toString(), state.trainingDaysPerWeek == day) {
                     onEvent(OnboardingEvent.SelectTrainingDays(day))
                 }
             })
@@ -668,8 +685,8 @@ private fun continueLabel(step: OnboardingStep, mode: OnboardingMode): String = 
 private fun OnboardingValidationError.message(): String = when (this) {
     OnboardingValidationError.SelectionRequired -> "Selecciona una opción para continuar."
     OnboardingValidationError.InvalidNumber -> "Ingresa un número válido."
-    OnboardingValidationError.AgeOutOfRange -> "Ingresa una edad entre 16 y 100 años."
-    OnboardingValidationError.HeightOutOfRange -> "Ingresa una altura entre 120 y 230 cm."
+    OnboardingValidationError.AgeOutOfRange -> "Ingresa una edad entre 1 y 150 años."
+    OnboardingValidationError.HeightOutOfRange -> "Ingresa una altura entre 100 y 300 cm."
     OnboardingValidationError.WeightOutOfRange -> "Ingresa un peso entre 35 y 300 kg."
     OnboardingValidationError.TrainingDaysOutOfRange -> "Selecciona entre 1 y 7 días."
     OnboardingValidationError.MealsOutOfRange -> "Selecciona entre 1 y 8 comidas."
@@ -793,6 +810,7 @@ private fun signedPercent(value: Double): String = when {
 }
 
 const val AGE_INPUT_TAG = "onboarding_age"
+const val TRAINING_DAYS_LABEL = "días a la semana"
 const val HEIGHT_INPUT_TAG = "onboarding_height"
 const val WEIGHT_INPUT_TAG = "onboarding_weight"
 const val MEALS_INPUT_TAG = "onboarding_meals"

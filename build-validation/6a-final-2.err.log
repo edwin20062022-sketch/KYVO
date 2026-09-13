@@ -1,0 +1,34 @@
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:lintDebug' (registered by plugin 'com.android.internal.application').
+> Lint found errors in the project; aborting build.
+  
+  Fix the issues identified by lint, or create a baseline to see only new errors.
+  To create a baseline, run `gradlew updateLintBaseline` after adding the following to the module's build.gradle file:
+  ```
+  android {
+      lint {
+          baseline = file("lint-baseline.xml")
+      }
+  }
+  ```
+  For more details, see https://developer.android.com/studio/write/lint#snapshot
+  
+  Lint found 4 errors, 20 warnings, 2 hints. First failure:
+  
+  C:\Users\edwin\OneDrive\Escritorio\KYVO\app\src\main\java\com\kyvo\app\core\navigation\KyvoNavHost.kt:139: Error: Calling getBackStackEntry during composition without using remember with a NavBackStackEntry key [UnrememberedGetBackStackEntry from androidx.navigation.compose]
+              val mealShareEntry = remember(navController) { navController.getBackStackEntry(KyvoDestination.MealShare.route) }
+                                                                           ~~~~~~~~~~~~~~~~~
+  
+  The full lint text report is located at:
+    C:\Users\edwin\OneDrive\Escritorio\KYVO\app\build\intermediates\lint_intermediate_text_report\debug\lintReportDebug\lint-results-debug.txt
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 5m 17s

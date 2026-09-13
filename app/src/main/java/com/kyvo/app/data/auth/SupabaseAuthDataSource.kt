@@ -12,6 +12,7 @@ import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.functions.functions
 import io.github.jan.supabase.storage.storage
 import io.github.jan.supabase.storage.UploadData
+import io.ktor.http.ContentType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.contentOrNull
@@ -27,6 +28,7 @@ interface SupabaseAuthDataSource {
     suspend fun signInWithGoogle(idToken: String, rawNonce: String): AuthSession
     suspend fun updateProfileMetadata(displayName: String, username: String?): AuthSession
     suspend fun updateAvatar(bytes: ByteArray): AuthSession
+    suspend fun deleteAvatar(): AuthSession
     suspend fun updatePassword(newPassword: String): AuthSession = requireNotNull(currentSession())
     suspend fun signOut()
     suspend fun deleteAccount() = Unit
@@ -82,7 +84,10 @@ class SupabaseSdkAuthDataSource(private val client: SupabaseClient) : SupabaseAu
         val userId = requireNotNull(client.auth.currentUserOrNull()?.id) { "No authenticated user" }
         val bucket = client.storage.from("avatars")
         val path = "$userId/avatar.jpg"
-        bucket.upload(path, bytes) { upsert = true }
+        bucket.upload(path, bytes) {
+            upsert = true
+            contentType = ContentType.Image.JPEG
+        }
         val publicUrl = bucket.publicUrl(path)
         val version = System.currentTimeMillis().toString()
         client.auth.updateUser {
@@ -92,6 +97,19 @@ class SupabaseSdkAuthDataSource(private val client: SupabaseClient) : SupabaseAu
             }
         }
         return requireNotNull(currentSession()) { "Supabase returned no session after avatar update" }
+    }
+
+    override suspend fun deleteAvatar(): AuthSession {
+        val userId = requireNotNull(client.auth.currentUserOrNull()?.id) { "No authenticated user" }
+        val bucket = client.storage.from("avatars")
+        runCatching { bucket.delete("$userId/avatar.jpg") }
+        client.auth.updateUser {
+            data = buildJsonObject {
+                put("avatar_url", JsonPrimitive(""))
+                put("avatar_version", JsonPrimitive(""))
+            }
+        }
+        return requireNotNull(currentSession()) { "Supabase returned no session after avatar deletion" }
     }
 
     override suspend fun updatePassword(newPassword: String): AuthSession {

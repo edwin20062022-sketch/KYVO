@@ -33,6 +33,8 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 private const val TICK_ITEM_WIDTH_DP = 20
+private val RULER_VISUAL_HEIGHT = 80.dp
+private val RULER_TOUCH_HEIGHT = 112.dp
 
 @Composable
 fun KyvoHorizontalWeightRuler(
@@ -123,7 +125,8 @@ fun KyvoHorizontalWeightRuler(
             Canvas(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(80.dp),
+                    .height(RULER_VISUAL_HEIGHT)
+                    .align(Alignment.TopCenter),
             ) {
                 drawLine(
                     color = primaryColor.copy(alpha = 0.6f),
@@ -141,7 +144,9 @@ fun KyvoHorizontalWeightRuler(
             LazyRow(
                 state = listState,
                 flingBehavior = flingBehavior,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(RULER_TOUCH_HEIGHT),
             ) {
                 items(values.size) { index ->
                     val value = values[index]
@@ -156,17 +161,17 @@ fun KyvoHorizontalWeightRuler(
                     val isMinor5 = value.roundToInt() % 5 == 0 && !isMajor
                     val tickColor = onSurfaceColor.copy(alpha = tickAlpha)
                     val tickHeight = when {
-                        distance == 0 -> 48.dp
-                        isMajor -> 32.dp
-                        isMinor5 -> 24.dp
-                        else -> 16.dp
+                        distance == 0 -> 53.dp
+                        isMajor -> 35.dp
+                        isMinor5 -> 26.dp
+                        else -> 18.dp
                     }
                     val showLabel = isMajor && distance <= 10
 
                     Column(
                         modifier = Modifier
                             .width(TICK_ITEM_WIDTH_DP.dp)
-                            .height(80.dp),
+                            .height(RULER_VISUAL_HEIGHT),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Bottom,
                     ) {

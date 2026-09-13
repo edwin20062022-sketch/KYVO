@@ -14,11 +14,13 @@ class AppSettingsTest {
         assertEquals(AppearanceMode.LIGHT, AppSettings().appearance)
     }
 
-    @Test fun appearanceResolvesAgainstSystemOnlyForAutomatic() {
-        assertTrue(AppearanceMode.SYSTEM.resolveDarkTheme(true))
-        assertFalse(AppearanceMode.SYSTEM.resolveDarkTheme(false))
-        assertTrue(AppearanceMode.DARK.resolveDarkTheme(false))
+    @Test fun appearanceResolverUsesSystemOnlyForAutomatic() {
+        assertFalse(AppearanceMode.LIGHT.resolveDarkTheme(false))
         assertFalse(AppearanceMode.LIGHT.resolveDarkTheme(true))
+        assertTrue(AppearanceMode.DARK.resolveDarkTheme(false))
+        assertTrue(AppearanceMode.DARK.resolveDarkTheme(true))
+        assertFalse(AppearanceMode.SYSTEM.resolveDarkTheme(false))
+        assertTrue(AppearanceMode.SYSTEM.resolveDarkTheme(true))
     }
 
     @Test fun conversionsAreRoundedOnlyForDisplay() {

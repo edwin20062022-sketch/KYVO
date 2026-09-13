@@ -12,6 +12,7 @@ import com.kyvo.app.feature.onboarding.domain.model.SavedOnboarding
 import com.kyvo.app.feature.onboarding.domain.model.TrainingType
 import com.kyvo.app.feature.onboarding.domain.model.WorkActivity
 import com.kyvo.app.feature.onboarding.domain.validation.OnboardingValidationError
+import com.kyvo.app.feature.onboarding.domain.validation.OnboardingLimits
 import com.kyvo.app.test.MainDispatcherRule
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -34,6 +35,21 @@ class OnboardingViewModelTest {
         advanceUntilIdle()
         assertEquals(OnboardingStep.Gender, vm.state.value.currentStep)
         assertFalse(vm.state.value.isRestoring)
+    }
+
+    @Test fun missingPersonalDataUsesRequestedDefaults() = runTest {
+        val vm = viewModel()
+        advanceUntilIdle()
+        assertEquals(OnboardingLimits.DefaultAge.toString(), vm.state.value.ageInput)
+        assertEquals(OnboardingLimits.DefaultHeightCm.toInt().toString(), vm.state.value.heightInput)
+    }
+
+    @Test fun decorativeZeroAgeIsNotPersisted() = runTest {
+        val vm = viewModel()
+        advanceUntilIdle()
+        vm.onEvent(OnboardingEvent.ChangeAge("0"))
+        advanceUntilIdle()
+        assertEquals("", vm.state.value.ageInput)
     }
 
     @Test fun cannotAdvanceWithoutRequiredSelection() = runTest {
@@ -60,7 +76,7 @@ class OnboardingViewModelTest {
         advanceUntilIdle()
         vm.onEvent(OnboardingEvent.SelectGender(GenderOption.Male))
         vm.onEvent(OnboardingEvent.Continue)
-        vm.onEvent(OnboardingEvent.ChangeAge("12"))
+        vm.onEvent(OnboardingEvent.ChangeAge("151"))
         vm.onEvent(OnboardingEvent.Continue)
         assertEquals(OnboardingStep.Age, vm.state.value.currentStep)
         assertEquals(OnboardingValidationError.AgeOutOfRange, vm.state.value.validationError)

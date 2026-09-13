@@ -1,0 +1,17 @@
+e: file:///C:/Users/edwin/OneDrive/Escritorio/KYVO/app/src/main/java/com/kyvo/app/feature/mealshare/presentation/MealShareMealBuilderScreen.kt:22:49 Unresolved reference 'DeleteOutline'.
+e: file:///C:/Users/edwin/OneDrive/Escritorio/KYVO/app/src/main/java/com/kyvo/app/feature/mealshare/presentation/MealShareMealBuilderScreen.kt:159:116 Unresolved reference 'DeleteOutline'.
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugKotlin' (registered by plugin 'com.android.internal.application').
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 56s

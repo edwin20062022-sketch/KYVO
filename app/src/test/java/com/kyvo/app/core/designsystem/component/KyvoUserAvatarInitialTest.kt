@@ -9,6 +9,9 @@ class KyvoUserAvatarInitialTest {
     fun `Edwin yields E`() = assertEquals("E", extractInitial("Edwin"))
 
     @Test
+    fun `Edwin Beta yields E`() = assertEquals("E", extractInitial("Edwin Beta"))
+
+    @Test
     fun `maria yields M with uppercase`() = assertEquals("M", extractInitial("maría"))
 
     @Test

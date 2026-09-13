@@ -10,6 +10,7 @@ import com.kyvo.app.feature.onboarding.domain.model.OnboardingStep
 import com.kyvo.app.feature.onboarding.domain.model.SavedOnboarding
 import com.kyvo.app.feature.onboarding.domain.repository.OnboardingRepository
 import com.kyvo.app.feature.onboarding.domain.validation.OnboardingValidationError
+import com.kyvo.app.feature.onboarding.domain.validation.OnboardingLimits
 import com.kyvo.app.feature.onboarding.domain.validation.OnboardingValidator
 import com.kyvo.app.feature.onboarding.domain.validation.ValidationResult
 import com.kyvo.app.feature.onboarding.domain.restriction.DietaryRestrictionNormalizer
@@ -50,7 +51,10 @@ class OnboardingViewModel(
     fun onEvent(event: OnboardingEvent) {
         when (event) {
             is OnboardingEvent.SelectGender -> edit { copy(gender = event.value) }
-            is OnboardingEvent.ChangeAge -> edit { copy(ageInput = event.value.digitsOnly()) }
+            is OnboardingEvent.ChangeAge -> edit {
+                val age = event.value.digitsOnly()
+                copy(ageInput = age.takeUnless { it.toIntOrNull() == OnboardingLimits.MinimumVisualAge }.orEmpty())
+            }
             is OnboardingEvent.ChangeHeight -> edit { copy(heightInput = event.value.decimalOnly()) }
             is OnboardingEvent.ChangeWeight -> edit { copy(weightInput = event.value.decimalOnly()) }
             is OnboardingEvent.SelectTrainingDays -> edit { copy(trainingDaysPerWeek = event.value) }
@@ -265,8 +269,8 @@ class OnboardingViewModel(
             else -> currentStep
         }
         return OnboardingUiState(
-            currentStep = restoredStep, gender = gender, ageInput = ageYears?.toString().orEmpty(),
-            heightInput = heightCm?.display().orEmpty(), weightInput = weightKg?.display().orEmpty(),
+            currentStep = restoredStep, gender = gender, ageInput = (ageYears ?: OnboardingLimits.DefaultAge).toString(),
+            heightInput = (heightCm ?: OnboardingLimits.DefaultHeightCm).display(), weightInput = weightKg?.display().orEmpty(),
             trainingDaysPerWeek = trainingDaysPerWeek, trainingType = trainingType,
             workActivity = workActivity, goal = goal, experience = experience,
             foodPreference = foodPreference, customDietaryRestrictions = customDietaryRestrictions,
@@ -278,8 +282,8 @@ class OnboardingViewModel(
 
     private fun SavedOnboarding.toUiStateForEdit(): OnboardingUiState = OnboardingUiState(
         currentStep = OnboardingStep.Gender, gender = gender,
-        ageInput = ageYears?.toString().orEmpty(),
-        heightInput = heightCm?.display().orEmpty(),
+        ageInput = (ageYears ?: OnboardingLimits.DefaultAge).toString(),
+        heightInput = (heightCm ?: OnboardingLimits.DefaultHeightCm).display(),
         weightInput = weightKg?.display().orEmpty(),
         trainingDaysPerWeek = trainingDaysPerWeek, trainingType = trainingType,
         workActivity = workActivity, goal = goal, experience = experience,

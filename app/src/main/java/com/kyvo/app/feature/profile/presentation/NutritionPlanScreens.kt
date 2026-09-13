@@ -100,7 +100,7 @@ private fun NutritionPlanContent(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(52.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = KyvoColors.PurplePrimary),
                 shape = MaterialTheme.shapes.large,
-            ) { Text("Recalcular metas", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
+            ) { Text("Actualizar información", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
         }
         item {
             Text("Tu guía diaria para alcanzar tus objetivos.", Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.titleMedium)

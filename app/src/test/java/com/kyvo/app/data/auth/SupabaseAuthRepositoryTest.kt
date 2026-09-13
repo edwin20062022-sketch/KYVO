@@ -122,6 +122,9 @@ private class FakeDataSource(
     override suspend fun updateAvatar(bytes: ByteArray): AuthSession =
         requireNotNull(currentSession())
 
+    override suspend fun deleteAvatar(): AuthSession =
+        requireNotNull(currentSession())
+
     override suspend fun signOut() {
         states.value = AuthState.SignedOut
     }
